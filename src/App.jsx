@@ -3,6 +3,15 @@ import { BrowserRouter, Routes, Route, useNavigate, useParams } from 'react-rout
 import { YEARS, TARGET_DATE } from './data';
 import './App.css';
 
+// 컴포넌트 외부로 이동 (컴포넌트가 리렌더링되어도 값은 유지됨)
+const INITIAL_ITEMS = Array.from({ length: 20 }, (_, i) => ({
+    id: i,
+    x: Math.random() * 100,
+    delay: Math.random() * 4,
+    dur: 3 + Math.random() * 4,
+    size: 3 + Math.random() * 6,
+}));
+
 /* ── Countdown Hook (기존과 동일) ── */
 function useCountdown() {
     const calc = () => {
@@ -25,13 +34,7 @@ function useCountdown() {
 
 /* ── Floating particles (기존과 동일) ── */
 function Sparks({ color }) {
-    const items = Array.from({ length: 20 }, (_, i) => ({
-        id: i,
-        x: Math.random() * 100,
-        delay: Math.random() * 4,
-        dur: 3 + Math.random() * 4,
-        size: 3 + Math.random() * 6,
-    }));
+    const items = INITIAL_ITEMS;
     return (
         <div className="sparks" aria-hidden>
             {items.map((p) => (
@@ -89,7 +92,7 @@ function HeroPage() {
                         체육 축제
                     </span>
                 </h1>
-                <p className="hero-date anim-3">📅 2026년 5월 31일 개막</p>
+                <p className="hero-date anim-3">2026년 5월 31일 개막</p>
                 <div className="countdown anim-4">
                     <Digit value={days} label="일" />
                     <span className="cd-sep">:</span>
