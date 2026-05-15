@@ -86,13 +86,9 @@ function HeroPage() {
                 <div className="hero-badge anim-1">GLOBAL SPORTS FESTIVAL</div>
                 <h1 className="hero-title anim-2">
                     <span className="ht-year">2026</span>
-                    <span className="ht-main">
-                        글로벌
-                        <br />
-                        체육 축제
-                    </span>
+                    <span className="ht-main">글로벌 체육 축제</span>
                 </h1>
-                <p className="hero-date anim-3">2026년 5월 31일 개막</p>
+                <p className="hero-date anim-3">2026년 5월 30일 (토) 09:00</p>
                 <div className="countdown anim-4">
                     <Digit value={days} label="일" />
                     <span className="cd-sep">:</span>
@@ -102,7 +98,7 @@ function HeroPage() {
                     <span className="cd-sep">:</span>
                     <Digit value={seconds} label="초" />
                 </div>
-                <p className="hero-sub anim-5">지난 응원전을 돌아보며 2026년을 함께 기대해요!</p>
+                {/* <p className="hero-sub anim-5">지난 응원전을 돌아보며 2026년을 함께 기대해요!</p> */}
                 <button className="enter-btn anim-6" onClick={() => navigate('/years')}>
                     <span>역대 응원전 보러가기</span>
                     <span className="arrow-right">→</span>
