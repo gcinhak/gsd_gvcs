@@ -98,7 +98,6 @@ export const EVENTS = [
     { key: 'basketball', name: '농구', emoji: '🏀' },
     { key: 'soccer', name: '축구', emoji: '⚽' },
     { key: 'volleyball', name: '배구', emoji: '🏐' },
-    { key: 'dodgeball', name: '피구', emoji: '🤾' },
     { key: 'relay', name: '계주', emoji: '🏃' },
     { key: 'tugofwar', name: '줄다리기', emoji: '🪢' },
 ];

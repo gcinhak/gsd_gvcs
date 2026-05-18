@@ -33,49 +33,73 @@ function Tally({ items }) {
 
 function EventCard({ event }) {
     const [open, setOpen] = useState(false);
-    const totalWins = event.wins ? event.wins.reduce((s, w) => s + (w.count || 0), 0) : 0;
+    const colors = CAMPUS_COLORS[event.winner];
+    const hasDetails =
+        (event.matches && event.matches.length > 0) ||
+        (event.wins && event.wins.length > 0) ||
+        event.finalScore ||
+        event.note;
+
+    const style = colors
+        ? { '--card-tint': colors.soft, '--card-accent': colors.bg }
+        : {};
+
     return (
-        <article className="event-card">
+        <article
+            className={`event-card ${event.winner ? `winner-${event.winner.replace('/', '-')}` : ''}`}
+            style={style}
+        >
             <header className="ec-head">
                 <h4 className="ec-name">{event.name}</h4>
                 <CampusBadge campus={event.winner} size="md" />
             </header>
 
-            {event.finalScore && (
-                <div className="ec-final">
-                    최종 <strong>{event.finalScore}</strong>
+            {(event.finalScore || event.gameCount != null) && (
+                <div className="ec-sub">
+                    {event.finalScore && (
+                        <span className="ec-final">
+                            최종 <strong>{event.finalScore}</strong>
+                        </span>
+                    )}
+                    {event.gameCount != null && (
+                        <span className="ec-count">총 {event.gameCount}경기</span>
+                    )}
                 </div>
             )}
 
-            {event.wins && event.wins.length > 0 && (
-                <div className="ec-wins">
-                    {event.wins.map((w) => {
-                        const isWinner = w.campus === event.winner;
-                        return (
-                            <div key={w.campus} className={`win-row ${isWinner ? 'is-winner' : ''}`}>
-                                <CampusBadge campus={w.campus} size="sm" soft={!isWinner} />
-                                <div className="win-bar">
-                                    <div
-                                        className="win-bar-fill"
-                                        style={{
-                                            width: totalWins ? `${(w.count / totalWins) * 100}%` : '0%',
-                                            background: CAMPUS_COLORS[w.campus]?.bg || '#374151',
-                                        }}
-                                    />
-                                </div>
-                                <span className="win-count">{w.count}승</span>
-                            </div>
-                        );
-                    })}
-                </div>
+            {hasDetails && (
+                <button className="ec-expand" onClick={() => setOpen((v) => !v)}>
+                    {open ? '접기 ▲' : '상세 보기 ▼'}
+                </button>
             )}
 
-            {event.matches && event.matches.length > 0 && (
-                <>
-                    <button className="ec-expand" onClick={() => setOpen((v) => !v)}>
-                        {open ? '세부 경기 접기 ▲' : `세부 경기 ${event.matches.length}건 보기 ▼`}
-                    </button>
-                    {open && (
+            {open && (
+                <div className="ec-details">
+                    {event.wins && event.wins.length > 0 && (
+                        <div className="ec-wins">
+                            {event.wins.map((w) => {
+                                const isWinner = w.campus === event.winner;
+                                const totalWins = event.wins.reduce((s, x) => s + (x.count || 0), 0);
+                                return (
+                                    <div key={w.campus} className={`win-row ${isWinner ? 'is-winner' : ''}`}>
+                                        <CampusBadge campus={w.campus} size="sm" soft={!isWinner} />
+                                        <div className="win-bar">
+                                            <div
+                                                className="win-bar-fill"
+                                                style={{
+                                                    width: totalWins ? `${(w.count / totalWins) * 100}%` : '0%',
+                                                    background: CAMPUS_COLORS[w.campus]?.bg || '#374151',
+                                                }}
+                                            />
+                                        </div>
+                                        <span className="win-count">{w.count}승</span>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+
+                    {event.matches && event.matches.length > 0 && (
                         <ul className="match-list">
                             {event.matches.map((m, i) => (
                                 <li key={i} className="match-row">
@@ -87,13 +111,9 @@ function EventCard({ event }) {
                             ))}
                         </ul>
                     )}
-                </>
-            )}
 
-            {event.note && <div className="ec-note">⚠ {event.note}</div>}
-
-            {event.gameCount != null && (
-                <div className="ec-meta">총 {event.gameCount}경기</div>
+                    {event.note && <div className="ec-note">⚠ {event.note}</div>}
+                </div>
             )}
         </article>
     );
@@ -101,7 +121,6 @@ function EventCard({ event }) {
 
 function CheerBreakdown({ cheer }) {
     if (!cheer) return null;
-
     const hasScores = cheer.scores && cheer.scores.length > 0;
     const hasRankings = cheer.rankings && cheer.rankings.length > 0;
     const breakdownKeys = hasScores && cheer.scores[0]?.breakdown
@@ -127,9 +146,7 @@ function CheerBreakdown({ cheer }) {
                                 const isWinner = s.campus === cheer.winner;
                                 return (
                                     <tr key={s.campus} className={isWinner ? 'is-winner' : ''}>
-                                        <td>
-                                            <CampusBadge campus={s.campus} size="sm" />
-                                        </td>
+                                        <td><CampusBadge campus={s.campus} size="sm" /></td>
                                         {breakdownKeys.length > 0
                                             ? breakdownKeys.map((k) => {
                                                   const v = s.breakdown?.find((b) => b.name === k);
@@ -181,7 +198,6 @@ export default function HistoryPage() {
                     description="연도를 선택해 종합 우승, 응원전, 종목별 결과를 확인하세요."
                 />
 
-                {/* 연도 탭 — 큰 숫자만 */}
                 <div className="year-pills">
                     {HISTORY.map((h) => (
                         <button
@@ -194,7 +210,6 @@ export default function HistoryPage() {
                     ))}
                 </div>
 
-                {/* 선택 연도 우승 요약 — 단일 헤더 카드 */}
                 {yearData && (
                     <section className="year-hero">
                         <div className="yh-year-block">
@@ -225,7 +240,6 @@ export default function HistoryPage() {
                     </section>
                 )}
 
-                {/* 서브 탭 */}
                 <div className="sub-tabs">
                     {TABS.map((t) => {
                         const disabled = t.key === 'cheer' && !yearData?.cheer?.scores;
@@ -246,7 +260,6 @@ export default function HistoryPage() {
                     })}
                 </div>
 
-                {/* 탭 컨텐츠 */}
                 {activeTab === 'events' && yearData?.events && (
                     <div className="events-grid">
                         {yearData.events.map((e, i) => (
@@ -266,7 +279,6 @@ export default function HistoryPage() {
                     </div>
                 )}
 
-                {/* 누적 통계 — 페이지 하단 */}
                 <section className="history-summary">
                     <div className="hs-card">
                         <div className="hs-label">📊 종합 우승 누적</div>
