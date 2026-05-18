@@ -58,7 +58,7 @@ export default function CheersVideoPage() {
                                 allowFullScreen
                             />
                             <div className="player-watermark">
-                                <span>made by 문경캠 Sync 코딩동아리</span>
+                                <span>made by Sync</span>
                             </div>
                         </div>
                         <button className="close-player" onClick={() => setPlaying(null)}>

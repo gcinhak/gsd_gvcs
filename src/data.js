@@ -95,11 +95,20 @@ export const SCHEDULE = {
    필요에 따라 종목을 추가/수정하세요.
 ────────────────────────────────────────────────────────── */
 export const EVENTS = [
-    { key: 'basketball', name: '농구', emoji: '🏀' },
     { key: 'soccer', name: '축구', emoji: '⚽' },
+    { key: 'basketball', name: '농구', emoji: '🏀' },
     { key: 'volleyball', name: '배구', emoji: '🏐' },
+    { key: 'taekwondo', name: '태권도', emoji: '🥋' },
     { key: 'relay', name: '계주', emoji: '🏃' },
     { key: 'tugofwar', name: '줄다리기', emoji: '🪢' },
+];
+
+/* 역대 전적 종목 정렬 우선순위 — 모든 연도 카드를 동일 순서로 노출 */
+export const EVENT_ORDER = [
+    '축구', '농구', '배구',
+    '태권도', '탁구', '체스',
+    '계주', '이어달리기', '중거리달리기', '중거리',
+    '줄다리기', '초등',
 ];
 
 /* ──────────────────────────────────────────────────────────
@@ -451,12 +460,6 @@ export const UPCOMING_FEATURES = [
         status: '준비중',
     },
     {
-        key: 'lineup',
-        title: '종목별 라인업',
-        desc: '음성·세종·문경 전체 캠퍼스 라인업이 본선 직전 공개됩니다.',
-        status: '준비중',
-    },
-    {
         key: 'timeline',
         title: '전체 타임라인 + 위치',
         desc: '예선 종목별 진행 위치, 시간별 일정이 한눈에 들어오는 타임라인.',
@@ -465,7 +468,7 @@ export const UPCOMING_FEATURES = [
     {
         key: 'popcat',
         title: '팝캣 클릭 카운터',
-        desc: '응원 누적 클릭 수가 실시간으로 올라가는 응원 카운터.',
+        desc: '문경·음성·세종 3캠퍼스가 클릭으로 겨루는 응원 카운터.',
         status: '베타',
     },
     {

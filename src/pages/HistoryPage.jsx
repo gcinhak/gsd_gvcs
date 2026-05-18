@@ -1,7 +1,12 @@
 import { useMemo, useState } from 'react';
 import PageHeader from '../components/PageHeader';
 import CampusBadge from '../components/CampusBadge';
-import { HISTORY, CAMPUS_COLORS } from '../data';
+import { HISTORY, CAMPUS_COLORS, EVENT_ORDER } from '../data';
+
+function eventOrderIdx(name) {
+    const idx = EVENT_ORDER.indexOf(name);
+    return idx === -1 ? EVENT_ORDER.length : idx;
+}
 
 const TABS = [
     { key: 'events', label: '종목 결과' },
@@ -262,9 +267,12 @@ export default function HistoryPage() {
 
                 {activeTab === 'events' && yearData?.events && (
                     <div className="events-grid">
-                        {yearData.events.map((e, i) => (
-                            <EventCard key={`${selectedYear}-${e.name}-${i}`} event={e} />
-                        ))}
+                        {yearData.events
+                            .slice()
+                            .sort((a, b) => eventOrderIdx(a.name) - eventOrderIdx(b.name))
+                            .map((e, i) => (
+                                <EventCard key={`${selectedYear}-${e.name}-${i}`} event={e} />
+                            ))}
                     </div>
                 )}
 

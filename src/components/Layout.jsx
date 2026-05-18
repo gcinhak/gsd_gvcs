@@ -64,7 +64,7 @@ export default function Layout() {
                     <div className="footer-watermark">
                         <SyncLogo size={20} />
                         <span>
-                            made by <strong>문경캠 Sync 코딩동아리</strong>
+                            made by <strong>Sync</strong>
                         </span>
                     </div>
                     <div className="footer-meta">
