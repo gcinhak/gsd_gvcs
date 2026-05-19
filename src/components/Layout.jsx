@@ -61,9 +61,9 @@ export default function Layout() {
 
             <footer className="site-footer">
                 <div className="footer-inner">
-                    <div className="footer-watermark" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <SyncLogo size={24} />
-                        <span style={{ whiteSpace: 'nowrap' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <SyncLogo size={22} />
+                        <span style={{ fontSize: '13px', color: '#6b7280', whiteSpace: 'nowrap' }}>
                             made by <strong>GVCS MG coding club Sync</strong>
                         </span>
                     </div>
