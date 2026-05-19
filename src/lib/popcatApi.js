@@ -1,5 +1,8 @@
-const RAW = import.meta.env.VITE_POPCAT_API_URL;
-const API = RAW ? RAW.replace(/\/$/, '') : '';
+// 운영 Worker URL — 비밀이 아니라서 기본값으로 박아둠.
+// 로컬/스테이징에서 다른 워커를 가리키려면 .env.local 의 VITE_POPCAT_API_URL 로 override.
+const DEFAULT_API = 'https://gsd-gvcs-popcat.gcinhak.workers.dev';
+const RAW = import.meta.env.VITE_POPCAT_API_URL || DEFAULT_API;
+const API = RAW.replace(/\/$/, '');
 
 export const isPopcatApiConfigured = Boolean(API);
 
