@@ -1,29 +1,24 @@
-export default function SyncLogo({ size = 22 }) {
+import React from 'react';
+
+// 1. 컴포넌트 이름을 더 명확하게 바꿉니다. (선택사항, 기존 SyncLogo도 무방)
+export default function GvcsMgFooter({ imgSize = 22, textSize = 'xs' }) {
     return (
-        <svg
-            className="sync-logo"
-            width={size}
-            height={size}
-            viewBox="0 0 32 32"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            aria-hidden
-        >
-            <circle cx="16" cy="16" r="14" stroke="currentColor" strokeWidth="2.5" opacity="0.25" />
-            <path
-                d="M22 11.5C20.6 9.6 18.5 8.5 16 8.5C11.6 8.5 8 12.1 8 16.5"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
+        // flex를 사용하여 이미지와 텍스트를 한 줄로 나란히 정렬합니다.
+        // gap-1.5는 이미지와 텍스트 사이의 간격입니다. (Tailwind 기준 약 6px)
+        <div className="flex items-center gap-1.5 text-gray-500">
+            
+            {/* 2. public 폴더에 넣은 이미지 (파일명: sync-logo.png 기준) */}
+            <img 
+                src="/sync-logo.png copy.jpg"   
+                alt="MG Coding Club Sync Logo"
+                style={{ width: imgSize, height: 'auto' }}
+                className="object-contain inline-block flex-shrink-0"
             />
-            <path
-                d="M10 20.5C11.4 22.4 13.5 23.5 16 23.5C20.4 23.5 24 19.9 24 15.5"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-            />
-            <path d="M22 8.5L22 12.5L18 12.5" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-            <path d="M10 23.5L10 19.5L14 19.5" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
+            
+            {/* 3. 요청하신 긴 문구를 Tailwind로 스타일링 */}
+            <span className={`text-${textSize} font-medium tracking-tight whitespace-nowrap`}>
+                made by <span className="font-bold">GVCS MG coding club Sync</span>
+            </span>
+        </div>
     );
 }
