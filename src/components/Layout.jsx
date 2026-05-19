@@ -21,7 +21,7 @@ export default function Layout() {
             <header className="site-header">
                 <div className="header-inner">
                     <Link to="/" className="brand" onClick={() => setMenuOpen(false)}>
-                        <span className="brand-mark">GVCSMG</span>
+                        <span className="brand-mark">GVCS</span>
                         <span className="brand-sub">Global Sports Festival</span>
                     </Link>
 
@@ -68,7 +68,7 @@ export default function Layout() {
                         </span>
                     </div>
                     <div className="footer-meta">
-                        <span>© {new Date().getFullYear()} GVCSMG Global Sports Festival</span>
+                        <span>© {new Date().getFullYear()} GVCS Global Sports Festival</span>
                         <a href="https://gsd.gvcs.kr" target="_blank" rel="noreferrer">
                             gsd.gvcs.kr
                         </a>
