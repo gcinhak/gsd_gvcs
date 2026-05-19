@@ -2766,4 +2766,9 @@ img {
     .day-hero-title {
         font-size: 1.2rem;
     }
+    /* Sync 로고 크기 확대 */
+    .hero-sync img {
+        width: 150px !important; /* 원하는 크기로 숫자를 조절하세요 (예: 120px ~ 180px) */
+        height: auto !important;
+    }
 }
