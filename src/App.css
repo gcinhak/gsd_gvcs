@@ -2768,13 +2768,15 @@ img {
     }
     /* Sync 로고 박스의 상단 여백 설정 */
     .hero-sync {
-        margin-top: 2rem !important; /* 💡 위쪽 카운트다운과의 간격을 넓힙니다 */
+        margin-top: 1rem !important; /* 💡 위쪽 카운트다운과의 간격을 넓힙니다 */
         text-align: center; /* 로고가 가운데 정렬되도록 설정 */
     }
 
     /* Sync 로고 이미지 크기 설정 */
+    /* 2. 로고 이미지 자체의 크기 강제 지정 */
     .hero-sync img {
-        width: 300px !important; /* 로고 가로 크기 */
-        height: auto !important;
+        width: 300px !important; /* 원하셨던 가로 폭 300px */
+        height: auto !important; /* 비율 유지 */
+        max-width: 85% !important; /* 화면이 아주 작은 핸드폰에서 로고가 화면 밖으로 삐져나가지 않도록 방지 */
     }
 }
