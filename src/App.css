@@ -184,9 +184,15 @@ img { display: block; max-width: 100%; }
     cursor: pointer;
     transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
     padding: 0;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
 }
-.theme-swatch:hover { transform: scale(1.1); }
-.theme-swatch.active {
+
+@media (hover: hover) and (pointer: fine) {
+    .theme-swatch:hover {
+        transform: scale(1.1);
+    }
+}.theme-swatch.active {
     border-color: #fff;
     box-shadow: 0 0 0 2px var(--border-strong);
 }
