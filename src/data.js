@@ -163,36 +163,41 @@ export const HISTORY = [
         year: 2025,
         overall: {
             winner: '음성',
-            note: '7종목 중 5종목 우승으로 음성캠퍼스 종합우승',
+            note: '7종목 중 5종목 우승으로 음성캠퍼스 경기 종합우승',
         },
         cheer: {
             winner: '문경',
-            note: '응원전 심사 결과 (총 2500점 만점)',
+            note: '2025년 응원전은 문경캠퍼스 우승',
             scores: [
                 { campus: '문경', total: 2443 },
                 { campus: '음성', total: 2370 },
             ],
         },
         events: [
-            { name: '탁구', winner: '음성', gameCount: 4, wins: [{ campus: '음성', count: 2 }, { campus: '문경', count: 1 }] },
-            { name: '태권도', winner: '음성', gameCount: 5, wins: [{ campus: '음성', count: 0 }, { campus: '문경', count: 5 }], note: '원본 표 기준 우승 표기. 승수와 차이가 있어 확인 필요' },
-            { name: '축구', winner: '음성', gameCount: 2, wins: [{ campus: '음성', count: 1 }, { campus: '문경', count: 1 }], note: '승부차기 승' },
-            { name: '배구', winner: '문경', gameCount: 3, wins: [{ campus: '음성', count: 0 }, { campus: '문경', count: 3 }, { campus: '세종', count: 0 }] },
-            { name: '농구', winner: '문경', gameCount: 3, wins: [{ campus: '음성', count: 3 }, { campus: '문경', count: 0 }, { campus: '세종', count: 0 }], note: '원본 표 기준 우승 표기. 승수와 차이가 있어 확인 필요' },
-            { name: '체스', winner: '음성', gameCount: 3, wins: [{ campus: '음성', count: 1 }, { campus: '문경', count: 1 }, { campus: '세종', count: 1 }], note: '남녀 기록수 합산' },
-            { name: '줄다리기', winner: '음성', gameCount: 3, wins: [{ campus: '음성', count: 2 }, { campus: '문경', count: 1 }, { campus: '세종', count: 0 }] },
+            { name: '탁구', winner: '음성', matches: [{ label: '탁구 종합', winner: '음성' }] },
+            { name: '태권도', winner: '음성', matches: [{ label: '태권도 종합', winner: '음성' }] },
+            { name: '축구', winner: '음성', matches: [{ label: '축구 종합', winner: '음성', note: '승부차기 승' }] },
+            { name: '배구', winner: '문경', matches: [{ label: '배구 종합', winner: '문경' }] },
+            { name: '농구', winner: '문경', matches: [{ label: '농구 종합', winner: '문경' }] },
+            { name: '체스', winner: '음성', matches: [{ label: '체스 종합', winner: '음성', note: '남은 기물 수 승' }] },
+            { name: '줄다리기', winner: '음성', matches: [{ label: '줄다리기 종합', winner: '음성' }] },
         ],
     },
+
     {
         year: 2024,
         overall: {
             winner: '문경',
-            note: '7종목 중 6종목 우승 (응원전 결과 미반영)',
+            note: '7종목 중 6종목 우승으로 문경캠퍼스 경기 종합우승',
         },
-        cheer: { winner: null },
+        cheer: {
+            winner: '문경',
+            note: '2024년 응원전은 문경캠퍼스 우승',
+        },
         events: [
             {
-                name: '축구', winner: '문경',
+                name: '축구',
+                winner: '문경',
                 matches: [
                     { label: '중학교(남)', winner: '음성' },
                     { label: '고등학교(남)', winner: '문경' },
@@ -200,7 +205,8 @@ export const HISTORY = [
                 ],
             },
             {
-                name: '배구', winner: '문경',
+                name: '배구',
+                winner: '문경',
                 matches: [
                     { label: '중학교(남)', winner: '세종' },
                     { label: '고등학교(남)', winner: '문경' },
@@ -210,7 +216,8 @@ export const HISTORY = [
                 ],
             },
             {
-                name: '농구', winner: '문경',
+                name: '농구',
+                winner: '문경',
                 matches: [
                     { label: '중학교(남)', winner: '문경' },
                     { label: '고등학교(남)', winner: '문경' },
@@ -218,7 +225,8 @@ export const HISTORY = [
                 ],
             },
             {
-                name: '태권도', winner: '음성',
+                name: '태권도',
+                winner: '음성',
                 matches: [
                     { label: '품새 중등부', winner: '문경' },
                     { label: '품새 고등부', winner: '문경' },
@@ -228,7 +236,8 @@ export const HISTORY = [
                 ],
             },
             {
-                name: '탁구', winner: '문경',
+                name: '탁구',
+                winner: '문경',
                 matches: [
                     { label: '7학년', winner: '문경' },
                     { label: '8학년', winner: '음성' },
@@ -242,7 +251,8 @@ export const HISTORY = [
                 ],
             },
             {
-                name: '중거리달리기', winner: '문경',
+                name: '중거리달리기',
+                winner: '문경',
                 matches: [
                     { label: '중학교(남)', winner: '문경' },
                     { label: '중학교(여)', winner: '세종' },
@@ -251,7 +261,8 @@ export const HISTORY = [
                 ],
             },
             {
-                name: '줄다리기', winner: '문경',
+                name: '줄다리기',
+                winner: '문경',
                 matches: [
                     { label: '동문', winner: '문경' },
                     { label: '인기모', winner: '문경' },
@@ -260,16 +271,21 @@ export const HISTORY = [
             },
         ],
     },
+
     {
         year: 2023,
         overall: {
             winner: '문경',
-            note: '7종목 중 6종목 우승 (응원전 음성)',
+            note: '7종목 중 6종목 우승으로 문경캠퍼스 경기 종합우승',
         },
-        cheer: { winner: '음성' },
+        cheer: {
+            winner: '음성',
+            note: '2023년 응원전은 음성캠퍼스 우승',
+        },
         events: [
             {
-                name: '축구', winner: '문경',
+                name: '축구',
+                winner: '문경',
                 matches: [
                     { label: '중학교', winner: '문경' },
                     { label: '고등학교', winner: '음성' },
@@ -278,7 +294,8 @@ export const HISTORY = [
                 ],
             },
             {
-                name: '배구', winner: '음성',
+                name: '배구',
+                winner: '음성',
                 matches: [
                     { label: '중학교', winner: '문경' },
                     { label: '고등학교', winner: '음성' },
@@ -287,14 +304,17 @@ export const HISTORY = [
                 ],
             },
             {
-                name: '농구', winner: '문경',
+                name: '농구',
+                winner: '문경',
                 matches: [
                     { label: '중학교', winner: '문경' },
-                    { label: '고등학교', winner: '음성' },
+                    { label: '고등학교', winner: '문경' },
+                    { label: '여연합', winner: '음성' },
                 ],
             },
             {
-                name: '태권도', winner: '문경',
+                name: '태권도',
+                winner: '문경',
                 matches: [
                     { label: '품새', winner: '음성' },
                     { label: '겨루기 단체전', winner: '문경' },
@@ -302,7 +322,8 @@ export const HISTORY = [
                 ],
             },
             {
-                name: '탁구', winner: '문경',
+                name: '탁구',
+                winner: '문경',
                 matches: [
                     { label: '7,8학년', winner: '문경' },
                     { label: '9학년', winner: '음성' },
@@ -314,15 +335,17 @@ export const HISTORY = [
                 ],
             },
             {
-                name: '이어달리기', winner: '문경',
+                name: '이어달리기',
+                winner: '문경',
                 matches: [
-                    { label: '중등', winner: '음성' },
+                    { label: '중등', winner: '문경' },
                     { label: '고등', winner: '문경' },
                     { label: '성인', winner: '음성' },
                 ],
             },
             {
-                name: '줄다리기', winner: '문경',
+                name: '줄다리기',
+                winner: '문경',
                 matches: [
                     { label: '동문', winner: '음성' },
                     { label: '인기모', winner: '문경' },
@@ -331,15 +354,16 @@ export const HISTORY = [
             },
         ],
     },
+
     {
         year: 2022,
         overall: {
             winner: '문경',
-            note: '6종목 우승 (2020·2021에 이어 3연속 종합우승)',
+            note: '6종목 우승으로 문경캠퍼스 경기 종합우승',
         },
         cheer: {
             winner: '음성',
-            note: '응원전 합산 272.2점으로 음성캠퍼스 우승',
+            note: '2022년 응원전은 음성캠퍼스 우승',
             scores: [
                 {
                     campus: '문경',
@@ -376,72 +400,83 @@ export const HISTORY = [
             ],
         },
         events: [
-            { name: '탁구', winner: '문경', gameCount: 7, wins: [{ campus: '문경', count: 6 }, { campus: '음성', count: 1 }, { campus: '미국/세종', count: 0 }] },
-            { name: '태권도', winner: '음성', gameCount: 5, wins: [{ campus: '문경', count: 3 }, { campus: '음성', count: 2 }, { campus: '미국/세종', count: 0 }], note: '문경 3승이나 총합점수에서 음성 우세로 음성 우승' },
-            { name: '축구', winner: '문경', gameCount: 4, wins: [{ campus: '문경', count: 3 }, { campus: '음성', count: 1 }, { campus: '미국/세종', count: 0 }] },
-            { name: '배구', winner: '문경', gameCount: 3, wins: [{ campus: '문경', count: 2 }, { campus: '음성', count: 1 }, { campus: '미국/세종', count: 0 }] },
-            { name: '농구', winner: '문경', gameCount: 3, wins: [{ campus: '문경', count: 2 }, { campus: '음성', count: 1 }, { campus: '미국/세종', count: 0 }] },
-            { name: '중거리', winner: '문경', gameCount: 4, wins: [{ campus: '문경', count: 2 }, { campus: '음성', count: 2 }, { campus: '미국/세종', count: 0 }] },
-            { name: '줄다리기', winner: '음성', gameCount: 3, wins: [{ campus: '문경', count: 1 }, { campus: '음성', count: 2 }, { campus: '미국/세종', count: 0 }] },
-            { name: '초등', winner: '문경', gameCount: 2, wins: [{ campus: '문경', count: 1 }, { campus: '음성', count: 1 }, { campus: '미국/세종', count: 0 }] },
+            { name: '탁구', winner: '문경', matches: [{ label: '탁구 종합', winner: '문경' }] },
+            { name: '태권도', winner: '음성', matches: [{ label: '태권도 종합', winner: '음성' }] },
+            { name: '축구', winner: '문경', matches: [{ label: '축구 종합', winner: '문경' }] },
+            { name: '배구', winner: '문경', matches: [{ label: '배구 종합', winner: '문경' }] },
+            { name: '농구', winner: '문경', matches: [{ label: '농구 종합', winner: '문경' }] },
+            { name: '중거리달리기', winner: '문경', matches: [{ label: '중거리달리기 종합', winner: '문경' }] },
+            { name: '줄다리기', winner: '음성', matches: [{ label: '줄다리기 종합', winner: '음성' }] },
+            { name: '초등', winner: '문경', matches: [{ label: '초등 종합', winner: '문경' }] },
         ],
     },
+
     {
         year: 2021,
-        overall: { winner: null, note: '데이터 일부만 확인됨' },
-        cheer: { winner: null },
+        overall: {
+            winner: '문경',
+            note: '5종목 중 4종목 우승으로 문경캠퍼스 경기 종합우승',
+        },
+        cheer: {
+            winner: '음성',
+            note: '2021년 응원전은 음성캠퍼스 우승',
+        },
         events: [
             {
-                name: '농구', winner: '음성', finalScore: '1:2',
+                name: '농구',
+                winner: '음성',
                 matches: [
-                    { label: '남중', winner: '음성', score: '문경 15 : 16 음성' },
-                    { label: '여자연합', winner: '문경', score: '문경 22 : 14 음성' },
-                    { label: '남고', winner: '음성', score: '문경 12 : 15 음성' },
+                    { label: '남중', winner: '음성' },
+                    { label: '여자연합', winner: '문경' },
+                    { label: '남고', winner: '음성' },
                 ],
             },
             {
-                name: '배구', winner: '문경', finalScore: '3:0',
+                name: '배구',
+                winner: '문경',
                 matches: [
-                    { label: '남중', winner: '문경', score: '문경 2 : 0 음성' },
-                    { label: '여자연합', winner: '문경', score: '문경 2 : 0 음성' },
-                    { label: '남고', winner: '문경', score: '문경 2 : 1 음성' },
+                    { label: '남중', winner: '문경' },
+                    { label: '여자연합', winner: '문경' },
+                    { label: '남고', winner: '문경' },
                 ],
             },
             {
-                name: '축구', winner: '문경', finalScore: '2:1',
+                name: '축구',
+                winner: '문경',
                 matches: [
-                    { label: '남중', winner: '문경', score: '문경 1 : 1 음성', note: '승부차기 6:5 승' },
-                    { label: '여자연합', winner: '문경', score: '문경 1 : 0 음성' },
-                    { label: '남고', winner: '음성', score: '문경 0 : 1 음성' },
+                    { label: '남중', winner: '문경', note: '승부차기 승' },
+                    { label: '여자연합', winner: '문경' },
+                    { label: '남고', winner: '음성' },
                 ],
             },
             {
-                name: '탁구', winner: '문경', finalScore: '4:2',
+                name: '탁구',
+                winner: '문경',
                 matches: [
-                    { label: '8학년', winner: '문경', score: '문경 3 : 0 음성' },
-                    { label: '9학년', winner: '문경', score: '문경 3 : 0 음성' },
-                    { label: '10학년', winner: '음성', score: '문경 1 : 2 음성' },
-                    { label: '11학년', winner: '문경', score: '문경 3 : 0 음성' },
-                    { label: '12학년', winner: '음성', score: '문경 0 : 3 음성' },
-                    { label: '교직원', winner: '문경', score: '문경 2 : 1 음성' },
+                    { label: '8학년', winner: '문경' },
+                    { label: '9학년', winner: '문경' },
+                    { label: '10학년', winner: '음성' },
+                    { label: '11학년', winner: '문경' },
+                    { label: '12학년', winner: '음성' },
+                    { label: '교직원', winner: '문경' },
                 ],
             },
             {
-                name: '태권도', winner: '문경', finalScore: '5:2',
+                name: '태권도',
+                winner: '문경',
                 matches: [
-                    { label: '품새 8학년', winner: '문경', score: '문경 2 : 1 음성' },
-                    { label: '품새 9·10학년', winner: '음성', score: '문경 0 : 3 음성' },
-                    { label: '품새 11·12학년', winner: '음성', score: '문경 0 : 3 음성' },
-                    { label: '남자 겨루기 9·10학년', winner: '문경', score: '문경 54 : 33 음성' },
-                    { label: '남자 겨루기 11·12학년', winner: '문경', score: '문경 47 : 13 음성' },
-                    { label: '여자 겨루기 9·10학년', winner: '문경', score: '문경 55 : 44 음성' },
-                    { label: '여자 겨루기 11·12학년', winner: '문경', score: '문경 59 : 55 음성' },
+                    { label: '품새 8학년', winner: '문경' },
+                    { label: '품새 9·10학년', winner: '음성' },
+                    { label: '품새 11·12학년', winner: '음성' },
+                    { label: '남자 겨루기 9·10학년', winner: '문경' },
+                    { label: '남자 겨루기 11·12학년', winner: '문경' },
+                    { label: '여자 겨루기 9·10학년', winner: '문경' },
+                    { label: '여자 겨루기 11·12학년', winner: '문경' },
                 ],
             },
         ],
     },
 ];
-
 /* ──────────────────────────────────────────────────────────
    하이라이트 영상 (Popcat 페이지 등에서 사용)
 ────────────────────────────────────────────────────────── */
