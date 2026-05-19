@@ -105,7 +105,7 @@ export const SCHEDULE = {
         key: 'saturday',
         date: '2026년 5월 30일 (토)',
         shortDate: '5/30 (토)',
-        title: '본선 · 체육축제',
+        title: '체육축제',
         emoji: '🎉',
         venues: [
             {

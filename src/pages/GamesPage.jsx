@@ -33,7 +33,7 @@ export default function GamesPage() {
                 <PageHeader
                     eyebrow="GLOBAL SPORTS FESTIVAL"
                     title="종목별 경기 영상"
-                    description="연도 · 종목 · 예선/본선 별로 GMB 경기 영상을 찾아보세요."
+                    description="연도 · 종목 · 예선/본선 별로 경기 영상을 모아봤습니다."
                 />
 
                 <div className="filter-bar">
@@ -44,7 +44,10 @@ export default function GamesPage() {
                                 <button
                                     key={y}
                                     className={`chip ${year === y ? 'active' : ''}`}
-                                    onClick={() => { setYear(y); setPlaying(null); }}
+                                    onClick={() => {
+                                        setYear(y);
+                                        setPlaying(null);
+                                    }}
                                 >
                                     {y}
                                 </button>
@@ -57,7 +60,10 @@ export default function GamesPage() {
                         <div className="filter-chips">
                             <button
                                 className={`chip ${eventKey === 'all' ? 'active' : ''}`}
-                                onClick={() => { setEventKey('all'); setPlaying(null); }}
+                                onClick={() => {
+                                    setEventKey('all');
+                                    setPlaying(null);
+                                }}
                             >
                                 전체
                             </button>
@@ -65,7 +71,10 @@ export default function GamesPage() {
                                 <button
                                     key={e.key}
                                     className={`chip ${eventKey === e.key ? 'active' : ''}`}
-                                    onClick={() => { setEventKey(e.key); setPlaying(null); }}
+                                    onClick={() => {
+                                        setEventKey(e.key);
+                                        setPlaying(null);
+                                    }}
                                 >
                                     <span aria-hidden>{e.emoji}</span> {e.name}
                                 </button>
@@ -80,7 +89,10 @@ export default function GamesPage() {
                                 <button
                                     key={r.key}
                                     className={`chip ${round === r.key ? 'active' : ''}`}
-                                    onClick={() => { setRound(r.key); setPlaying(null); }}
+                                    onClick={() => {
+                                        setRound(r.key);
+                                        setPlaying(null);
+                                    }}
                                 >
                                     {r.label}
                                 </button>

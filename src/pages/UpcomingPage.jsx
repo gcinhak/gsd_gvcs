@@ -2,9 +2,9 @@ import PageHeader from '../components/PageHeader';
 import { UPCOMING_FEATURES } from '../data';
 
 const STATUS_COLORS = {
-    '준비중': 'var(--bright)',
-    '베타': 'var(--primary)',
-    '예정': 'var(--accent)',
+    준비중: 'var(--bright)',
+    베타: 'var(--primary)',
+    예정: 'var(--accent)',
 };
 
 export default function UpcomingPage() {
@@ -26,8 +26,8 @@ export default function UpcomingPage() {
                         <h3>실시간 문자 중계 (Play-by-Play)</h3>
                     </div>
                     <p>
-                        본선 당일, 실시간 문자 중계 화면이 가동됩니다. 관리자가 점수와 코멘트를 입력하면
-                        모든 관람객 화면이 1초 안에 자동으로 업데이트됩니다.
+                        본선 당일, 실시간 문자 중계 화면이 가동됩니다. 관리자가 점수와 코멘트를 입력하면 모든 관람객
+                        화면이 1초 안에 자동으로 업데이트됩니다.
                     </p>
                     <ul className="us-checklist">
                         <li>· 상단 고정 스코어보드 (홈 / 어웨이)</li>
@@ -54,7 +54,6 @@ export default function UpcomingPage() {
                         </article>
                     ))}
                 </div>
-
             </div>
         </div>
     );
