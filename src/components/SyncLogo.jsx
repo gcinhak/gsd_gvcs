@@ -1,4 +1,3 @@
-import React from 'react';
 import syncLogoImg from '../assets/sync_logo.jpg';
 
 export default function SyncLogo({ size = 22 }) {
