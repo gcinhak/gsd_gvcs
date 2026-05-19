@@ -70,23 +70,147 @@ export const YEARS = [
 ];
 
 /* ──────────────────────────────────────────────────────────
-   경기 일정 (Coming Soon 상태)
-   날짜/장소가 확정되면 stage·rounds·location 등을 채워주세요.
+   2026 경기 일정
 ────────────────────────────────────────────────────────── */
 export const SCHEDULE = {
-    status: 'coming_soon',
-    preliminary: {
-        label: '예선전',
-        dateRange: '2026년 5월 28일(목) ~ 29일(금)',
-        location: '문경캠 / 음성캠 동시 진행 (장소 미정)',
-        rounds: [],
+    thursday: {
+        key: 'thursday',
+        date: '2026년 5월 28일 (목)',
+        shortDate: '5/28 (목)',
+        title: '농구',
+        emoji: '🏀',
+        matches: [
+            { num: '1경기', round: '예선', category: '남자 고등', match: '문경 VS 음성' },
+            { num: '2경기', round: '결선', category: '여자 연합', match: '문경 VS 음성' },
+            { num: '3경기', round: '결선', category: '남자 중등', match: '문경 VS 음성' },
+            { num: '4경기', round: '결선', category: '남자 고등', match: '세종 VS 예선 승리 팀' },
+        ],
     },
-    finals: {
-        label: '본선',
-        dateRange: '2026년 5월 30일(토)',
-        location: '본선 장소 미정',
-        kickOff: '09:00',
-        rounds: [],
+    friday: {
+        key: 'friday',
+        date: '2026년 5월 29일 (금)',
+        shortDate: '5/29 (금)',
+        title: '배구',
+        emoji: '🏐',
+        matches: [
+            { num: '1경기', round: '예선', category: '남중', match: '문경 VS 음성' },
+            { num: '2경기', round: '예선', category: '여연합', match: '음성 VS 세종' },
+            { num: '3경기', round: '예선', category: '남고', match: '문경 VS 음성' },
+            { num: '4경기', round: '결선', category: '남중', match: '세종 VS 예선 승리 팀' },
+            { num: '5경기', round: '결선', category: '여연합', match: '문경 VS 예선 승리 팀' },
+            { num: '6경기', round: '결선', category: '남고', match: '세종 VS 예선 승리 팀' },
+        ],
+    },
+    saturday: {
+        key: 'saturday',
+        date: '2026년 5월 30일 (토)',
+        shortDate: '5/30 (토)',
+        title: '본선 · 체육축제',
+        emoji: '🎉',
+        venues: [
+            {
+                name: '보조경기장',
+                kind: 'timeline',
+                items: [
+                    { start: '9:00', end: '9:30', label: '개회식', meta: '30분' },
+                    { start: '9:30', end: '9:50', label: '태권도 시범', meta: '15분' },
+                    { start: '9:50', end: '10:40', label: '응원전', highlight: true },
+                    { start: '10:40', end: '11:10', label: '중거리 달리기' },
+                    { start: '11:10', end: '11:40', label: '초등 경기' },
+                    { start: '11:40', end: '12:30', label: '축구 남고부 1경기', sub: '음성 VS 세종', meta: '50분' },
+                    { start: '12:30', end: '13:20', label: '축구 남중부', sub: '음성 VS 문경', meta: '50분' },
+                    { start: '13:20', end: '14:00', label: '축구 여자연합', sub: '음성 VS 문경', meta: '40분' },
+                    { start: '14:00', end: '14:50', label: '축구 남고부 결선', sub: '1경기 승 VS 부전승', meta: '50분' },
+                    { start: '15:30', end: '16:00', label: '줄다리기·이어달리기 선수 확인', meta: '주변 정리' },
+                    { start: '16:10', end: '16:35', label: '줄다리기 학부모용', meta: '25분' },
+                    { start: '16:35', end: '17:00', label: '줄다리기 학생', meta: '4경기 25분' },
+                    { start: '17:00', end: '17:30', label: '이어달리기', meta: '30분' },
+                    { start: '17:30', end: '18:00', label: '폐회식', highlight: true },
+                ],
+            },
+            {
+                name: '조치원복합커뮤니티센터 · 중회의실',
+                subtitle: '체스 — 장소 3곳 운영',
+                kind: 'timeline',
+                items: [
+                    { start: '12:00', end: '13:00', label: '체스 중등부', meta: '45분' },
+                    { start: '13:00', end: '14:00', label: '체스 고등부', meta: '45분' },
+                ],
+            },
+            {
+                name: '보조실내체육관 2층',
+                subtitle: '탁구 — 코트 3개 동시 진행',
+                kind: 'courts',
+                courtNames: ['코트 1', '코트 2', '코트 3'],
+                rows: [
+                    {
+                        num: '1-1경기', start: '13:50', end: '14:00',
+                        courts: [
+                            { category: '인기모 남 단식', match: '문경 VS 세종' },
+                            { category: '인기모 여 단식', match: '문경 VS 세종' },
+                            null,
+                        ],
+                    },
+                    {
+                        num: '1-2경기', start: '14:00', end: '14:10',
+                        courts: [
+                            null,
+                            null,
+                            { category: '인기모 복식', match: '문경 VS 세종' },
+                        ],
+                    },
+                    {
+                        num: '2-1경기', start: '14:10', end: '14:20',
+                        courts: [
+                            { category: '중학교 여 단식', match: '음성 VS 세종' },
+                            { category: '중학교 남 단식', match: '음성 VS 세종' },
+                            { category: '고등학교 복식', match: '문경 VS 음성' },
+                        ],
+                    },
+                    {
+                        num: '2-2경기', start: '14:20', end: '14:30',
+                        courts: [
+                            { category: '중학교 복식', match: '음성 VS 세종' },
+                            { category: '고등학교 남 단식', match: '문경 VS 음성' },
+                            { category: '고등학교 여 단식', match: '문경 VS 음성' },
+                        ],
+                    },
+                    {
+                        num: '3-1경기', start: '14:30', end: '14:40', isFinal: true,
+                        courts: [
+                            { category: '인기모 남 단식 결선', match: '음성 VS 예선 승리 팀' },
+                            { category: '인기모 여 단식 결선', match: '음성 VS 예선 승리 팀' },
+                            null,
+                        ],
+                    },
+                    {
+                        num: '3-2경기', start: '14:40', end: '14:50', isFinal: true,
+                        courts: [
+                            null,
+                            null,
+                            { category: '인기모 복식 결선', match: '음성 VS 예선 승리 팀' },
+                        ],
+                    },
+                    {
+                        num: '4-1경기', start: '14:50', end: '15:00', isFinal: true,
+                        courts: [
+                            { category: '중학교 복식 결선', match: '문경 VS 예선 승리 팀' },
+                            { category: '고등학교 남 단식 결선', match: '세종 VS 예선 승리 팀' },
+                            { category: '고등학교 여 단식 결선', match: '세종 VS 예선 승리 팀' },
+                        ],
+                    },
+                    {
+                        num: '4-2경기', start: '15:00', end: '15:10', isFinal: true,
+                        courts: [
+                            { category: '중학교 남 단식 결선', match: '문경 VS 예선 승리 팀' },
+                            { category: '중학교 여 단식 결선', match: '문경 VS 예선 승리 팀' },
+                            { category: '고등학교 복식 결선', match: '세종 VS 예선 승리 팀' },
+                        ],
+                    },
+                ],
+                byes: ['음성 인기모', '음성 교직원', '문경 중등', '세종 고등'],
+            },
+        ],
     },
 };
 
