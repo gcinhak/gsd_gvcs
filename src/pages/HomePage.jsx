@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import useCountdown from '../hooks/useCountdown';
-import SyncLogo from '../components/SyncLogo';
+import syncHeroImg from '../assets/sync_hero.png';
 
 function Digit({ value, label }) {
     const str = String(value).padStart(2, '0');
@@ -45,7 +45,7 @@ export default function HomePage() {
             </div>
 
             <div className="hero-sync anim-5">
-                <SyncLogo size={120} />
+                <img src={syncHeroImg} alt="Sync" />
             </div>
         </div>
     );
