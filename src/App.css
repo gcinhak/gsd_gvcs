@@ -2687,19 +2687,19 @@ img {
 @media (max-width: 480px) {
     /* 1. "2026" 연도 텍스트 크기 축소 */
     .ht-year {
-        font-size: 3.5rem !important; /* 기존 clamp 최솟값보다 작게 강제 지정 */
+        font-size: 6rem !important; /* 기존 clamp 최솟값보다 작게 강제 지정 */
     }
 
     /* 2. "글로벌 체육 축제" 타이틀 크기 축소 */
     .ht-main {
-        font-size: 1.8rem !important;
+        font-size: 2.8rem !important;
     }
 
     /* 3. 날짜 텍스트 크기 및 여백 재조정 (모바일에서는 너무 크지 않게) */
     .hero-date {
-        font-size: 1.1rem !important;
-        margin-top: 0.2rem !important;
-        margin-bottom: 0.2rem !important;
+        font-size: 1.3rem !important;
+        /* margin-top: 0.2rem !important; */
+        margin-bottom: -1rem !important;
     }
 
     /* 4. 히어로 섹션 콘텐츠 높이 유연하게 변경 */
