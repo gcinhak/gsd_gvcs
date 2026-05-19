@@ -1,5 +1,4 @@
 import React from 'react';
-// src/assets 폴더에 있는 jpg 이미지를 불러옵니다.
 import syncLogoImg from '../assets/sync_logo.jpg';
 
 export default function SyncLogo({ size = 22 }) {
