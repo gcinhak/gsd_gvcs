@@ -61,7 +61,6 @@ export default function Layout() {
 
             <footer className="site-footer">
                 <div className="footer-inner">
-                    {/* 푸터 워터마크 영역: 이미지 크기를 24로 늘리고 문구를 수정했습니다 */}
                     <div className="footer-watermark" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                         <SyncLogo size={24} />
                         <span style={{ whiteSpace: 'nowrap' }}>
