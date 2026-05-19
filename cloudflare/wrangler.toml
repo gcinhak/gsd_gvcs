@@ -1,0 +1,14 @@
+name = "gsd-gvcs-popcat"
+main = "src/worker.js"
+compatibility_date = "2026-05-19"
+account_id = "26d103b4b1d8be53b4a1ec8a3d340e25"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "gsd_popcat"
+database_id = "88f9f5a8-4810-4dd2-b3c8-5d6f9ce0272c"
+
+# (선택) 커스텀 라우트 — 프로젝트 도메인이 Cloudflare에 연결된 경우 사용
+# routes = [
+#   { pattern = "api.gvcs.kr/*", custom_domain = true }
+# ]
