@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import useCountdown from '../hooks/useCountdown';
+import SyncLogo from '../components/SyncLogo';
 
 function Digit({ value, label }) {
     const str = String(value).padStart(2, '0');
@@ -24,7 +25,7 @@ export default function HomePage() {
         <div className={`page hero-page ${ready ? 'ready' : ''}`}>
             <section className="hero-bg">
                 <div className="hero-inner-top">
-                    <span className="hero-badge anim-1">GLOBAL SPORTS FESTIVAL · PRE-OPEN</span>
+                    <span className="hero-badge anim-1">GLOBAL SPORTS FESTIVAL</span>
                     <h1 className="hero-title anim-2">
                         <span className="ht-year">2026</span>
                         <span className="ht-main">글로벌 체육 축제</span>
@@ -41,6 +42,10 @@ export default function HomePage() {
                 <Digit value={minutes} label="MIN" />
                 <span className="cd-sep">:</span>
                 <Digit value={seconds} label="SEC" />
+            </div>
+
+            <div className="hero-sync anim-5">
+                <SyncLogo size={120} />
             </div>
         </div>
     );

@@ -389,20 +389,20 @@ img { display: block; max-width: 100%; }
 }
 .ht-year {
     font-family: 'Black Han Sans', sans-serif;
-    font-size: clamp(4rem, 14vw, 8.5rem);
+    font-size: clamp(4rem, 18vw, 11rem);
     color: #fff;
-    letter-spacing: 0.02em;
-    line-height: 0.95;
-    text-shadow: 0 4px 24px rgba(0, 0, 0, 0.18);
+    letter-spacing: 0.03em;
+    line-height: 0.9;
+    text-shadow: 0 4px 28px rgba(0, 0, 0, 0.2);
 }
 .ht-main {
     font-family: 'Black Han Sans', sans-serif;
-    font-size: clamp(1.8rem, 6vw, 3.8rem);
+    font-size: clamp(2rem, 8vw, 5rem);
     color: #fff;
     line-height: 1.1;
     font-weight: 500;
     letter-spacing: -0.01em;
-    text-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+    text-shadow: 0 2px 14px rgba(0, 0, 0, 0.18);
 }
 .hero-date {
     font-size: clamp(0.95rem, 2vw, 1.1rem);
@@ -568,6 +568,22 @@ img { display: block; max-width: 100%; }
     letter-spacing: 0.15em;
     color: var(--primary);
     font-size: 0.7rem;
+}
+
+/* Sync 로고 영역 (카운트다운 아래) */
+.hero-sync {
+    margin: 2rem auto 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.9;
+}
+.hero-sync img {
+    max-width: min(60vw, 280px);
+    height: auto !important;
+    width: auto;
+    image-rendering: pixelated;
+    filter: drop-shadow(0 2px 8px rgba(15, 23, 42, 0.08));
 }
 
 /* hide unused .anim classes if any are still in JSX */
