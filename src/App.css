@@ -439,7 +439,7 @@ img {
     text-shadow: 0 2px 14px rgba(0, 0, 0, 0.18);
 }
 .hero-date {
-    font-size: clamp(0.95rem, 2vw, 1.1rem);
+    font-size: clamp(1.2rem, 2.25vw, 1.3rem);
     color: rgba(255, 255, 255, 0.92);
     letter-spacing: 0.04em;
     font-weight: 500;
@@ -2685,6 +2685,34 @@ img {
 }
 
 @media (max-width: 480px) {
+    /* 1. "2026" 연도 텍스트 크기 축소 */
+    .ht-year {
+        font-size: 3.5rem !important; /* 기존 clamp 최솟값보다 작게 강제 지정 */
+    }
+
+    /* 2. "글로벌 체육 축제" 타이틀 크기 축소 */
+    .ht-main {
+        font-size: 1.8rem !important;
+    }
+
+    /* 3. 날짜 텍스트 크기 및 여백 재조정 (모바일에서는 너무 크지 않게) */
+    .hero-date {
+        font-size: 1.1rem !important;
+        margin-top: 0.2rem !important;
+        margin-bottom: 0.2rem !important;
+    }
+
+    /* 4. 히어로 섹션 콘텐츠 높이 유연하게 변경 */
+    .hero-inner-top {
+        min-height: auto !important;
+        padding-top: 1.5rem;
+        padding-bottom: 2rem;
+    }
+
+    /* 5. 카운트다운 박스가 배경 밖으로 너무 튀어나가지 않게 위치 조정 */
+    .countdown {
+        margin-top: -1rem !important;
+    }
     .year-grid {
         grid-template-columns: 1fr 1fr;
     }
