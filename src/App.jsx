@@ -88,7 +88,7 @@ function HeroPage() {
                     <span className="ht-year">2026</span>
                     <span className="ht-main">글로벌 체육 축제</span>
                 </h1>
-                <p className="hero-date anim-3">2026년 5월 30일 (토) 09:00</p>
+                <p className="hero-date anim-3">2026년 5월 30일(토) 09:00</p>
                 <div className="countdown anim-4">
                     <Digit value={days} label="일" />
                     <span className="cd-sep">:</span>
