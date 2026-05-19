@@ -2766,9 +2766,15 @@ img {
     .day-hero-title {
         font-size: 1.2rem;
     }
-    /* Sync 로고 크기 확대 */
+    /* Sync 로고 박스의 상단 여백 설정 */
+    .hero-sync {
+        margin-top: 2rem !important; /* 💡 위쪽 카운트다운과의 간격을 넓힙니다 */
+        text-align: center; /* 로고가 가운데 정렬되도록 설정 */
+    }
+
+    /* Sync 로고 이미지 크기 설정 */
     .hero-sync img {
-        width: 150px !important; /* 원하는 크기로 숫자를 조절하세요 (예: 120px ~ 180px) */
+        width: 300px !important; /* 로고 가로 크기 */
         height: auto !important;
     }
 }
