@@ -2766,13 +2766,15 @@ img {
     .day-hero-title {
         font-size: 1.2rem;
     }
-    /* Sync 로고 박스의 상단 여백 설정 */
+
+    /* 1. PC 및 모든 화면 공통: 로고 부모 박스 정렬 및 상단 여백 */
     .hero-sync {
-        margin-top: 1rem !important; /* 💡 위쪽 카운트다운과의 간격을 넓힙니다 */
-        text-align: center; /* 로고가 가운데 정렬되도록 설정 */
+        width: 100%;
+        display: flex;
+        justify-content: center; /* 로고를 가로 가운데 정렬 */
+        margin-top: 1rem !important; /* 위쪽 카운트다운 박스와의 상단 여백 (원하시는 만큼 조절) */
     }
 
-    /* Sync 로고 이미지 크기 설정 */
     /* 2. 로고 이미지 자체의 크기 강제 지정 */
     .hero-sync img {
         width: 300px !important; /* 원하셨던 가로 폭 300px */
