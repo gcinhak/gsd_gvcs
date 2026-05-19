@@ -7,11 +7,11 @@ export const TARGET_DATE = new Date('2026-05-30T09:00:00');
 export const THEMES = {
     blue: {
         name: '블루',
-        primary: '#1d4ed8',        // 진한 블루 (버튼/포인트)
+        primary: '#1d4ed8', // 진한 블루 (버튼/포인트)
         primaryDark: '#1e3a8a',
-        primarySoft: '#dbeafe',    // 옅은 배경 틴트
-        primaryLine: '#93c5fd',    // 활성 라인/보더
-        primaryInk: '#ffffff',     // 진한 블루 위에 올라가는 글자
+        primarySoft: '#dbeafe', // 옅은 배경 틴트
+        primaryLine: '#93c5fd', // 활성 라인/보더
+        primaryInk: '#ffffff', // 진한 블루 위에 올라가는 글자
     },
     red: {
         name: '레드',
@@ -114,17 +114,23 @@ export const SCHEDULE = {
                 items: [
                     { start: '9:00', end: '9:30', label: '개회식', meta: '30분' },
                     { start: '9:30', end: '9:50', label: '태권도 시범', meta: '15분' },
-                    { start: '9:50', end: '10:40', label: '응원전', highlight: true },
+                    { start: '9:50', end: '10:40', label: '응원전' },
                     { start: '10:40', end: '11:10', label: '중거리 달리기' },
                     { start: '11:10', end: '11:40', label: '초등 경기' },
-                    { start: '11:40', end: '12:30', label: '축구 남고부 1경기', sub: '음성 VS 세종', meta: '50분' },
-                    { start: '12:30', end: '13:20', label: '축구 남중부', sub: '음성 VS 문경', meta: '50분' },
-                    { start: '13:20', end: '14:00', label: '축구 여자연합', sub: '음성 VS 문경', meta: '40분' },
-                    { start: '14:00', end: '14:50', label: '축구 남고부 결선', sub: '1경기 승 VS 부전승', meta: '50분' },
+                    { start: '11:40', end: '12:30', label: '예선) 축구 남고부', sub: '음성 VS 세종', meta: '50분' },
+                    { start: '12:30', end: '13:20', label: '결선) 축구 남중부', sub: '음성 VS 문경', meta: '50분' },
+                    { start: '13:20', end: '14:00', label: '결선) 축구 여자연합', sub: '음성 VS 문경', meta: '40분' },
+                    {
+                        start: '14:00',
+                        end: '14:50',
+                        label: '결선) 축구 남고부',
+                        sub: '문경 VS 예선 승리팀',
+                        meta: '50분',
+                    },
                     { start: '15:30', end: '16:00', label: '줄다리기·이어달리기 선수 확인', meta: '주변 정리' },
-                    { start: '16:10', end: '16:35', label: '줄다리기 학부모', meta: '25분' },
-                    { start: '16:35', end: '17:00', label: '줄다리기 학생', meta: '4경기 25분' },
-                    { start: '17:00', end: '17:30', label: '이어달리기', meta: '30분' },
+                    { start: '16:10', end: '16:35', label: '결선) 줄다리기 학부모', meta: '25분' },
+                    { start: '16:35', end: '17:00', label: '결선) 줄다리기 학생', meta: '4경기 25분' },
+                    { start: '17:00', end: '17:30', label: '결선) 이어달리기', meta: '30분' },
                     { start: '17:30', end: '18:00', label: '폐회식' },
                 ],
             },
@@ -133,11 +139,11 @@ export const SCHEDULE = {
                 subtitle: '태권도',
                 kind: 'timeline',
                 items: [
-                    { start: '11:10', end: '11:20', label: '품새 중등 혼성', meta: '10분' },
-                    { start: '11:20', end: '11:35', label: '품새 고등 혼성', meta: '15분' },
-                    { start: '11:35', end: '11:45', label: '태권체조', meta: '10분' },
-                    { start: '11:45', end: '12:05', label: '겨루기 여자', sub: '문경 VS 음성', meta: '20분' },
-                    { start: '12:05', end: '12:25', label: '겨루기 남자', sub: '문경 VS 음성', meta: '20분' },
+                    { start: '11:10', end: '11:20', label: '결선) 품새 중등 혼성', meta: '10분' },
+                    { start: '11:20', end: '11:35', label: '결선) 품새 고등 혼성', meta: '15분' },
+                    { start: '11:35', end: '11:45', label: '결선) 태권체조', meta: '10분' },
+                    { start: '11:45', end: '12:05', label: '결선) 겨루기 여자', sub: '문경 VS 음성', meta: '20분' },
+                    { start: '12:05', end: '12:25', label: '결선) 겨루기 남자', sub: '문경 VS 음성', meta: '20분' },
                 ],
             },
             {
@@ -145,8 +151,8 @@ export const SCHEDULE = {
                 subtitle: '체스 — 장소 3곳 운영',
                 kind: 'timeline',
                 items: [
-                    { start: '12:00', end: '13:00', label: '체스 중등부', meta: '45분' },
-                    { start: '13:00', end: '14:00', label: '체스 고등부', meta: '45분' },
+                    { start: '12:00', end: '13:00', label: '결선) 체스 중등부', meta: '45분' },
+                    { start: '13:00', end: '14:00', label: '결선) 체스 고등부', meta: '45분' },
                 ],
             },
             {
@@ -156,67 +162,79 @@ export const SCHEDULE = {
                 courtNames: ['코트 1', '코트 2', '코트 3'],
                 rows: [
                     {
-                        num: '1-1경기', start: '13:50', end: '14:00',
+                        num: '1-1경기',
+                        start: '13:50',
+                        end: '14:00',
                         courts: [
-                            { category: '인기모 남 단식', match: '문경 VS 세종' },
-                            { category: '인기모 여 단식', match: '문경 VS 세종' },
+                            { category: '예선) 인기모 남 단식', match: '문경 VS 세종' },
+                            { category: '예선) 인기모 여 단식', match: '문경 VS 세종' },
                             null,
                         ],
                     },
                     {
-                        num: '1-2경기', start: '14:00', end: '14:10',
+                        num: '1-2경기',
+                        start: '14:00',
+                        end: '14:10',
+                        courts: [null, null, { category: '예선) 인기모 복식', match: '문경 VS 세종' }],
+                    },
+                    {
+                        num: '2-1경기',
+                        start: '14:10',
+                        end: '14:20',
                         courts: [
+                            { category: '예선) 중학교 여 단식', match: '음성 VS 세종' },
+                            { category: '예선) 중학교 남 단식', match: '음성 VS 세종' },
+                            { category: '예선) 고등학교 복식', match: '문경 VS 음성' },
+                        ],
+                    },
+                    {
+                        num: '2-2경기',
+                        start: '14:20',
+                        end: '14:30',
+                        courts: [
+                            { category: '예선) 중학교 복식', match: '음성 VS 세종' },
+                            { category: '예선) 고등학교 남 단식', match: '문경 VS 음성' },
+                            { category: '예선) 고등학교 여 단식', match: '문경 VS 음성' },
+                        ],
+                    },
+                    {
+                        num: '3-1경기',
+                        start: '14:30',
+                        end: '14:40',
+                        // isFinal: true,
+                        courts: [
+                            { category: '결선) 인기모 남 단식', match: '음성 VS 예선 승리 팀' },
+                            { category: '결선) 인기모 여 단식', match: '음성 VS 예선 승리 팀' },
                             null,
-                            null,
-                            { category: '인기모 복식', match: '문경 VS 세종' },
                         ],
                     },
                     {
-                        num: '2-1경기', start: '14:10', end: '14:20',
+                        num: '3-2경기',
+                        start: '14:40',
+                        end: '14:50',
+                        // isFinal: true,
+                        courts: [null, null, { category: '결선) 인기모 복식', match: '음성 VS 예선 승리 팀' }],
+                    },
+                    {
+                        num: '4-1경기',
+                        start: '14:50',
+                        end: '15:00',
+                        // isFinal: true,
                         courts: [
-                            { category: '중학교 여 단식', match: '음성 VS 세종' },
-                            { category: '중학교 남 단식', match: '음성 VS 세종' },
-                            { category: '고등학교 복식', match: '문경 VS 음성' },
+                            { category: '결선) 중학교 복식', match: '문경 VS 예선 승리 팀' },
+                            { category: '결선) 고등학교 남 단식', match: '세종 VS 예선 승리 팀' },
+                            { category: '결선) 고등학교 여 단식', match: '세종 VS 예선 승리 팀' },
                         ],
                     },
                     {
-                        num: '2-2경기', start: '14:20', end: '14:30',
+                        num: '4-2경기',
+                        start: '15:00',
+                        end: '15:10',
+                        // isFinal: true,
                         courts: [
-                            { category: '중학교 복식', match: '음성 VS 세종' },
-                            { category: '고등학교 남 단식', match: '문경 VS 음성' },
-                            { category: '고등학교 여 단식', match: '문경 VS 음성' },
-                        ],
-                    },
-                    {
-                        num: '3-1경기', start: '14:30', end: '14:40', isFinal: true,
-                        courts: [
-                            { category: '인기모 남 단식 결선', match: '음성 VS 예선 승리 팀' },
-                            { category: '인기모 여 단식 결선', match: '음성 VS 예선 승리 팀' },
-                            null,
-                        ],
-                    },
-                    {
-                        num: '3-2경기', start: '14:40', end: '14:50', isFinal: true,
-                        courts: [
-                            null,
-                            null,
-                            { category: '인기모 복식 결선', match: '음성 VS 예선 승리 팀' },
-                        ],
-                    },
-                    {
-                        num: '4-1경기', start: '14:50', end: '15:00', isFinal: true,
-                        courts: [
-                            { category: '중학교 복식 결선', match: '문경 VS 예선 승리 팀' },
-                            { category: '고등학교 남 단식 결선', match: '세종 VS 예선 승리 팀' },
-                            { category: '고등학교 여 단식 결선', match: '세종 VS 예선 승리 팀' },
-                        ],
-                    },
-                    {
-                        num: '4-2경기', start: '15:00', end: '15:10', isFinal: true,
-                        courts: [
-                            { category: '중학교 남 단식 결선', match: '문경 VS 예선 승리 팀' },
-                            { category: '중학교 여 단식 결선', match: '문경 VS 예선 승리 팀' },
-                            { category: '고등학교 복식 결선', match: '세종 VS 예선 승리 팀' },
+                            { category: '결선) 중학교 남 단식', match: '문경 VS 예선 승리 팀' },
+                            { category: '결선) 중학교 여 단식', match: '문경 VS 예선 승리 팀' },
+                            { category: '결선) 고등학교 복식', match: '세종 VS 예선 승리 팀' },
                         ],
                     },
                 ],
@@ -240,10 +258,18 @@ export const EVENTS = [
 
 /* 역대 전적 종목 정렬 우선순위 — 모든 연도 카드를 동일 순서로 노출 */
 export const EVENT_ORDER = [
-    '축구', '농구', '배구',
-    '태권도', '탁구', '체스',
-    '계주', '이어달리기', '중거리달리기', '중거리',
-    '줄다리기', '초등',
+    '축구',
+    '농구',
+    '배구',
+    '태권도',
+    '탁구',
+    '체스',
+    '계주',
+    '이어달리기',
+    '중거리달리기',
+    '중거리',
+    '줄다리기',
+    '초등',
 ];
 
 /* ──────────────────────────────────────────────────────────
@@ -558,58 +584,42 @@ export const HISTORY = [
             {
                 name: '탁구',
                 winner: '문경',
-                matches: [
-                    { label: '탁구 종합', winner: '문경' },
-                ],
+                matches: [{ label: '탁구 종합', winner: '문경' }],
             },
             {
                 name: '태권도',
                 winner: '음성',
-                matches: [
-                    { label: '태권도 종합', winner: '음성' },
-                ],
+                matches: [{ label: '태권도 종합', winner: '음성' }],
             },
             {
                 name: '축구',
                 winner: '문경',
-                matches: [
-                    { label: '축구 종합', winner: '문경' },
-                ],
+                matches: [{ label: '축구 종합', winner: '문경' }],
             },
             {
                 name: '배구',
                 winner: '문경',
-                matches: [
-                    { label: '배구 종합', winner: '문경' },
-                ],
+                matches: [{ label: '배구 종합', winner: '문경' }],
             },
             {
                 name: '농구',
                 winner: '문경',
-                matches: [
-                    { label: '농구 종합', winner: '문경' },
-                ],
+                matches: [{ label: '농구 종합', winner: '문경' }],
             },
             {
                 name: '중거리달리기',
                 winner: '문경',
-                matches: [
-                    { label: '중거리달리기 종합', winner: '문경' },
-                ],
+                matches: [{ label: '중거리달리기 종합', winner: '문경' }],
             },
             {
                 name: '줄다리기',
                 winner: '음성',
-                matches: [
-                    { label: '줄다리기 종합', winner: '음성' },
-                ],
+                matches: [{ label: '줄다리기 종합', winner: '음성' }],
             },
             {
                 name: '초등',
                 winner: '문경',
-                matches: [
-                    { label: '초등', winner: '문경' },
-                ],
+                matches: [{ label: '초등', winner: '문경' }],
             },
         ],
     },
@@ -680,7 +690,6 @@ export const HISTORY = [
         ],
     },
 ];
-
 
 /* ──────────────────────────────────────────────────────────
    하이라이트 영상 (Popcat 페이지 등에서 사용)
