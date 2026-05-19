@@ -1,0 +1,15 @@
+name = "gsd-gvcs-popcat"
+main = "src/worker.js"
+compatibility_date = "2026-05-19"
+
+# D1 데이터베이스 바인딩 — `wrangler d1 create gsd_popcat` 실행 후
+# 출력된 database_id 를 아래에 채워주세요.
+[[d1_databases]]
+binding = "DB"
+database_name = "gsd_popcat"
+database_id = "REPLACE_WITH_D1_DATABASE_ID"
+
+# (선택) 커스텀 라우트 — 프로젝트 도메인이 Cloudflare에 연결된 경우 사용
+# routes = [
+#   { pattern = "api.gvcs.kr/*", custom_domain = true }
+# ]
