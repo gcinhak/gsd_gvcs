@@ -128,9 +128,7 @@ function VenueSection({ venue }) {
             </header>
 
             {venue.kind === 'timeline' && <TimelineList items={venue.items} />}
-            {venue.kind === 'courts' && (
-                <CourtsTable courtNames={venue.courtNames} rows={venue.rows} />
-            )}
+            {venue.kind === 'courts' && <CourtsTable courtNames={venue.courtNames} rows={venue.rows} />}
 
             {venue.byes && venue.byes.length > 0 && (
                 <div className="byes-note">
@@ -164,7 +162,9 @@ export default function SchedulePage() {
                                 className={`day-tab ${activeDay === key ? 'active' : ''}`}
                                 onClick={() => setActiveDay(key)}
                             >
-                                <span className="day-tab-emoji" aria-hidden>{d.emoji}</span>
+                                <span className="day-tab-emoji" aria-hidden>
+                                    {d.emoji}
+                                </span>
                                 <span className="day-tab-text">
                                     <span className="day-tab-date">{d.shortDate}</span>
                                     <span className="day-tab-title">{d.title}</span>

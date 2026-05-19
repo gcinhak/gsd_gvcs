@@ -2780,4 +2780,16 @@ img {
         height: auto !important; /* 비율 유지 */
         max-width: 85% !important; /* 화면이 아주 작은 핸드폰에서 로고가 화면 밖으로 삐져나가지 않도록 방지 */
     }
+
+    /* 일정표 전용 예선/결선 뱃지 스타일 */
+    .match-plain .tag-round,
+    .match-pair .tag-round {
+        display: inline-block;
+        padding: 0.15rem 0.4rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        border-radius: 4px;
+        line-height: 1.2;
+        vertical-align: middle;
+    }
 }
