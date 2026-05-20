@@ -45,9 +45,7 @@ function EventCard({ event }) {
         event.finalScore ||
         event.note;
 
-    const style = colors
-        ? { '--card-tint': colors.soft, '--card-accent': colors.bg }
-        : {};
+    const style = colors ? { '--card-tint': colors.soft, '--card-accent': colors.bg } : {};
 
     return (
         <article
@@ -66,9 +64,7 @@ function EventCard({ event }) {
                             최종 <strong>{event.finalScore}</strong>
                         </span>
                     )}
-                    {event.gameCount != null && (
-                        <span className="ec-count">총 {event.gameCount}경기</span>
-                    )}
+                    {event.gameCount != null && <span className="ec-count">총 {event.gameCount}경기</span>}
                 </div>
             )}
 
@@ -128,9 +124,7 @@ function CheerBreakdown({ cheer }) {
     if (!cheer) return null;
     const hasScores = cheer.scores && cheer.scores.length > 0;
     const hasRankings = cheer.rankings && cheer.rankings.length > 0;
-    const breakdownKeys = hasScores && cheer.scores[0]?.breakdown
-        ? cheer.scores[0].breakdown.map((b) => b.name)
-        : [];
+    const breakdownKeys = hasScores && cheer.scores[0]?.breakdown ? cheer.scores[0].breakdown.map((b) => b.name) : [];
 
     return (
         <div className="cheer-section">
@@ -151,7 +145,9 @@ function CheerBreakdown({ cheer }) {
                                 const isWinner = s.campus === cheer.winner;
                                 return (
                                     <tr key={s.campus} className={isWinner ? 'is-winner' : ''}>
-                                        <td><CampusBadge campus={s.campus} size="sm" /></td>
+                                        <td>
+                                            <CampusBadge campus={s.campus} size="sm" />
+                                        </td>
                                         {breakdownKeys.length > 0
                                             ? breakdownKeys.map((k) => {
                                                   const v = s.breakdown?.find((b) => b.name === k);
@@ -191,7 +187,19 @@ export default function HistoryPage() {
     const [activeTab, setActiveTab] = useState('events');
     const yearData = HISTORY.find((h) => h.year === selectedYear);
 
-    const overallItems = HISTORY.map((h) => h.overall?.winner);
+    const overallItems = [
+        ...HISTORY.map((h) => h.overall?.winner),
+        // 과거 연도 누적분 (연도 데이터 없이 우승 기록만 반영)
+        '문경',
+        '문경',
+        '문경',
+        '문경', // +4회 → 문경 8회 합계
+        '음성',
+        '음성',
+        '음성',
+        '음성',
+        '음성', // +5회 → 음성 6회 합계
+    ];
     const cheerItems = HISTORY.map((h) => h.cheer?.winner);
 
     return (
@@ -208,7 +216,10 @@ export default function HistoryPage() {
                         <button
                             key={h.year}
                             className={`year-pill ${selectedYear === h.year ? 'active' : ''}`}
-                            onClick={() => { setSelectedYear(h.year); setActiveTab('events'); }}
+                            onClick={() => {
+                                setSelectedYear(h.year);
+                                setActiveTab('events');
+                            }}
                         >
                             {h.year}
                         </button>
@@ -224,16 +235,20 @@ export default function HistoryPage() {
                         <div className="yh-winners">
                             <div className="yh-winner">
                                 <span className="yh-w-label">🏆 종합 우승</span>
-                                {yearData.overall?.winner
-                                    ? <CampusBadge campus={yearData.overall.winner} size="lg" />
-                                    : <span className="yh-w-empty">데이터 없음</span>}
+                                {yearData.overall?.winner ? (
+                                    <CampusBadge campus={yearData.overall.winner} size="lg" />
+                                ) : (
+                                    <span className="yh-w-empty">데이터 없음</span>
+                                )}
                             </div>
                             <div className="yh-divider" aria-hidden />
                             <div className="yh-winner">
                                 <span className="yh-w-label">📣 응원전 우승</span>
-                                {yearData.cheer?.winner
-                                    ? <CampusBadge campus={yearData.cheer.winner} size="lg" />
-                                    : <span className="yh-w-empty">데이터 없음</span>}
+                                {yearData.cheer?.winner ? (
+                                    <CampusBadge campus={yearData.cheer.winner} size="lg" />
+                                ) : (
+                                    <span className="yh-w-empty">데이터 없음</span>
+                                )}
                             </div>
                         </div>
                         {(yearData.overall?.note || yearData.cheer?.note) && (
@@ -276,9 +291,7 @@ export default function HistoryPage() {
                     </div>
                 )}
 
-                {activeTab === 'cheer' && yearData?.cheer && (
-                    <CheerBreakdown cheer={yearData.cheer} />
-                )}
+                {activeTab === 'cheer' && yearData?.cheer && <CheerBreakdown cheer={yearData.cheer} />}
 
                 {activeTab === 'events' && (!yearData?.events || yearData.events.length === 0) && (
                     <div className="empty-state">

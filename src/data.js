@@ -67,6 +67,34 @@ export const YEARS = [
             { id: 'S9osgUg2kao', campus: '음성', label: '음성 댄스' },
         ],
     },
+    {
+        year: 2019,
+        color: '#c2410c',
+        soft: '#ffedd5',
+        videos: [
+            { id: 'pyNlyms0IDY', campus: '문경', label: '문경 1부' },
+            { id: 'yPwJ-QmnUKQ', campus: '문경', label: '문경 2부' },
+        ],
+    },
+    {
+        year: 2017,
+        color: '#7c3aed',
+        soft: '#ede9fe',
+        videos: [
+            { id: 'v3YktPGB3vc', campus: '문경', label: '문경 1부' },
+            { id: 'B5fzWEOLk98', campus: '문경', label: '문경 2부' },
+        ],
+    },
+    {
+        year: 2016,
+        color: '#b45309',
+        soft: '#fef3c7',
+        videos: [
+            { id: 'CzpsyfWmh_g', campus: '문경', label: '문경 1부' },
+            { id: 'wfpbMMd3NCw', campus: '문경', label: '문경 2부' },
+            { id: 'lcOMDlnLQ_g', campus: '음성', label: '음성 3부' },
+        ],
+    },
 ];
 
 /* ──────────────────────────────────────────────────────────
@@ -584,32 +612,63 @@ export const HISTORY = [
             {
                 name: '탁구',
                 winner: '문경',
-                matches: [{ label: '탁구 종합', winner: '문경' }],
+                matches: [
+                    { label: '탁구 1', winner: '문경' },
+                    { label: '탁구 2', winner: '문경' },
+                    { label: '탁구 3', winner: '문경' },
+                    { label: '탁구 4', winner: '문경' },
+                    { label: '탁구 5', winner: '문경' },
+                    { label: '탁구 6', winner: '문경' },
+                    { label: '탁구 7', winner: '세종' },
+                ],
             },
             {
                 name: '태권도',
                 winner: '음성',
-                matches: [{ label: '태권도 종합', winner: '음성' }],
+                matches: [
+                    { label: '태권도 1', winner: '문경' },
+                    { label: '태권도 2', winner: '문경' },
+                    { label: '태권도 3', winner: '문경' },
+                    { label: '태권도 4', winner: '음성' },
+                    { label: '태권도 5', winner: '세종' },
+                ],
             },
             {
                 name: '축구',
                 winner: '문경',
-                matches: [{ label: '축구 종합', winner: '문경' }],
+                matches: [
+                    { label: '축구 1', winner: '문경' },
+                    { label: '축구 2', winner: '문경' },
+                    { label: '축구 3', winner: '문경' },
+                ],
             },
             {
                 name: '배구',
                 winner: '문경',
-                matches: [{ label: '배구 종합', winner: '문경' }],
+                matches: [
+                    { label: '배구 1', winner: '문경' },
+                    { label: '배구 2', winner: '문경' },
+                    { label: '배구 3', winner: '음성' },
+                ],
             },
             {
                 name: '농구',
                 winner: '문경',
-                matches: [{ label: '농구 종합', winner: '문경' }],
+                matches: [
+                    { label: '농구 1', winner: '문경' },
+                    { label: '농구 2', winner: '문경' },
+                    { label: '농구 3', winner: '음성' },
+                ],
             },
             {
                 name: '중거리달리기',
                 winner: '문경',
-                matches: [{ label: '중거리달리기 종합', winner: '문경' }],
+                matches: [
+                    { label: '중거리달리기 1', winner: '문경' },
+                    { label: '중거리달리기 2', winner: '문경' },
+                    { label: '중거리달리기 3', winner: '음성' },
+                    { label: '중거리달리기 4', winner: '세종' },
+                ],
             },
             {
                 name: '줄다리기',
@@ -689,6 +748,105 @@ export const HISTORY = [
             },
         ],
     },
+    // {
+    //     year: 2020,
+    //     overall: {
+    //         winner: '문경',
+    //         note: '2020년 경기 종합우승은 문경캠퍼스입니다.',
+    //     },
+    //     cheer: {
+    //         // winner: '음성',
+    //         note: '2020년 응원전 우승은 음성캠퍼스입니다.',
+    //     },
+    // },
+    // {
+    //     year: 2019,
+    //     overall: {
+    //         winner: '문경',
+    //         note: '2020년 경기 종합우승은 문경캠퍼스입니다.',
+    //     },
+    //     cheer: {
+    //         // winner: '음성',
+    //         note: '2020년 응원전 우승은 음성캠퍼스입니다.',
+    //     },
+    // },
+    // {
+    //     year: 2018,
+    //     overall: {
+    //         winner: '문경',
+    //         note: '2020년 경기 종합우승은 문경캠퍼스입니다.',
+    //     },
+    //     cheer: {
+    //         // winner: '음성',
+    //         note: '2020년 응원전 우승은 음성캠퍼스입니다.',
+    //     },
+    // },
+    // {
+    //     year: 2017,
+    //     overall: {
+    //         winner: '문경',
+    //         note: '2020년 경기 종합우승은 문경캠퍼스입니다.',
+    //     },
+    //     cheer: {
+    //         // winner: '음성',
+    //         note: '2020년 응원전 우승은 음성캠퍼스입니다.',
+    //     },
+    // },
+    // {
+    //     year: 2016,
+    //     overall: {
+    //         winner: '문경',
+    //         note: '2020년 경기 종합우승은 문경캠퍼스입니다.',
+    //     },
+    //     cheer: {
+    //         // winner: '음성',
+    //         note: '2020년 응원전 우승은 음성캠퍼스입니다.',
+    //     },
+    // },
+    // {
+    //     year: 2015,
+    //     overall: {
+    //         winner: '문경',
+    //         note: '2020년 경기 종합우승은 문경캠퍼스입니다.',
+    //     },
+    //     cheer: {
+    //         // winner: '음성',
+    //         note: '2020년 응원전 우승은 음성캠퍼스입니다.',
+    //     },
+    // },
+    // {
+    //     year: 2014,
+    //     overall: {
+    //         winner: '문경',
+    //         note: '2020년 경기 종합우승은 문경캠퍼스입니다.',
+    //     },
+    //     cheer: {
+    //         // winner: '음성',
+    //         note: '2020년 응원전 우승은 음성캠퍼스입니다.',
+    //     },
+    // },
+    // {
+    //     year: 2013,
+    //     overall: {
+    //         winner: '문경',
+    //         note: '2020년 경기 종합우승은 문경캠퍼스입니다.',
+    //     },
+    //     cheer: {
+    //         // winner: '음성',
+    //         note: '2020년 응원전 우승은 음성캠퍼스입니다.',
+    //     },
+    // },
+    // {
+    //     year: 2012,
+    //     overall: {
+    //         winner: '문경',
+    //         note: '2020년 경기 종합우승은 문경캠퍼스입니다.',
+    //     },
+    //     cheer: {
+    //         // winner: '음성',
+    //         note: '2020년 응원전 우승은 음성캠퍼스입니다.',
+    //     },
+    // },
 ];
 
 /* ──────────────────────────────────────────────────────────
