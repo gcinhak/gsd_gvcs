@@ -2,13 +2,12 @@ import { useEffect, useRef, useState } from 'react';
 import PageHeader from '../components/PageHeader';
 import CampusBadge from '../components/CampusBadge';
 import { CAMPUS_COLORS } from '../data';
-import { fetchCounts, incrementCount, isPopcatApiConfigured } from '../lib/popcatApi';
+import { fetchCounts, isPopcatApiConfigured } from '../lib/popcatApi';
 
 const LOCAL_STORAGE_KEY = 'gsd-popcat-counts-v2';
 const MY_CLICKS_KEY = 'gsd-popcat-my-clicks'; // ← 추가
 const MY_UUID_KEY = 'gsd-popcat-uuid'; // ← 추가
 const CAMPUSES = ['문경', '음성', '세종'];
-const POLL_MS = 15000; // 서버 폴링 간격 (15초)
 const FLUSH_MS = 20000; // 클릭 누적 배치 전송 간격 (20초)
 const IS_DISABLED = false; // 응급 비활성화 토글 — true 로 바꾸면 클릭 막힘
 
@@ -96,7 +95,31 @@ export default function PopcatPage() {
                 const delta = toSend[c];
                 if (delta > 0) {
                     try {
-                        await incrementCount(c, delta);
+                        // 1. API 응답 상태 코드를 직접 확인하기 위해 fetch를 사용합니다.
+                        const url =
+                            (
+                                import.meta.env.VITE_POPCAT_API_URL || 'https://gsd-gvcs-popcat.gcinhak.workers.dev'
+                            ).replace(/\/$/, '') + '/api/popcat/increment';
+
+                        const response = await fetch(url, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ campus: c, delta }),
+                        });
+
+                        // 2. 🛑 429 매크로 차단 응답이 왔을 때 알림창 띄우기
+                        if (response.status === 429) {
+                            alert(
+                                '🚨 [경고] 비정상적인 요청 속도가 감지되었습니다.\n\n매크로 방지를 위해 5분간 팝캣 참여가 차단됩니다.'
+                            );
+                            window.location.reload(); // 새로고침하여 매크로 작동 강제 중단
+                            return; // 함수 즉시 종료
+                        }
+
+                        // 3. 그 외 서버 에러 시 catch 문으로 보내기
+                        if (!response.ok) {
+                            throw new Error('서버 또는 네트워크 에러');
+                        }
                     } catch {
                         pendingRef.current[c] += delta;
                     }
@@ -163,12 +186,13 @@ export default function PopcatPage() {
         };
     }, []);
 
+    /* 20초 주기 정해진 시간에 맞춘 동기화 폴링 (매 00초, 20초, 40초) */
     useEffect(() => {
         if (!isPopcatApiConfigured) return;
         let cancelled = false;
+        let timeoutId = null;
 
         const pull = async () => {
-            // document.visibilityState !== 'visible' 체크 로직 제거 (항상 실행)
             try {
                 const remote = await fetchCounts();
                 if (cancelled) return;
@@ -182,21 +206,47 @@ export default function PopcatPage() {
                 setServerState('online');
             } catch {
                 if (!cancelled) setServerState('error');
+            } finally {
+                // 3. 요청이 끝나면 다음 정해진 타임스탬프를 계산해 다시 예약합니다.
+                if (!cancelled) scheduleNextPull();
             }
         };
 
-        // 탭이 다시 보일 때 즉시 한 번 갱신하여 최신화
-        const handleVisibility = () => {
-            if (document.visibilityState === 'visible') pull();
+        const scheduleNextPull = () => {
+            // 🛑 사용자가 팝캣 페이지를 안 보고 있다면 다음 타이머를 예약하지 않고 쉽니다.
+            if (document.visibilityState !== 'visible') return;
+
+            const now = Date.now();
+            const INTERVAL = 20000; // 20초 (밀리초 단위)
+
+            // 다음 정해진 시간(매 00초, 20초, 40초...)까지 남은 시간 계산
+            const nextTick = Math.ceil(now / INTERVAL) * INTERVAL;
+            const delay = nextTick - now;
+
+            timeoutId = setTimeout(pull, delay);
         };
 
-        pull(); // 초기 1회 실행
-        const timer = setInterval(pull, POLL_MS); // 15초 간격으로 무조건 실행
+        // 1. 최초 접속 시 즉시 1회 갱신
+        pull();
+
+        // 2. 다음 정해진 시간 예약 시작
+        scheduleNextPull();
+
+        const handleVisibility = () => {
+            if (document.visibilityState === 'visible') {
+                pull(); // 돌아온 순간 즉시 서버 데이터 한 번 갱신하고 타이머 다시 시작
+            } else {
+                if (timeoutId) {
+                    clearTimeout(timeoutId);
+                    timeoutId = null;
+                }
+            }
+        };
         document.addEventListener('visibilitychange', handleVisibility);
 
         return () => {
             cancelled = true;
-            clearInterval(timer);
+            if (timeoutId) clearTimeout(timeoutId);
             document.removeEventListener('visibilitychange', handleVisibility);
         };
     }, []);
