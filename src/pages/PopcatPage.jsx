@@ -168,15 +168,22 @@ export default function PopcatPage() {
                                     e.preventDefault();
                                     press(campus);
                                 }}
+                                aria-label={`${campus} 캠퍼스 응원하기`}
                             >
                                 <span className="pop-btn-name">{campus}</span>
                                 <span className="pop-btn-face" aria-hidden>
-                                    😴
-                                </span>{' '}
-                                {/* ← 잠든 고양이 */}
+                                    {IS_DISABLED ? '😴' : isOpen ? '😮' : '😺'}
+                                </span>
                                 <span className="pop-btn-count">{(counts[campus] || 0).toLocaleString()}</span>
-                                <span className="pop-btn-hint">잠시 준비 중</span> {/* ← 안내 문구 */}
-                                {/* pop-floater 제거 */}
+                                <span className="pop-btn-hint">
+                                    {IS_DISABLED ? '잠시 준비 중' : isOpen ? 'POP!' : '터치 / 클릭'}
+                                </span>
+                                {!IS_DISABLED &&
+                                    campusPops.map((p) => (
+                                        <span key={p.id} className="pop-floater" style={{ left: `${p.x}%` }}>
+                                            +1
+                                        </span>
+                                    ))}
                             </button>
                         );
                     })}

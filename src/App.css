@@ -413,6 +413,8 @@ img {
     padding: 0.4rem 1.2rem;
     font-weight: 600;
     backdrop-filter: blur(6px);
+    will-change: background; /* 👈 추가 */
+    transform: translateZ(0); /* 👈 추가: GPU 레이어 강제 생성 */
 }
 .hero-title {
     display: flex;
@@ -1749,6 +1751,7 @@ img {
     display: flex;
     flex-direction: column;
     gap: 0.4rem;
+    align-items: flex-start;
 }
 .yh-w-label {
     font-size: 0.78rem;
