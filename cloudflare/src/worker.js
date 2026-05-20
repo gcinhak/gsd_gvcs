@@ -6,9 +6,12 @@
  *   POST /api/popcat/increment  body { campus: "문경", delta?: 1 } → { count: 124 }
  *
  * D1 바인딩 이름: DB
+ * GET 응답은 Cloudflare 엣지에 2초 캐시되어 D1 부하를 크게 줄임.
+ * POST 는 클라이언트에서 20초 단위로 누적 전송(batched delta) 하도록 설계됨.
  */
 
 const CAMPUSES = ['문경', '음성', '세종'];
+const GET_CACHE_TTL = 2; // 초
 
 const CORS_HEADERS = {
     'Access-Control-Allow-Origin': '*',
@@ -18,7 +21,7 @@ const CORS_HEADERS = {
 };
 
 export default {
-    async fetch(req, env) {
+    async fetch(req, env, ctx) {
         if (req.method === 'OPTIONS') {
             return new Response(null, { headers: CORS_HEADERS });
         }
@@ -26,7 +29,7 @@ export default {
         const url = new URL(req.url);
 
         if (url.pathname === '/api/popcat' && req.method === 'GET') {
-            return getCounts(env);
+            return getCounts(env, req, ctx);
         }
         if (url.pathname === '/api/popcat/increment' && req.method === 'POST') {
             return increment(req, env);
@@ -36,7 +39,13 @@ export default {
     },
 };
 
-async function getCounts(env) {
+async function getCounts(env, req, ctx) {
+    const cache = caches.default;
+    const cacheKey = new Request(req.url, { method: 'GET' });
+
+    const cached = await cache.match(cacheKey);
+    if (cached) return cached;
+
     const { results } = await env.DB
         .prepare('SELECT campus, count FROM popcat_counts')
         .all();
@@ -45,7 +54,20 @@ async function getCounts(env) {
     for (const row of results || []) {
         if (CAMPUSES.includes(row.campus)) out[row.campus] = Number(row.count) || 0;
     }
-    return json(out);
+
+    const res = new Response(JSON.stringify(out), {
+        status: 200,
+        headers: {
+            ...CORS_HEADERS,
+            'Content-Type': 'application/json',
+            'Cache-Control': `public, max-age=${GET_CACHE_TTL}`,
+        },
+    });
+
+    if (ctx && ctx.waitUntil) {
+        ctx.waitUntil(cache.put(cacheKey, res.clone()));
+    }
+    return res;
 }
 
 async function increment(req, env) {
@@ -57,7 +79,7 @@ async function increment(req, env) {
     }
 
     const campus = body?.campus;
-    const delta = Math.max(1, Math.min(Number(body?.delta) || 1, 1000));
+    const delta = Math.max(1, Math.min(Number(body?.delta) || 1, 10000));
 
     if (!CAMPUSES.includes(campus)) {
         return json({ error: 'invalid campus' }, 400);

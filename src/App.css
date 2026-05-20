@@ -412,7 +412,6 @@ img {
     border-radius: 30px;
     padding: 0.4rem 1.2rem;
     font-weight: 600;
-    backdrop-filter: blur(6px);
 }
 .hero-title {
     display: flex;
@@ -1749,6 +1748,7 @@ img {
     display: flex;
     flex-direction: column;
     gap: 0.4rem;
+    align-items: flex-start;
 }
 .yh-w-label {
     font-size: 0.78rem;
@@ -2229,6 +2229,11 @@ img {
 .si-text {
     font-weight: 600;
     letter-spacing: 0.02em;
+}
+.si-pending {
+    color: var(--primary);
+    margin-left: 0.2rem;
+    font-weight: 700;
 }
 .pb-rows {
     display: flex;

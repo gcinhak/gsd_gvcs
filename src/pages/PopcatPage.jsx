@@ -5,8 +5,12 @@ import { CAMPUS_COLORS } from '../data';
 import { fetchCounts, incrementCount, isPopcatApiConfigured } from '../lib/popcatApi';
 
 const LOCAL_STORAGE_KEY = 'gsd-popcat-counts-v2';
+const MY_CLICKS_KEY = 'gsd-popcat-my-clicks'; // ← 추가
+const MY_UUID_KEY = 'gsd-popcat-uuid'; // ← 추가
 const CAMPUSES = ['문경', '음성', '세종'];
-const POLL_MS = 1500;
+const POLL_MS = 15000; // 서버 폴링 간격 (15초)
+const FLUSH_MS = 20000; // 클릭 누적 배치 전송 간격 (20초)
+const IS_DISABLED = false; // 응급 비활성화 토글 — true 로 바꾸면 클릭 막힘
 
 const ZERO = { 문경: 0, 음성: 0, 세종: 0 };
 
@@ -23,27 +27,148 @@ function readLocal() {
     }
 }
 
+function getOrCreateUUID() {
+    if (typeof window === 'undefined') return null;
+    let uuid = window.localStorage.getItem(MY_UUID_KEY);
+    if (!uuid) {
+        uuid = crypto.randomUUID();
+        window.localStorage.setItem(MY_UUID_KEY, uuid);
+    }
+    return uuid;
+}
+
+function readMyClicks() {
+    if (typeof window === 'undefined') return { ...ZERO };
+    try {
+        const parsed = JSON.parse(window.localStorage.getItem(MY_CLICKS_KEY) || '{}');
+        return CAMPUSES.reduce((acc, c) => {
+            acc[c] = Number(parsed[c]) || 0;
+            return acc;
+        }, {});
+    } catch {
+        return { ...ZERO };
+    }
+}
+
 export default function PopcatPage() {
     const [counts, setCounts] = useState(() => (isPopcatApiConfigured ? { ...ZERO } : readLocal()));
+    const [myCounts, setMyCounts] = useState(() => readMyClicks()); // ← 추가
     const [openCampus, setOpenCampus] = useState(null);
     const [pops, setPops] = useState([]);
     const [serverState, setServerState] = useState(isPopcatApiConfigured ? 'connecting' : 'offline');
+    const [pendingTotal, setPendingTotal] = useState(0);
 
     const popIdRef = useRef(0);
     const releaseTimers = useRef({});
+    const pendingRef = useRef({ ...ZERO });
+    const flushTimerRef = useRef(null);
+    const schedulerRef = useRef(() => {});
 
-    /* localStorage 캐시 (오프라인/폴백용) */
+    /* localStorage 캐시 (로컬모드 한정) */
     useEffect(() => {
         if (isPopcatApiConfigured) return;
         window.localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(counts));
     }, [counts]);
 
-    /* 서버 폴링 — 상승만 반영해서 낙관적 업데이트와 충돌 안 나게 */
+    /* UUID 초기화 — 최초 방문 시 생성, 이후 유지 */
+    useEffect(() => {
+        getOrCreateUUID();
+    }, []);
+
+    /* 내 클릭 수 localStorage 저장 */
+    useEffect(() => {
+        window.localStorage.setItem(MY_CLICKS_KEY, JSON.stringify(myCounts));
+    }, [myCounts]);
+
+    /* 20초 배치 플러시 — flush 와 scheduler 가 같은 클로저 안에서 작동 */
+    useEffect(() => {
+        if (!isPopcatApiConfigured) {
+            schedulerRef.current = () => {};
+            return;
+        }
+
+        const flush = async () => {
+            const toSend = { ...pendingRef.current };
+            pendingRef.current = { ...ZERO };
+            setPendingTotal(0);
+
+            for (const c of CAMPUSES) {
+                const delta = toSend[c];
+                if (delta > 0) {
+                    try {
+                        await incrementCount(c, delta);
+                    } catch {
+                        pendingRef.current[c] += delta;
+                    }
+                }
+            }
+
+            const remaining = CAMPUSES.reduce((s, c) => s + pendingRef.current[c], 0);
+            setPendingTotal(remaining);
+            if (remaining > 0) {
+                flushTimerRef.current = setTimeout(flush, FLUSH_MS);
+            }
+        };
+
+        schedulerRef.current = () => {
+            if (flushTimerRef.current) return;
+            flushTimerRef.current = setTimeout(() => {
+                flushTimerRef.current = null;
+                flush();
+            }, FLUSH_MS);
+        };
+
+        return () => {
+            if (flushTimerRef.current) {
+                clearTimeout(flushTimerRef.current);
+                flushTimerRef.current = null;
+            }
+        };
+    }, []);
+
+    /* 페이지 이탈 시 마지막 저장 시도 (keepalive fetch) */
+    useEffect(() => {
+        if (!isPopcatApiConfigured) return;
+
+        const sendBeacon = () => {
+            const pending = pendingRef.current;
+            const url =
+                (import.meta.env.VITE_POPCAT_API_URL || 'https://gsd-gvcs-popcat.gcinhak.workers.dev').replace(
+                    /\/$/,
+                    ''
+                ) + '/api/popcat/increment';
+            for (const c of CAMPUSES) {
+                if (pending[c] > 0) {
+                    try {
+                        fetch(url, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ campus: c, delta: pending[c] }),
+                            keepalive: true,
+                        });
+                    } catch {
+                        /* ignore */
+                    }
+                }
+            }
+            pendingRef.current = { ...ZERO };
+        };
+
+        window.addEventListener('beforeunload', sendBeacon);
+        window.addEventListener('pagehide', sendBeacon);
+        return () => {
+            window.removeEventListener('beforeunload', sendBeacon);
+            window.removeEventListener('pagehide', sendBeacon);
+            sendBeacon();
+        };
+    }, []);
+
     useEffect(() => {
         if (!isPopcatApiConfigured) return;
         let cancelled = false;
 
         const pull = async () => {
+            // document.visibilityState !== 'visible' 체크 로직 제거 (항상 실행)
             try {
                 const remote = await fetchCounts();
                 if (cancelled) return;
@@ -60,17 +185,32 @@ export default function PopcatPage() {
             }
         };
 
-        pull();
-        const timer = setInterval(pull, POLL_MS);
+        // 탭이 다시 보일 때 즉시 한 번 갱신하여 최신화
+        const handleVisibility = () => {
+            if (document.visibilityState === 'visible') pull();
+        };
+
+        pull(); // 초기 1회 실행
+        const timer = setInterval(pull, POLL_MS); // 15초 간격으로 무조건 실행
+        document.addEventListener('visibilitychange', handleVisibility);
+
         return () => {
             cancelled = true;
             clearInterval(timer);
+            document.removeEventListener('visibilitychange', handleVisibility);
         };
     }, []);
 
     const press = (campus) => {
+        if (IS_DISABLED) return;
         setOpenCampus(campus);
         setCounts((c) => ({ ...c, [campus]: (c[campus] || 0) + 1 }));
+        setMyCounts((c) => ({ ...c, [campus]: (c[campus] || 0) + 1 })); // ← 추가
+
+        // 누적치에 추가 + 다음 flush 예약
+        pendingRef.current[campus] = (pendingRef.current[campus] || 0) + 1;
+        setPendingTotal((p) => p + 1);
+        schedulerRef.current();
 
         const id = popIdRef.current++;
         setPops((prev) => [...prev, { id, campus, x: 40 + Math.random() * 20 }]);
@@ -80,12 +220,6 @@ export default function PopcatPage() {
         releaseTimers.current[campus] = setTimeout(() => {
             setOpenCampus((cur) => (cur === campus ? null : cur));
         }, 140);
-
-        if (isPopcatApiConfigured) {
-            incrementCount(campus).catch(() => {
-                // 실패해도 다음 폴링에서 자동 재동기화
-            });
-        }
     };
 
     const total = CAMPUSES.reduce((s, c) => s + (counts[c] || 0), 0);
@@ -103,12 +237,11 @@ export default function PopcatPage() {
                     description="문경 · 음성 · 세종 — 가장 많이 응원한 캠퍼스가 이깁니다."
                 />
 
-                {/* Scoreboard */}
                 <section className="pop-board">
                     <div className="pb-head">
                         <span className="pb-title">실시간 랭킹</span>
                         <div className="pb-meta">
-                            <ServerIndicator state={serverState} />
+                            <ServerIndicator state={serverState} pendingTotal={pendingTotal} />
                             <span className="pb-total">총 {total.toLocaleString()} POPS</span>
                         </div>
                     </div>
@@ -132,14 +265,17 @@ export default function PopcatPage() {
                                         <span className="pb-count-num">{count.toLocaleString()}</span>
                                         <span className="pb-count-pct">{pct.toFixed(1)}%</span>
                                     </div>
-                                    {isLeader && <span className="pb-crown" aria-hidden>👑</span>}
+                                    {isLeader && (
+                                        <span className="pb-crown" aria-hidden>
+                                            👑
+                                        </span>
+                                    )}
                                 </div>
                             );
                         })}
                     </div>
                 </section>
 
-                {/* Battle Buttons */}
                 <section className="pop-battle">
                     {CAMPUSES.map((campus) => {
                         const color = CAMPUS_COLORS[campus];
@@ -148,19 +284,29 @@ export default function PopcatPage() {
                         return (
                             <button
                                 key={campus}
-                                className={`pop-btn ${isOpen ? 'open' : ''}`}
+                                className={`pop-btn ${isOpen ? 'open' : ''} ${IS_DISABLED ? 'disabled' : ''}`}
+                                disabled={IS_DISABLED}
                                 style={{
                                     '--btn-bg': color?.bg,
                                     '--btn-soft': color?.soft,
+                                    opacity: IS_DISABLED ? 0.45 : 1,
+                                    cursor: IS_DISABLED ? 'not-allowed' : 'pointer',
+                                    filter: IS_DISABLED ? 'grayscale(60%)' : 'none',
                                 }}
-                                onMouseDown={() => press(campus)}
-                                onTouchStart={(e) => { e.preventDefault(); press(campus); }}
+                                onPointerDown={(e) => {
+                                    e.preventDefault();
+                                    press(campus);
+                                }}
                                 aria-label={`${campus} 캠퍼스 응원하기`}
                             >
                                 <span className="pop-btn-name">{campus}</span>
-                                <span className="pop-btn-face" aria-hidden>{isOpen ? '😮' : '😺'}</span>
-                                <span className="pop-btn-count">{(counts[campus] || 0).toLocaleString()}</span>
-                                <span className="pop-btn-hint">{isOpen ? 'POP!' : '터치 / 클릭'}</span>
+                                <span className="pop-btn-face" aria-hidden>
+                                    {isOpen ? '😮' : '😺'}
+                                </span>
+                                <span className="pop-btn-count">{(myCounts[campus] || 0).toLocaleString()}</span>
+                                <span className="pop-btn-hint">
+                                    {IS_DISABLED ? '잠시 점검중' : isOpen ? 'POP!' : '내 응원 횟수'}
+                                </span>
                                 {campusPops.map((p) => (
                                     <span key={p.id} className="pop-floater" style={{ left: `${p.x}%` }}>
                                         +1
@@ -183,6 +329,7 @@ function ServerIndicator({ state }) {
         offline: { dot: '#9ca3af', text: '로컬 모드' },
     };
     const cur = map[state] || map.offline;
+
     return (
         <span className="server-indicator">
             <span className="si-dot" style={{ background: cur.dot }} />
