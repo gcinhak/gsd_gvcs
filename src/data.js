@@ -411,7 +411,7 @@ export const HISTORY = [
                 name: '배구',
                 winner: '문경',
                 matches: [
-                    { label: '중학교(남)', winner: '문경' },
+                    { label: '중학교(남)', winner: '세종' },
                     { label: '고등학교(남)', winner: '문경' },
                     { label: '중고연합(여)', winner: '문경' },
                 ],
