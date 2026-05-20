@@ -6,9 +6,9 @@ import { fetchCounts, incrementCount, isPopcatApiConfigured } from '../lib/popca
 
 const LOCAL_STORAGE_KEY = 'gsd-popcat-counts-v2';
 const CAMPUSES = ['문경', '음성', '세종'];
-const POLL_MS = 2500;       // 서버 폴링 간격 (요청 부하 완화 위해 1500 → 2500)
-const FLUSH_MS = 20000;     // 클릭 누적 배치 전송 간격 (20초)
-const IS_DISABLED = false;  // 응급 비활성화 토글 — true 로 바꾸면 클릭 막힘
+const POLL_MS = 3000; // 서버 폴링 간격 (요청 부하 완화 위해 1500 → 2500)
+const FLUSH_MS = 20000; // 클릭 누적 배치 전송 간격 (20초)
+const IS_DISABLED = false; // 응급 비활성화 토글 — true 로 바꾸면 클릭 막힘
 
 const ZERO = { 문경: 0, 음성: 0, 세종: 0 };
 
@@ -97,8 +97,10 @@ export default function PopcatPage() {
         const sendBeacon = () => {
             const pending = pendingRef.current;
             const url =
-                (import.meta.env.VITE_POPCAT_API_URL || 'https://gsd-gvcs-popcat.gcinhak.workers.dev')
-                    .replace(/\/$/, '') + '/api/popcat/increment';
+                (import.meta.env.VITE_POPCAT_API_URL || 'https://gsd-gvcs-popcat.gcinhak.workers.dev').replace(
+                    /\/$/,
+                    ''
+                ) + '/api/popcat/increment';
             for (const c of CAMPUSES) {
                 if (pending[c] > 0) {
                     try {
