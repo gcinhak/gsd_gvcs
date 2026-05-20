@@ -412,9 +412,6 @@ img {
     border-radius: 30px;
     padding: 0.4rem 1.2rem;
     font-weight: 600;
-    backdrop-filter: blur(6px);
-    will-change: background; /* 👈 추가 */
-    transform: translateZ(0); /* 👈 추가: GPU 레이어 강제 생성 */
 }
 .hero-title {
     display: flex;
