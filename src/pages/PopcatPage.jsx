@@ -323,7 +323,7 @@ export default function PopcatPage() {
     );
 }
 
-function ServerIndicator({ state, pendingTotal }) {
+function ServerIndicator({ state }) {
     const map = {
         online: { dot: '#10b981', text: '서버 연결됨' },
         connecting: { dot: '#f59e0b', text: '연결중' },
@@ -331,14 +331,11 @@ function ServerIndicator({ state, pendingTotal }) {
         offline: { dot: '#9ca3af', text: '로컬 모드' },
     };
     const cur = map[state] || map.offline;
-    const hasPending = pendingTotal > 0 && state !== 'offline';
+
     return (
-        <span className="server-indicator" title={hasPending ? `${pendingTotal}회 곧 저장` : ''}>
+        <span className="server-indicator">
             <span className="si-dot" style={{ background: cur.dot }} />
-            <span className="si-text">
-                {cur.text}
-                {hasPending && <span className="si-pending"> · 곧 저장 {pendingTotal}</span>}
-            </span>
+            <span className="si-text">{cur.text}</span>
         </span>
     );
 }
