@@ -254,7 +254,8 @@ export default function PopcatPage() {
     const press = (campus) => {
         if (IS_DISABLED) return;
         setOpenCampus(campus);
-        setCounts((c) => ({ ...c, [campus]: (c[campus] || 0) + 1 }));
+
+        // setCounts((c) => ({ ...c, [campus]: (c[campus] || 0) + 1 }));
         setMyCounts((c) => ({ ...c, [campus]: (c[campus] || 0) + 1 })); // ← 추가
 
         // 누적치에 추가 + 다음 flush 예약
