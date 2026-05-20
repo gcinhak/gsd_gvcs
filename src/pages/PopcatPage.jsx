@@ -7,6 +7,7 @@ import { fetchCounts, incrementCount, isPopcatApiConfigured } from '../lib/popca
 const LOCAL_STORAGE_KEY = 'gsd-popcat-counts-v2';
 const CAMPUSES = ['문경', '음성', '세종'];
 const POLL_MS = 1500;
+const IS_DISABLED = true; // ← 추가 (나중에 false로 바꾸면 재활성화)
 
 const ZERO = { 문경: 0, 음성: 0, 세종: 0 };
 
@@ -69,6 +70,7 @@ export default function PopcatPage() {
     }, []);
 
     const press = (campus) => {
+        if (IS_DISABLED) return; // ← 추가
         setOpenCampus(campus);
         setCounts((c) => ({ ...c, [campus]: (c[campus] || 0) + 1 }));
 
@@ -132,7 +134,11 @@ export default function PopcatPage() {
                                         <span className="pb-count-num">{count.toLocaleString()}</span>
                                         <span className="pb-count-pct">{pct.toFixed(1)}%</span>
                                     </div>
-                                    {isLeader && <span className="pb-crown" aria-hidden>👑</span>}
+                                    {isLeader && (
+                                        <span className="pb-crown" aria-hidden>
+                                            👑
+                                        </span>
+                                    )}
                                 </div>
                             );
                         })}
@@ -148,24 +154,29 @@ export default function PopcatPage() {
                         return (
                             <button
                                 key={campus}
-                                className={`pop-btn ${isOpen ? 'open' : ''}`}
+                                className={`pop-btn ${isOpen ? 'open' : ''} ${IS_DISABLED ? 'disabled' : ''}`}
+                                disabled={IS_DISABLED}
                                 style={{
                                     '--btn-bg': color?.bg,
                                     '--btn-soft': color?.soft,
+                                    opacity: IS_DISABLED ? 0.45 : 1,
+                                    cursor: IS_DISABLED ? 'not-allowed' : 'pointer',
+                                    filter: IS_DISABLED ? 'grayscale(60%)' : 'none',
                                 }}
                                 onMouseDown={() => press(campus)}
-                                onTouchStart={(e) => { e.preventDefault(); press(campus); }}
-                                aria-label={`${campus} 캠퍼스 응원하기`}
+                                onTouchStart={(e) => {
+                                    e.preventDefault();
+                                    press(campus);
+                                }}
                             >
                                 <span className="pop-btn-name">{campus}</span>
-                                <span className="pop-btn-face" aria-hidden>{isOpen ? '😮' : '😺'}</span>
+                                <span className="pop-btn-face" aria-hidden>
+                                    😴
+                                </span>{' '}
+                                {/* ← 잠든 고양이 */}
                                 <span className="pop-btn-count">{(counts[campus] || 0).toLocaleString()}</span>
-                                <span className="pop-btn-hint">{isOpen ? 'POP!' : '터치 / 클릭'}</span>
-                                {campusPops.map((p) => (
-                                    <span key={p.id} className="pop-floater" style={{ left: `${p.x}%` }}>
-                                        +1
-                                    </span>
-                                ))}
+                                <span className="pop-btn-hint">잠시 준비 중</span> {/* ← 안내 문구 */}
+                                {/* pop-floater 제거 */}
                             </button>
                         );
                     })}
