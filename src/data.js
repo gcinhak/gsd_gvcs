@@ -37,8 +37,8 @@ export const THEMES = {
 export const YEARS = [
     {
         year: 2025,
-        color: '#1d4ed8',
-        soft: '#dbeafe',
+        color: '#e11d48', // Rose
+        soft: '#ffe4e6',
         videos: [
             { id: 'fEnq3d-uKXA', campus: '문경', label: '문경 응원전' },
             { id: 'UF3dDM0MlF4', campus: '음성', label: '음성 응원전' },
@@ -46,20 +46,20 @@ export const YEARS = [
     },
     {
         year: 2024,
-        color: '#4f46e5',
-        soft: '#e0e7ff',
+        color: '#f97316', // Orange
+        soft: '#ffedd5',
         videos: [{ id: 'rljlFUm5hUM', campus: '문경', label: '문경 응원전' }],
     },
     {
         year: 2023,
-        color: '#0891b2',
-        soft: '#cffafe',
+        color: '#eab308', // Yellow
+        soft: '#fef9c3',
         videos: [{ id: '-DtEM16yC8o', campus: '문경', label: '문경 응원전' }],
     },
     {
         year: 2022,
-        color: '#059669',
-        soft: '#d1fae5',
+        color: '#16a34a', // Green
+        soft: '#dcfce7',
         videos: [
             { id: 'UhRKLqWNoio', campus: '문경', label: '문경 단체' },
             { id: 'EU19d_kOl18', campus: '문경', label: '문경 댄스' },
@@ -68,18 +68,36 @@ export const YEARS = [
         ],
     },
     {
+        year: 2021,
+        color: '#0891b2', // Cyan
+        soft: '#cffafe',
+        videos: [],
+    },
+    {
+        year: 2020,
+        color: '#2563eb', // Blue
+        soft: '#dbeafe',
+        videos: [],
+    },
+    {
         year: 2019,
-        color: '#c2410c',
-        soft: '#ffedd5',
+        color: '#7c3aed', // Violet
+        soft: '#ede9fe',
         videos: [
             { id: 'pyNlyms0IDY', campus: '문경', label: '문경 1부' },
             { id: 'yPwJ-QmnUKQ', campus: '문경', label: '문경 2부' },
         ],
     },
     {
+        year: 2018,
+        color: '#db2777', // Pink
+        soft: '#fce7f3',
+        videos: [],
+    },
+    {
         year: 2017,
-        color: '#7c3aed',
-        soft: '#ede9fe',
+        color: '#9333ea', // Purple
+        soft: '#f3e8ff',
         videos: [
             { id: 'v3YktPGB3vc', campus: '문경', label: '문경 1부' },
             { id: 'B5fzWEOLk98', campus: '문경', label: '문경 2부' },
@@ -87,8 +105,8 @@ export const YEARS = [
     },
     {
         year: 2016,
-        color: '#b45309',
-        soft: '#fef3c7',
+        color: '#0e7490', // Teal
+        soft: '#e0f2fe',
         videos: [
             { id: 'CzpsyfWmh_g', campus: '문경', label: '문경 1부' },
             { id: 'wfpbMMd3NCw', campus: '문경', label: '문경 2부' },
@@ -317,6 +335,7 @@ export const GAME_VIDEOS = [
     // { year: 2023, event: 'basketball', round: 'final', label: '농구 본선', videoId: '' },
     // // 2022
     // { year: 2022, event: 'basketball', round: 'final', label: '농구 본선', videoId: '' },
+    { year: 2021, event: 'taekwondo', round: 'final', label: '태권도 본선', videoId: 'hsv7rPIFXQU' },
 ];
 
 /* ──────────────────────────────────────────────────────────
