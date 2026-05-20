@@ -5,6 +5,8 @@ import { CAMPUS_COLORS } from '../data';
 import { fetchCounts, incrementCount, isPopcatApiConfigured } from '../lib/popcatApi';
 
 const LOCAL_STORAGE_KEY = 'gsd-popcat-counts-v2';
+const MY_CLICKS_KEY = 'gsd-popcat-my-clicks'; // ← 추가
+const MY_UUID_KEY = 'gsd-popcat-uuid'; // ← 추가
 const CAMPUSES = ['문경', '음성', '세종'];
 const POLL_MS = 30000; // 서버 폴링 간격 (요청 부하 완화 위해 1500 → 30000)
 const FLUSH_MS = 20000; // 클릭 누적 배치 전송 간격 (20초)
@@ -25,8 +27,32 @@ function readLocal() {
     }
 }
 
+function getOrCreateUUID() {
+    if (typeof window === 'undefined') return null;
+    let uuid = window.localStorage.getItem(MY_UUID_KEY);
+    if (!uuid) {
+        uuid = crypto.randomUUID();
+        window.localStorage.setItem(MY_UUID_KEY, uuid);
+    }
+    return uuid;
+}
+
+function readMyClicks() {
+    if (typeof window === 'undefined') return { ...ZERO };
+    try {
+        const parsed = JSON.parse(window.localStorage.getItem(MY_CLICKS_KEY) || '{}');
+        return CAMPUSES.reduce((acc, c) => {
+            acc[c] = Number(parsed[c]) || 0;
+            return acc;
+        }, {});
+    } catch {
+        return { ...ZERO };
+    }
+}
+
 export default function PopcatPage() {
     const [counts, setCounts] = useState(() => (isPopcatApiConfigured ? { ...ZERO } : readLocal()));
+    const [myCounts, setMyCounts] = useState(() => readMyClicks()); // ← 추가
     const [openCampus, setOpenCampus] = useState(null);
     const [pops, setPops] = useState([]);
     const [serverState, setServerState] = useState(isPopcatApiConfigured ? 'connecting' : 'offline');
@@ -43,6 +69,16 @@ export default function PopcatPage() {
         if (isPopcatApiConfigured) return;
         window.localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(counts));
     }, [counts]);
+
+    /* UUID 초기화 — 최초 방문 시 생성, 이후 유지 */
+    useEffect(() => {
+        getOrCreateUUID();
+    }, []);
+
+    /* 내 클릭 수 localStorage 저장 */
+    useEffect(() => {
+        window.localStorage.setItem(MY_CLICKS_KEY, JSON.stringify(myCounts));
+    }, [myCounts]);
 
     /* 20초 배치 플러시 — flush 와 scheduler 가 같은 클로저 안에서 작동 */
     useEffect(() => {
@@ -170,6 +206,7 @@ export default function PopcatPage() {
         if (IS_DISABLED) return;
         setOpenCampus(campus);
         setCounts((c) => ({ ...c, [campus]: (c[campus] || 0) + 1 }));
+        setMyCounts((c) => ({ ...c, [campus]: (c[campus] || 0) + 1 })); // ← 추가
 
         // 누적치에 추가 + 다음 flush 예약
         pendingRef.current[campus] = (pendingRef.current[campus] || 0) + 1;
@@ -268,9 +305,9 @@ export default function PopcatPage() {
                                 <span className="pop-btn-face" aria-hidden>
                                     {isOpen ? '😮' : '😺'}
                                 </span>
-                                <span className="pop-btn-count">{(counts[campus] || 0).toLocaleString()}</span>
+                                <span className="pop-btn-count">{(myCounts[campus] || 0).toLocaleString()}</span>
                                 <span className="pop-btn-hint">
-                                    {IS_DISABLED ? '잠시 점검중' : isOpen ? 'POP!' : '터치 / 클릭'}
+                                    {IS_DISABLED ? '잠시 점검중' : isOpen ? 'POP!' : '내 응원 횟수'}
                                 </span>
                                 {campusPops.map((p) => (
                                     <span key={p.id} className="pop-floater" style={{ left: `${p.x}%` }}>
