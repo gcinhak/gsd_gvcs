@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import PageHeader from '../components/PageHeader';
 import CampusBadge from '../components/CampusBadge';
+import AnimatedNumber from '../components/AnimatedNumber';
 import { CAMPUS_COLORS } from '../data';
 import { fetchCounts, isPopcatApiConfigured } from '../lib/popcatApi';
 
@@ -293,7 +294,9 @@ export default function PopcatPage() {
                         <span className="pb-title">실시간 랭킹</span>
                         <div className="pb-meta">
                             <ServerIndicator state={serverState} pendingTotal={pendingTotal} />
-                            <span className="pb-total">총 {total.toLocaleString()} POPS</span>
+                            <span className="pb-total">
+                                총 <AnimatedNumber value={total} /> POPS
+                            </span>
                         </div>
                     </div>
                     <div className="pb-rows">
@@ -313,7 +316,9 @@ export default function PopcatPage() {
                                         />
                                     </div>
                                     <div className="pb-count">
-                                        <span className="pb-count-num">{count.toLocaleString()}</span>
+                                        <span className="pb-count-num">
+                                            <AnimatedNumber value={count} />
+                                        </span>
                                         <span className="pb-count-pct">{pct.toFixed(1)}%</span>
                                     </div>
                                     {isLeader && (
