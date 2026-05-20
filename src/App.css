@@ -2230,6 +2230,11 @@ img {
     font-weight: 600;
     letter-spacing: 0.02em;
 }
+.si-pending {
+    color: var(--primary);
+    margin-left: 0.2rem;
+    font-weight: 700;
+}
 .pb-rows {
     display: flex;
     flex-direction: column;

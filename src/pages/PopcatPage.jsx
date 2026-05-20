@@ -6,8 +6,9 @@ import { fetchCounts, incrementCount, isPopcatApiConfigured } from '../lib/popca
 
 const LOCAL_STORAGE_KEY = 'gsd-popcat-counts-v2';
 const CAMPUSES = ['문경', '음성', '세종'];
-const POLL_MS = 1500;
-const IS_DISABLED = true; // ← 추가 (나중에 false로 바꾸면 재활성화)
+const POLL_MS = 2500;       // 서버 폴링 간격 (요청 부하 완화 위해 1500 → 2500)
+const FLUSH_MS = 20000;     // 클릭 누적 배치 전송 간격 (20초)
+const IS_DISABLED = false;  // 응급 비활성화 토글 — true 로 바꾸면 클릭 막힘
 
 const ZERO = { 문경: 0, 음성: 0, 세종: 0 };
 
@@ -29,17 +30,102 @@ export default function PopcatPage() {
     const [openCampus, setOpenCampus] = useState(null);
     const [pops, setPops] = useState([]);
     const [serverState, setServerState] = useState(isPopcatApiConfigured ? 'connecting' : 'offline');
+    const [pendingTotal, setPendingTotal] = useState(0);
 
     const popIdRef = useRef(0);
     const releaseTimers = useRef({});
+    const pendingRef = useRef({ ...ZERO });
+    const flushTimerRef = useRef(null);
+    const schedulerRef = useRef(() => {});
 
-    /* localStorage 캐시 (오프라인/폴백용) */
+    /* localStorage 캐시 (로컬모드 한정) */
     useEffect(() => {
         if (isPopcatApiConfigured) return;
         window.localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(counts));
     }, [counts]);
 
-    /* 서버 폴링 — 상승만 반영해서 낙관적 업데이트와 충돌 안 나게 */
+    /* 20초 배치 플러시 — flush 와 scheduler 가 같은 클로저 안에서 작동 */
+    useEffect(() => {
+        if (!isPopcatApiConfigured) {
+            schedulerRef.current = () => {};
+            return;
+        }
+
+        const flush = async () => {
+            const toSend = { ...pendingRef.current };
+            pendingRef.current = { ...ZERO };
+            setPendingTotal(0);
+
+            for (const c of CAMPUSES) {
+                const delta = toSend[c];
+                if (delta > 0) {
+                    try {
+                        await incrementCount(c, delta);
+                    } catch {
+                        pendingRef.current[c] += delta;
+                    }
+                }
+            }
+
+            const remaining = CAMPUSES.reduce((s, c) => s + pendingRef.current[c], 0);
+            setPendingTotal(remaining);
+            if (remaining > 0) {
+                flushTimerRef.current = setTimeout(flush, FLUSH_MS);
+            }
+        };
+
+        schedulerRef.current = () => {
+            if (flushTimerRef.current) return;
+            flushTimerRef.current = setTimeout(() => {
+                flushTimerRef.current = null;
+                flush();
+            }, FLUSH_MS);
+        };
+
+        return () => {
+            if (flushTimerRef.current) {
+                clearTimeout(flushTimerRef.current);
+                flushTimerRef.current = null;
+            }
+        };
+    }, []);
+
+    /* 페이지 이탈 시 마지막 저장 시도 (keepalive fetch) */
+    useEffect(() => {
+        if (!isPopcatApiConfigured) return;
+
+        const sendBeacon = () => {
+            const pending = pendingRef.current;
+            const url =
+                (import.meta.env.VITE_POPCAT_API_URL || 'https://gsd-gvcs-popcat.gcinhak.workers.dev')
+                    .replace(/\/$/, '') + '/api/popcat/increment';
+            for (const c of CAMPUSES) {
+                if (pending[c] > 0) {
+                    try {
+                        fetch(url, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ campus: c, delta: pending[c] }),
+                            keepalive: true,
+                        });
+                    } catch {
+                        /* ignore */
+                    }
+                }
+            }
+            pendingRef.current = { ...ZERO };
+        };
+
+        window.addEventListener('beforeunload', sendBeacon);
+        window.addEventListener('pagehide', sendBeacon);
+        return () => {
+            window.removeEventListener('beforeunload', sendBeacon);
+            window.removeEventListener('pagehide', sendBeacon);
+            sendBeacon();
+        };
+    }, []);
+
+    /* 서버 폴링 — 상승만 반영해서 낙관적 업데이트와 충돌 방지 */
     useEffect(() => {
         if (!isPopcatApiConfigured) return;
         let cancelled = false;
@@ -70,9 +156,14 @@ export default function PopcatPage() {
     }, []);
 
     const press = (campus) => {
-        if (IS_DISABLED) return; // ← 추가
+        if (IS_DISABLED) return;
         setOpenCampus(campus);
         setCounts((c) => ({ ...c, [campus]: (c[campus] || 0) + 1 }));
+
+        // 누적치에 추가 + 다음 flush 예약
+        pendingRef.current[campus] = (pendingRef.current[campus] || 0) + 1;
+        setPendingTotal((p) => p + 1);
+        schedulerRef.current();
 
         const id = popIdRef.current++;
         setPops((prev) => [...prev, { id, campus, x: 40 + Math.random() * 20 }]);
@@ -82,12 +173,6 @@ export default function PopcatPage() {
         releaseTimers.current[campus] = setTimeout(() => {
             setOpenCampus((cur) => (cur === campus ? null : cur));
         }, 140);
-
-        if (isPopcatApiConfigured) {
-            incrementCount(campus).catch(() => {
-                // 실패해도 다음 폴링에서 자동 재동기화
-            });
-        }
     };
 
     const total = CAMPUSES.reduce((s, c) => s + (counts[c] || 0), 0);
@@ -105,12 +190,11 @@ export default function PopcatPage() {
                     description="문경 · 음성 · 세종 — 가장 많이 응원한 캠퍼스가 이깁니다."
                 />
 
-                {/* Scoreboard */}
                 <section className="pop-board">
                     <div className="pb-head">
                         <span className="pb-title">실시간 랭킹</span>
                         <div className="pb-meta">
-                            <ServerIndicator state={serverState} />
+                            <ServerIndicator state={serverState} pendingTotal={pendingTotal} />
                             <span className="pb-total">총 {total.toLocaleString()} POPS</span>
                         </div>
                     </div>
@@ -145,7 +229,6 @@ export default function PopcatPage() {
                     </div>
                 </section>
 
-                {/* Battle Buttons */}
                 <section className="pop-battle">
                     {CAMPUSES.map((campus) => {
                         const color = CAMPUS_COLORS[campus];
@@ -172,18 +255,17 @@ export default function PopcatPage() {
                             >
                                 <span className="pop-btn-name">{campus}</span>
                                 <span className="pop-btn-face" aria-hidden>
-                                    {IS_DISABLED ? '😴' : isOpen ? '😮' : '😺'}
+                                    {isOpen ? '😮' : '😺'}
                                 </span>
                                 <span className="pop-btn-count">{(counts[campus] || 0).toLocaleString()}</span>
                                 <span className="pop-btn-hint">
-                                    {IS_DISABLED ? '잠시 준비 중' : isOpen ? 'POP!' : '터치 / 클릭'}
+                                    {IS_DISABLED ? '잠시 점검중' : isOpen ? 'POP!' : '터치 / 클릭'}
                                 </span>
-                                {!IS_DISABLED &&
-                                    campusPops.map((p) => (
-                                        <span key={p.id} className="pop-floater" style={{ left: `${p.x}%` }}>
-                                            +1
-                                        </span>
-                                    ))}
+                                {campusPops.map((p) => (
+                                    <span key={p.id} className="pop-floater" style={{ left: `${p.x}%` }}>
+                                        +1
+                                    </span>
+                                ))}
                             </button>
                         );
                     })}
@@ -193,7 +275,7 @@ export default function PopcatPage() {
     );
 }
 
-function ServerIndicator({ state }) {
+function ServerIndicator({ state, pendingTotal }) {
     const map = {
         online: { dot: '#10b981', text: '서버 연결됨' },
         connecting: { dot: '#f59e0b', text: '연결중' },
@@ -201,10 +283,14 @@ function ServerIndicator({ state }) {
         offline: { dot: '#9ca3af', text: '로컬 모드' },
     };
     const cur = map[state] || map.offline;
+    const hasPending = pendingTotal > 0 && state !== 'offline';
     return (
-        <span className="server-indicator">
+        <span className="server-indicator" title={hasPending ? `${pendingTotal}회 곧 저장` : ''}>
             <span className="si-dot" style={{ background: cur.dot }} />
-            <span className="si-text">{cur.text}</span>
+            <span className="si-text">
+                {cur.text}
+                {hasPending && <span className="si-pending"> · 곧 저장 {pendingTotal}</span>}
+            </span>
         </span>
     );
 }
