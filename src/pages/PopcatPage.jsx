@@ -8,6 +8,7 @@ import { fetchCounts, isPopcatApiConfigured } from '../lib/popcatApi';
 const LOCAL_STORAGE_KEY = 'gsd-popcat-counts-v2';
 const MY_CLICKS_KEY = 'gsd-popcat-my-clicks'; // ← 추가
 const MY_UUID_KEY = 'gsd-popcat-uuid'; // ← 추가
+const BAN_KEY = 'gsd-popcat-ban-until';
 const CAMPUSES = ['문경', '음성', '세종'];
 const FLUSH_MS = 20000; // 클릭 누적 배치 전송 간격 (20초)
 const IS_DISABLED = false; // 응급 비활성화 토글 — true 로 바꾸면 클릭 막힘
@@ -57,12 +58,36 @@ export default function PopcatPage() {
     const [pops, setPops] = useState([]);
     const [serverState, setServerState] = useState(isPopcatApiConfigured ? 'connecting' : 'offline');
     const [pendingTotal, setPendingTotal] = useState(0);
-
+    const [banUntil, setBanUntil] = useState(() => Number(window.localStorage.getItem(BAN_KEY)) || 0);
+    const [isBanned, setIsBanned] = useState(() => {
+        const storedBan = Number(window.localStorage.getItem(BAN_KEY)) || 0;
+        return Date.now() < storedBan;
+    });
+    const uiDisabled = IS_DISABLED || isBanned;
     const popIdRef = useRef(0);
     const releaseTimers = useRef({});
     const pendingRef = useRef({ ...ZERO });
     const flushTimerRef = useRef(null);
     const schedulerRef = useRef(() => {});
+
+    useEffect(() => {
+        // 밴 상태가 아니면 타이머를 돌릴 필요 없음
+        if (!isBanned || banUntil === 0) return;
+
+        const timeLeft = banUntil - Date.now();
+
+        // 비동기(setTimeout) 내부의 상태 변경은 에러를 발생시키지 않음
+        const timer = setTimeout(
+            () => {
+                setIsBanned(false);
+                setBanUntil(0);
+                window.localStorage.removeItem(BAN_KEY);
+            },
+            Math.max(timeLeft, 0)
+        ); // 시간이 꼬여서 음수가 나오더라도 즉시 실행되도록 방어
+
+        return () => clearTimeout(timer);
+    }, [isBanned, banUntil]);
 
     /* localStorage 캐시 (로컬모드 한정) */
     useEffect(() => {
@@ -110,11 +135,15 @@ export default function PopcatPage() {
 
                         // 2. 🛑 429 매크로 차단 응답이 왔을 때 알림창 띄우기
                         if (response.status === 429) {
+                            const unbanTime = Date.now() + 5 * 60 * 1000; // 현재 시간 + 5분
+                            window.localStorage.setItem(BAN_KEY, unbanTime);
+                            setBanUntil(unbanTime);
+                            setIsBanned(true);
+
                             alert(
                                 '🚨 [경고] 비정상적인 요청 속도가 감지되었습니다.\n\n매크로 방지를 위해 5분간 팝캣 참여가 차단됩니다.'
                             );
-                            window.location.reload(); // 새로고침하여 매크로 작동 강제 중단
-                            return; // 함수 즉시 종료
+                            return; // 팝캣 데이터 전송만 중단하고 페이지는 유지
                         }
 
                         // 3. 그 외 서버 에러 시 catch 문으로 보내기
@@ -253,7 +282,10 @@ export default function PopcatPage() {
     }, []);
 
     const press = (campus) => {
-        if (IS_DISABLED) return;
+        if (uiDisabled) {
+            if (isBanned) alert('🚨 매크로 차단 중입니다. 남은 시간을 기다려주세요.');
+            return;
+        }
         setOpenCampus(campus);
 
         // setCounts((c) => ({ ...c, [campus]: (c[campus] || 0) + 1 }));
@@ -340,14 +372,14 @@ export default function PopcatPage() {
                         return (
                             <button
                                 key={campus}
-                                className={`pop-btn ${isOpen ? 'open' : ''} ${IS_DISABLED ? 'disabled' : ''}`}
-                                disabled={IS_DISABLED}
+                                className={`pop-btn ${isOpen ? 'open' : ''} ${uiDisabled ? 'disabled' : ''}`}
+                                disabled={uiDisabled}
                                 style={{
                                     '--btn-bg': color?.bg,
                                     '--btn-soft': color?.soft,
-                                    opacity: IS_DISABLED ? 0.45 : 1,
-                                    cursor: IS_DISABLED ? 'not-allowed' : 'pointer',
-                                    filter: IS_DISABLED ? 'grayscale(60%)' : 'none',
+                                    opacity: uiDisabled ? 0.45 : 1,
+                                    cursor: uiDisabled ? 'not-allowed' : 'pointer',
+                                    filter: uiDisabled ? 'grayscale(60%)' : 'none',
                                 }}
                                 onPointerDown={(e) => {
                                     e.preventDefault();
