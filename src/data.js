@@ -334,7 +334,7 @@ export const GAME_VIDEOS = [
     // // 2023
     // { year: 2023, event: 'basketball', round: 'final', label: '농구 본선', videoId: '' },
     // 2022
-    { year: 2022, event: 'tugofwar', round: 'Semifinal', label: '줄다리기 중등 예선', videoId: 'Mdg8baBwEfQ' },
+    { year: 2022, event: 'tugofwar', round: 'preliminary', label: '줄다리기 중등 예선', videoId: 'Mdg8baBwEfQ' },
     { year: 2022, event: 'basketball', round: 'final', label: '농구 중등 결선', videoId: 'OtWTw61IBKQ' },
 
     // 2021

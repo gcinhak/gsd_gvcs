@@ -293,8 +293,7 @@ export default function PopcatPage() {
                                     cursor: IS_DISABLED ? 'not-allowed' : 'pointer',
                                     filter: IS_DISABLED ? 'grayscale(60%)' : 'none',
                                 }}
-                                onMouseDown={() => press(campus)}
-                                onTouchStart={(e) => {
+                                onPointerDown={(e) => {
                                     e.preventDefault();
                                     press(campus);
                                 }}
