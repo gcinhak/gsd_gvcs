@@ -6,7 +6,7 @@ import { fetchCounts, incrementCount, isPopcatApiConfigured } from '../lib/popca
 
 const LOCAL_STORAGE_KEY = 'gsd-popcat-counts-v2';
 const CAMPUSES = ['문경', '음성', '세종'];
-const POLL_MS = 10000; // 서버 폴링 간격 (요청 부하 완화 위해 1500 → 2500)
+const POLL_MS = 30000; // 서버 폴링 간격 (요청 부하 완화 위해 1500 → 30000)
 const FLUSH_MS = 20000; // 클릭 누적 배치 전송 간격 (20초)
 const IS_DISABLED = false; // 응급 비활성화 토글 — true 로 바꾸면 클릭 막힘
 
@@ -127,12 +127,13 @@ export default function PopcatPage() {
         };
     }, []);
 
-    /* 서버 폴링 — 상승만 반영해서 낙관적 업데이트와 충돌 방지 */
+    /* 서버 폴링 — 백그라운드 탭 차단 + 30초 간격으로 요청 최소화 */
     useEffect(() => {
         if (!isPopcatApiConfigured) return;
         let cancelled = false;
 
         const pull = async () => {
+            if (document.visibilityState !== 'visible') return; // 백그라운드면 스킵
             try {
                 const remote = await fetchCounts();
                 if (cancelled) return;
@@ -149,11 +150,19 @@ export default function PopcatPage() {
             }
         };
 
+        // 탭이 다시 보일 때 즉시 한 번 갱신
+        const handleVisibility = () => {
+            if (document.visibilityState === 'visible') pull();
+        };
+
         pull();
         const timer = setInterval(pull, POLL_MS);
+        document.addEventListener('visibilitychange', handleVisibility);
+
         return () => {
             cancelled = true;
             clearInterval(timer);
+            document.removeEventListener('visibilitychange', handleVisibility);
         };
     }, []);
 
