@@ -333,9 +333,12 @@ export const GAME_VIDEOS = [
     // { year: 2024, event: 'soccer', round: 'final', label: '축구 본선', videoId: '' },
     // // 2023
     // { year: 2023, event: 'basketball', round: 'final', label: '농구 본선', videoId: '' },
-    // // 2022
-    // { year: 2022, event: 'basketball', round: 'final', label: '농구 본선', videoId: '' },
-    { year: 2021, event: 'taekwondo', round: 'final', label: '태권도 본선', videoId: 'hsv7rPIFXQU' },
+    // 2022
+    { year: 2022, event: 'tugofwar', round: 'Semifinal', label: '줄다리기 중등 예선', videoId: 'Mdg8baBwEfQ' },
+    { year: 2022, event: 'basketball', round: 'final', label: '농구 중등 결선', videoId: 'OtWTw61IBKQ' },
+
+    // 2021
+    { year: 2021, event: 'taekwondo', round: 'final', label: '태권도 결선', videoId: 'hsv7rPIFXQU' },
 ];
 
 /* ──────────────────────────────────────────────────────────
