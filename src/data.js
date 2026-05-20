@@ -306,17 +306,17 @@ export const EVENT_ORDER = [
    videoId가 비어 있으면 'Coming Soon'으로 표시됩니다.
 ────────────────────────────────────────────────────────── */
 export const GAME_VIDEOS = [
-    // 2025
-    { year: 2025, event: 'basketball', round: 'final', label: '농구 본선', videoId: '' },
-    { year: 2025, event: 'soccer', round: 'final', label: '축구 본선', videoId: '' },
-    { year: 2025, event: 'volleyball', round: 'final', label: '배구 본선', videoId: '' },
-    // 2024
-    { year: 2024, event: 'basketball', round: 'final', label: '농구 본선', videoId: '' },
-    { year: 2024, event: 'soccer', round: 'final', label: '축구 본선', videoId: '' },
-    // 2023
-    { year: 2023, event: 'basketball', round: 'final', label: '농구 본선', videoId: '' },
-    // 2022
-    { year: 2022, event: 'basketball', round: 'final', label: '농구 본선', videoId: '' },
+    // // 2025
+    // { year: 2025, event: 'basketball', round: 'final', label: '농구 본선', videoId: '' },
+    // { year: 2025, event: 'soccer', round: 'final', label: '축구 본선', videoId: '' },
+    // { year: 2025, event: 'volleyball', round: 'final', label: '배구 본선', videoId: '' },
+    // // 2024
+    // { year: 2024, event: 'basketball', round: 'final', label: '농구 본선', videoId: '' },
+    // { year: 2024, event: 'soccer', round: 'final', label: '축구 본선', videoId: '' },
+    // // 2023
+    // { year: 2023, event: 'basketball', round: 'final', label: '농구 본선', videoId: '' },
+    // // 2022
+    // { year: 2022, event: 'basketball', round: 'final', label: '농구 본선', videoId: '' },
 ];
 
 /* ──────────────────────────────────────────────────────────
