@@ -3,6 +3,8 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { YEARS } from '../data';
 
 // 인택이가 작업을 시작합니다.
+// asdasd
+// asdasd
 
 export default function CheersVideoPage() {
     const { yearId } = useParams();
