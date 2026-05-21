@@ -3,6 +3,8 @@ import PageHeader from '../components/PageHeader';
 import CampusBadge from '../components/CampusBadge';
 import { HISTORY, CAMPUS_COLORS, EVENT_ORDER } from '../data';
 
+// 윤지 공주가 수정함.
+
 function eventOrderIdx(name) {
     const idx = EVENT_ORDER.indexOf(name);
     return idx === -1 ? EVENT_ORDER.length : idx;
