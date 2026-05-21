@@ -5,6 +5,7 @@ import SyncLogo from './SyncLogo';
 
 const NAV_ITEMS = [
     { to: '/', label: '홈', end: true },
+    { to: '/live', label: 'LIVE', live: true },
     { to: '/schedule', label: '경기 일정' },
     { to: '/cheers', label: '응원전' },
     { to: '/games', label: '경기 영상' },
@@ -31,9 +32,12 @@ export default function Layout() {
                                 key={item.to}
                                 to={item.to}
                                 end={item.end}
-                                className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+                                className={({ isActive }) =>
+                                    `nav-link ${isActive ? 'active' : ''} ${item.live ? 'is-live' : ''}`
+                                }
                                 onClick={() => setMenuOpen(false)}
                             >
+                                {item.live && <span className="live-dot" aria-hidden />}
                                 {item.label}
                             </NavLink>
                         ))}
