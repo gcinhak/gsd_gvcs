@@ -404,11 +404,11 @@ export default function PopcatPage() {
                                         </span>
                                         <span className="pb-count-pct">{pct.toFixed(1)}%</span>
                                     </div>
-                                    {isLeader && (
+                                    {/* {isLeader && (
                                         <span className="pb-crown" aria-hidden>
                                             👑
                                         </span>
-                                    )}
+                                    )} */}
                                 </div>
                             );
                         })}
