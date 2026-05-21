@@ -110,7 +110,7 @@ export const YEARS = [
         videos: [
             { id: 'CzpsyfWmh_g', campus: '문경', label: '문경 1부' },
             { id: 'wfpbMMd3NCw', campus: '문경', label: '문경 2부' },
-            { id: 'lcOMDlnLQ_g', campus: '음성', label: '음성 3부' },
+            { id: 'lcOMDlnLQ_g', campus: '문경', label: '문경 3부' },
         ],
     },
 ];
