@@ -42,8 +42,9 @@ export default {
         if (url.pathname === '/api/popcat' && req.method === 'GET') {
             return getCounts(env, req, ctx);
         }
+
         if (url.pathname === '/api/popcat/increment' && req.method === 'POST') {
-            return increment(req, env);
+            return increment(req, env, ctx); // 💡 ctx(Context)를 넘겨줍니다!
         }
 
         return json({ error: 'not found' }, 404);
@@ -79,8 +80,8 @@ async function getCounts(env, req, ctx) {
     return res;
 }
 
-async function increment(req, env) {
-    // 바디를 먼저 파싱 (UUID, campus, delta 모두 여기에 있음)
+// ✅ 함수 정의 부분에 ctx 추가
+async function increment(req, env, ctx) {
     let body;
     try {
         body = await req.json();
@@ -90,56 +91,67 @@ async function increment(req, env) {
 
     const campus = body?.campus;
     let delta = Number(body?.delta);
-    // 클라이언트가 보낸 UUID (localStorage에서 생성한 값).
-    // UUID가 없으면 IP를 fallback으로 사용하되, 학교 NAT 환경에서는
-    // IP만으로 차단하면 전체 캠퍼스가 한꺼번에 밴될 수 있어 UUID 우선 사용.
-    const clientUuid = typeof body?.uuid === 'string' && body.uuid.length > 0 ? body.uuid : null;
+
+    // 💡 IP와 UUID 추출 (로그 기록용)
     const clientIp = req.headers.get('cf-connecting-ip') || 'unknown';
-
-    // 💡 차단 키: UUID가 있으면 UUID, 없으면 IP
-    const rateKey = clientUuid ?? clientIp;
-
+    const uuid = body?.uuid || 'none';
+    const rateKey = `rate:${clientIp}`;
     const now = Date.now();
 
-    // 1. 현재 차단(블랙리스트) 상태인지 확인
+    // 1. 이미 밴 당한 유저라면? -> 여기서 바로 차단 (DB 쓰기 절대 금지!)
     if (blockedIPs.has(rateKey)) {
         const unblockTime = blockedIPs.get(rateKey);
         if (now < unblockTime) {
-            const remainSeconds = Math.ceil((unblockTime - now) / 1000);
-            console.warn(`[Blocked Attempt] Key: ${rateKey} — 해제까지 ${remainSeconds}초 남음.`);
-            return json({ error: `Too many requests. Blocked for ${remainSeconds}s.` }, 429);
+            return json({ error: 'Too many requests. Blocked.' }, 429);
         } else {
             blockedIPs.delete(rateKey);
         }
     }
 
-    // 2. 20초 이내 요청 횟수 확인
-    //    임계값을 5회로 상향 (기존 3회는 20초 타이머 flush + SPA 이탈 flush 가
-    //    겹치면 정상 사용자도 쉽게 초과하는 문제가 있었음)
+    // 2. 20초 이내 요청 횟수 확인 로직
     const RATE_LIMIT = 5;
     let timestamps = ipRequestHistory.get(rateKey) || [];
     timestamps = timestamps.filter((t) => now - t < 20000);
 
     if (timestamps.length >= RATE_LIMIT) {
+        // 🚨 밴이 '최초로' 발생하는 순간!
         blockedIPs.set(rateKey, now + 5 * 60 * 1000);
-        console.warn(`[Auto Ban] Key: ${rateKey} (IP: ${clientIp}) — 20초 내 ${RATE_LIMIT}회 초과로 5분 밴.`);
+
+        // 💡 [여기에 로그 추가] 백그라운드에서 DB에 기록 (사용자 응답 지연 없음)
+        ctx.waitUntil(
+            env.DB.prepare(
+                'INSERT INTO abnormal_logs (uuid, ip, campus, attempted_delta, reason, created_at) VALUES (?, ?, ?, ?, ?, unixepoch())'
+            )
+                .bind(uuid, clientIp, campus || 'none', delta, 'RATE_LIMIT_EXCEEDED')
+                .run()
+                .catch(console.error)
+        );
+
         return json({ error: 'Too many requests. Blocked for 5 minutes.' }, 429);
     }
 
     timestamps.push(now);
     ipRequestHistory.set(rateKey, timestamps);
 
-    // 기존 유효성 검사
     if (isNaN(delta) || delta <= 0) {
         return json({ error: 'Invalid request' }, 400);
     }
 
-    // 3. 600타 초과 매크로 요청은 최대치로 깎아서 반영 (Delta 600 이상은 의심스러운 매크로로 간주하여 600으로 제한)
+    // 3. 600타 초과 매크로 요청 삭감 로직
     const MAX_DELTA = 600;
     if (delta > MAX_DELTA) {
-        console.warn(
-            `[Macro Adjusted] Key: ${rateKey}, Campus: ${campus}, Attempted Delta: ${delta} -> Reduced to 600`
+        // 🚨 매크로 삭감이 발생하는 순간!
+
+        // 💡 [여기에 로그 추가] 600타를 넘기려 한 괘씸한 내역도 기록합니다.
+        ctx.waitUntil(
+            env.DB.prepare(
+                'INSERT INTO abnormal_logs (uuid, ip, campus, attempted_delta, reason, created_at) VALUES (?, ?, ?, ?, ?, unixepoch())'
+            )
+                .bind(uuid, clientIp, campus, delta, 'MACRO_LIMIT_TRIGGERED')
+                .run()
+                .catch(console.error)
         );
+
         delta = MAX_DELTA;
     }
 
