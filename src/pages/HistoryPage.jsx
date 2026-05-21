@@ -13,9 +13,7 @@ function eventOrderIdx(name) {
     return idx === -1 ? EVENT_ORDER.length : idx;
 }
 
-const TABS = [
-    { key: 'events', label: '종목 결과' }
-];
+const TABS = [{ key: 'events', label: '종목 결과' }];
 
 function Tally({ items }) {
     const tally = useMemo(() => {
@@ -308,6 +306,10 @@ export default function HistoryPage() {
                     <div className="hs-card">
                         <div className="hs-label">📊 종합 우승 누적</div>
                         <Tally items={overallItems} />
+                    </div>
+                    <div className="hs-card">
+                        <div className="hs-label">📣 응원전 우승 누적</div>
+                        <Tally items={cheerItems} />
                     </div>
                 </section>
             </div>
