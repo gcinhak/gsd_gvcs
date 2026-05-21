@@ -14,8 +14,7 @@ function eventOrderIdx(name) {
 }
 
 const TABS = [
-    { key: 'events', label: '종목 결과' },
-    { key: 'cheer', label: '응원전' },
+    { key: 'events', label: '종목 결과' }
 ];
 
 function Tally({ items }) {
@@ -309,10 +308,6 @@ export default function HistoryPage() {
                     <div className="hs-card">
                         <div className="hs-label">📊 종합 우승 누적</div>
                         <Tally items={overallItems} />
-                    </div>
-                    <div className="hs-card">
-                        <div className="hs-label">📣 응원전 승리 누적</div>
-                        <Tally items={cheerItems} />
                     </div>
                 </section>
             </div>
