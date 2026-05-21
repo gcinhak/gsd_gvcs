@@ -4,6 +4,8 @@ import CampusBadge from '../components/CampusBadge';
 import { HISTORY, CAMPUS_COLORS, EVENT_ORDER } from '../data';
 
 // 윤지 공주가 수정함.
+// asdasda
+// asdasdasd
 
 function eventOrderIdx(name) {
     const idx = EVENT_ORDER.indexOf(name);
