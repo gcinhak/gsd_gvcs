@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { YEARS } from '../data';
 
+// 인택이가 작업을 시작합니다.
+
 export default function CheersVideoPage() {
     const { yearId } = useParams();
     const navigate = useNavigate();
@@ -30,7 +32,9 @@ export default function CheersVideoPage() {
                         ← 연도 선택
                     </button>
                     <h2 className="vl-title">
-                        <span className="vl-year" style={{ color: yearData.color }}>{yearData.year}</span>
+                        <span className="vl-year" style={{ color: yearData.color }}>
+                            {yearData.year}
+                        </span>
                         글로벌 체육 축제 응원전
                     </h2>
                 </div>
