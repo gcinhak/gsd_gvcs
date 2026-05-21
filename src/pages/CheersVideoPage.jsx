@@ -3,6 +3,9 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { YEARS } from '../data';
 
 // 인택이가 작업을 시작합니다.
+// git add .
+// git commit -m "남기고 싶은 멘트"
+// git push origin main
 
 export default function CheersVideoPage() {
     const { yearId } = useParams();
