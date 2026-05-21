@@ -134,7 +134,7 @@ async function increment(req, env) {
         return json({ error: 'Invalid request' }, 400);
     }
 
-    // 3. 600타 초과 매크로 요청은 최대치로 깎아서 반영
+    // 3. 600타 초과 매크로 요청은 최대치로 깎아서 반영(실제 600타도 충분히 빠른 편이므로)
     const MAX_DELTA = 600;
     if (delta > MAX_DELTA) {
         console.warn(
