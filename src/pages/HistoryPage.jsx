@@ -4,6 +4,9 @@ import CampusBadge from '../components/CampusBadge';
 import { HISTORY, CAMPUS_COLORS, EVENT_ORDER } from '../data';
 
 // 윤지 공주가 수정함.
+// git add .
+// git commit -m "역대 전적 페이지 구현 (2024 데이터까지)"
+// git push origin main
 
 function eventOrderIdx(name) {
     const idx = EVENT_ORDER.indexOf(name);
