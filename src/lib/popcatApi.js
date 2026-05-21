@@ -12,11 +12,11 @@ export async function fetchCounts() {
     return res.json();
 }
 
-export async function incrementCount(campus, delta = 1) {
+export async function incrementCount(campus, delta = 1, uuid = null) {
     const res = await fetch(`${API}/api/popcat/increment`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ campus, delta }),
+        body: JSON.stringify({ campus, delta, uuid }),
     });
     if (!res.ok) throw new Error(`incrementCount failed: ${res.status}`);
     return res.json();

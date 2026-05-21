@@ -80,39 +80,7 @@ async function getCounts(env, req, ctx) {
 }
 
 async function increment(req, env) {
-    // 💡 IP 기반 과도한 요청(매크로 API 호출) 5분 차단 로직
-    const clientIp = req.headers.get('cf-connecting-ip');
-    const now = Date.now();
-
-    // 1. 현재 5분 차단(블랙리스트) 상태인지 확인
-    if (blockedIPs.has(clientIp)) {
-        const unblockTime = blockedIPs.get(clientIp);
-        if (now < unblockTime) {
-            const remainSeconds = Math.ceil((unblockTime - now) / 1000);
-            console.warn(`[Blocked Attempt] IP: ${clientIp}는 차단된 상태입니다. 해제까지 ${remainSeconds}초 남음.`);
-            return json({ error: `Too many requests. Blocked for ${remainSeconds}s.` }, 429);
-        } else {
-            // 5분이 지나면 차단 해제
-            blockedIPs.delete(clientIp);
-        }
-    }
-
-    // 2. 20초 이내에 3번 이상 보냈는지 확인
-    let timestamps = ipRequestHistory.get(clientIp) || [];
-    timestamps = timestamps.filter((t) => now - t < 20000); // 최근 20초 기록만 남김
-
-    if (timestamps.length >= 3) {
-        // 20초 안에 3번(현재 요청 포함 4번째 시도)이면 즉시 5분(300,000ms) 차단
-        blockedIPs.set(clientIp, now + 5 * 60 * 1000);
-        console.warn(`[Auto Ban] IP: ${clientIp} - 20초 내 3회 이상 비정상 요청으로 5분간 밴 처리됨!`);
-        return json({ error: 'Too many requests. Blocked for 5 minutes.' }, 429);
-    }
-
-    // 이번 요청 시간 기록
-    timestamps.push(now);
-    ipRequestHistory.set(clientIp, timestamps);
-
-    // 기존 로직: 바디 파싱 및 점수 누적
+    // 바디를 먼저 파싱 (UUID, campus, delta 모두 여기에 있음)
     let body;
     try {
         body = await req.json();
@@ -122,16 +90,55 @@ async function increment(req, env) {
 
     const campus = body?.campus;
     let delta = Number(body?.delta);
+    // 클라이언트가 보낸 UUID (localStorage에서 생성한 값).
+    // UUID가 없으면 IP를 fallback으로 사용하되, 학교 NAT 환경에서는
+    // IP만으로 차단하면 전체 캠퍼스가 한꺼번에 밴될 수 있어 UUID 우선 사용.
+    const clientUuid = typeof body?.uuid === 'string' && body.uuid.length > 0 ? body.uuid : null;
+    const clientIp = req.headers.get('cf-connecting-ip') || 'unknown';
 
+    // 💡 차단 키: UUID가 있으면 UUID, 없으면 IP
+    const rateKey = clientUuid ?? clientIp;
+
+    const now = Date.now();
+
+    // 1. 현재 차단(블랙리스트) 상태인지 확인
+    if (blockedIPs.has(rateKey)) {
+        const unblockTime = blockedIPs.get(rateKey);
+        if (now < unblockTime) {
+            const remainSeconds = Math.ceil((unblockTime - now) / 1000);
+            console.warn(`[Blocked Attempt] Key: ${rateKey} — 해제까지 ${remainSeconds}초 남음.`);
+            return json({ error: `Too many requests. Blocked for ${remainSeconds}s.` }, 429);
+        } else {
+            blockedIPs.delete(rateKey);
+        }
+    }
+
+    // 2. 20초 이내 요청 횟수 확인
+    //    임계값을 5회로 상향 (기존 3회는 20초 타이머 flush + SPA 이탈 flush 가
+    //    겹치면 정상 사용자도 쉽게 초과하는 문제가 있었음)
+    const RATE_LIMIT = 5;
+    let timestamps = ipRequestHistory.get(rateKey) || [];
+    timestamps = timestamps.filter((t) => now - t < 20000);
+
+    if (timestamps.length >= RATE_LIMIT) {
+        blockedIPs.set(rateKey, now + 5 * 60 * 1000);
+        console.warn(`[Auto Ban] Key: ${rateKey} (IP: ${clientIp}) — 20초 내 ${RATE_LIMIT}회 초과로 5분 밴.`);
+        return json({ error: 'Too many requests. Blocked for 5 minutes.' }, 429);
+    }
+
+    timestamps.push(now);
+    ipRequestHistory.set(rateKey, timestamps);
+
+    // 기존 유효성 검사
     if (isNaN(delta) || delta <= 0) {
         return json({ error: 'Invalid request' }, 400);
     }
 
-    // 3. [보안 수정] 600타를 넘겨서 보낸 매크로 요청은 최대치인 600점으로 깎아서 반영
+    // 3. 600타 초과 매크로 요청은 최대치로 깎아서 반영
     const MAX_DELTA = 600;
     if (delta > MAX_DELTA) {
         console.warn(
-            `[Macro Adjusted] IP: ${clientIp}, Campus: ${campus}, Attempted Delta: ${delta} -> Reduced to 600`
+            `[Macro Adjusted] Key: ${rateKey}, Campus: ${campus}, Attempted Delta: ${delta} -> Reduced to 600`
         );
         delta = MAX_DELTA;
     }
@@ -140,7 +147,7 @@ async function increment(req, env) {
         return json({ error: 'invalid campus' }, 400);
     }
 
-    console.log(`[Score Added] Campus: ${campus}, Added Delta: ${delta} POPS (IP: ${clientIp})`);
+    console.log(`[Score Added] Campus: ${campus}, Delta: ${delta} POPS (Key: ${rateKey}, IP: ${clientIp})`);
 
     await env.DB.prepare(
         'INSERT INTO popcat_counts (campus, count, updated_at) VALUES (?, ?, unixepoch()) ' +

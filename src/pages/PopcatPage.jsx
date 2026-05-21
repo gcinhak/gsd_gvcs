@@ -9,6 +9,9 @@ const LOCAL_STORAGE_KEY = 'gsd-popcat-counts-v2';
 const MY_CLICKS_KEY = 'gsd-popcat-my-clicks'; // ← 추가
 const MY_UUID_KEY = 'gsd-popcat-uuid'; // ← 추가
 const BAN_KEY = 'gsd-popcat-ban-until';
+// SPA 이탈(컴포넌트 언마운트) 시 미전송 데이터를 보존하는 키
+// → 탭/브라우저 닫기가 아닌 페이지 이동에서는 POST를 보내지 않고 여기에 저장
+const SPA_PENDING_KEY = 'gsd-popcat-spa-pending-v1';
 const CAMPUSES = ['문경', '음성', '세종'];
 const FLUSH_MS = 20000; // 클릭 누적 배치 전송 간격 (20초)
 const IS_DISABLED = false; // 응급 비활성화 토글 — true 로 바꾸면 클릭 막힘
@@ -130,7 +133,7 @@ export default function PopcatPage() {
                         const response = await fetch(url, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ campus: c, delta }),
+                            body: JSON.stringify({ campus: c, delta, uuid: getOrCreateUUID() }),
                         });
 
                         // 2. 🛑 429 매크로 차단 응답이 왔을 때 알림창 띄우기
@@ -183,7 +186,34 @@ export default function PopcatPage() {
     useEffect(() => {
         if (!isPopcatApiConfigured) return;
 
-        const sendBeacon = () => {
+        // ─────────────────────────────────────────────────────────────
+        // SPA 복귀 시: 이전 페이지 이동에서 저장해 둔 미전송 데이터 복원
+        // ─────────────────────────────────────────────────────────────
+        try {
+            const stored = JSON.parse(window.localStorage.getItem(SPA_PENDING_KEY) || '{}');
+            let restoredTotal = 0;
+            for (const c of CAMPUSES) {
+                const v = Number(stored[c]) || 0;
+                if (v > 0) {
+                    pendingRef.current[c] = (pendingRef.current[c] || 0) + v;
+                    restoredTotal += v;
+                }
+            }
+            if (restoredTotal > 0) {
+                window.localStorage.removeItem(SPA_PENDING_KEY);
+                setTimeout(() => setPendingTotal((p) => p + restoredTotal), 0);
+                // 복원된 데이터를 다음 flush 주기에 전송 예약
+                schedulerRef.current();
+            }
+        } catch {
+            /* ignore */
+        }
+
+        // ─────────────────────────────────────────────────────────────
+        // 실제 탭/브라우저 닫기(beforeunload, pagehide)에서만 keepalive POST
+        // SPA 라우터 이탈(컴포넌트 언마운트)에서는 이 핸들러가 호출되지 않음
+        // ─────────────────────────────────────────────────────────────
+        const flushToServer = () => {
             const pending = pendingRef.current;
             const url =
                 (import.meta.env.VITE_POPCAT_API_URL || 'https://gsd-gvcs-popcat.gcinhak.workers.dev').replace(
@@ -196,7 +226,7 @@ export default function PopcatPage() {
                         fetch(url, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ campus: c, delta: pending[c] }),
+                            body: JSON.stringify({ campus: c, delta: pending[c], uuid: getOrCreateUUID() }),
                             keepalive: true,
                         });
                     } catch {
@@ -207,12 +237,33 @@ export default function PopcatPage() {
             pendingRef.current = { ...ZERO };
         };
 
-        window.addEventListener('beforeunload', sendBeacon);
-        window.addEventListener('pagehide', sendBeacon);
+        window.addEventListener('beforeunload', flushToServer);
+        window.addEventListener('pagehide', flushToServer);
+
         return () => {
-            window.removeEventListener('beforeunload', sendBeacon);
-            window.removeEventListener('pagehide', sendBeacon);
-            sendBeacon();
+            window.removeEventListener('beforeunload', flushToServer);
+            window.removeEventListener('pagehide', flushToServer);
+
+            // ─────────────────────────────────────────────────────────
+            // SPA 이탈(컴포넌트 언마운트): POST 금지 — localStorage에 보존
+            // 탭을 닫는 게 아니므로 keep-alive POST를 보내지 않는다.
+            // 보존된 데이터는 다음 번 이 페이지에 들어올 때 위 복원 로직이 처리함.
+            // ─────────────────────────────────────────────────────────
+            const pending = pendingRef.current;
+            const hasData = CAMPUSES.some((c) => pending[c] > 0);
+            if (hasData) {
+                try {
+                    const existing = JSON.parse(window.localStorage.getItem(SPA_PENDING_KEY) || '{}');
+                    const merged = {};
+                    for (const c of CAMPUSES) {
+                        merged[c] = (Number(existing[c]) || 0) + (pending[c] || 0);
+                    }
+                    window.localStorage.setItem(SPA_PENDING_KEY, JSON.stringify(merged));
+                } catch {
+                    /* ignore */
+                }
+            }
+            pendingRef.current = { ...ZERO };
         };
     }, []);
 
