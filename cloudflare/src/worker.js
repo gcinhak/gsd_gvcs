@@ -5,6 +5,11 @@
 const CAMPUSES = ['문경', '음성', '세종'];
 const GET_CACHE_TTL = 2; // 초
 
+// 매크로 감지 임계값
+const INSTANT_BAN_DELTA = 2001; // 이 이상이면 즉시 5분 밴
+const SOFT_BAN_DELTA = 800; // 이 이상이면 누적 카운터 +1
+const SOFT_BAN_COUNT = 3; // 누적 3회 도달 시 5분 밴
+
 const CORS_HEADERS = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
@@ -15,6 +20,7 @@ const CORS_HEADERS = {
 // 💡 IP별 접속 기록과 차단 목록을 서버 메모리에 임시 저장
 const ipRequestHistory = new Map();
 const blockedIPs = new Map();
+const macroDeltaCount = new Map(); // 💡 누적 카운터용 (800~2000 구간)
 
 export default {
     async fetch(req, env, ctx) {
@@ -95,6 +101,12 @@ async function increment(req, env, ctx) {
     // 💡 IP와 UUID 추출 (로그 기록용)
     const clientIp = req.headers.get('cf-connecting-ip') || 'unknown';
     const uuid = body?.uuid || 'none';
+
+    // [3] uuid 없거나 none이면 차단
+    if (!uuid || uuid === 'none') {
+        return json({ error: 'Forbidden' }, 403);
+    }
+
     const rateKey = `rate:${clientIp}`;
     const now = Date.now();
 
@@ -139,10 +151,45 @@ async function increment(req, env, ctx) {
 
     // 3. 600타 초과 매크로 요청 삭감 로직
     const MAX_DELTA = 600;
-    if (delta > MAX_DELTA) {
-        // 🚨 매크로 삭감이 발생하는 순간!
 
-        // 💡 [여기에 로그 추가] 600타를 넘기려 한 괘씸한 내역도 기록합니다.
+    if (delta > MAX_DELTA) {
+        const macroKey = `macro:${clientIp}`;
+
+        // [1] 즉시 밴 — delta가 2,001 이상이면 바로 5분 밴
+        if (delta >= INSTANT_BAN_DELTA) {
+            blockedIPs.set(rateKey, now + 5 * 60 * 1000);
+            ctx.waitUntil(
+                env.DB.prepare(
+                    'INSERT INTO abnormal_logs (uuid, ip, campus, attempted_delta, reason, created_at) VALUES (?, ?, ?, ?, ?, unixepoch())'
+                )
+                    .bind(uuid, clientIp, campus, delta, 'INSTANT_BAN')
+                    .run()
+                    .catch(console.error)
+            );
+            return json({ error: 'Macro detected. Blocked for 5 minutes.' }, 429);
+        }
+
+        // [2] 누적 밴 — delta가 800~2,000이면 카운터 +1, 3회 시 5분 밴
+        if (delta >= SOFT_BAN_DELTA) {
+            const count = (macroDeltaCount.get(macroKey) || 0) + 1;
+            macroDeltaCount.set(macroKey, count);
+
+            if (count >= SOFT_BAN_COUNT) {
+                macroDeltaCount.delete(macroKey); // 카운터 초기화
+                blockedIPs.set(rateKey, now + 5 * 60 * 1000);
+                ctx.waitUntil(
+                    env.DB.prepare(
+                        'INSERT INTO abnormal_logs (uuid, ip, campus, attempted_delta, reason, created_at) VALUES (?, ?, ?, ?, ?, unixepoch())'
+                    )
+                        .bind(uuid, clientIp, campus, delta, 'SOFT_BAN_3X')
+                        .run()
+                        .catch(console.error)
+                );
+                return json({ error: 'Repeated macro detected. Blocked for 5 minutes.' }, 429);
+            }
+        }
+
+        // 밴 조건 미달 시 — 기존대로 600으로 삭감 후 처리
         ctx.waitUntil(
             env.DB.prepare(
                 'INSERT INTO abnormal_logs (uuid, ip, campus, attempted_delta, reason, created_at) VALUES (?, ?, ?, ?, ?, unixepoch())'
@@ -151,7 +198,6 @@ async function increment(req, env, ctx) {
                 .run()
                 .catch(console.error)
         );
-
         delta = MAX_DELTA;
     }
 
