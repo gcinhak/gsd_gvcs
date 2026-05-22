@@ -1,13 +1,19 @@
 import { useMemo, useState } from 'react';
 import PageHeader from '../components/PageHeader';
 import CampusBadge from '../components/CampusBadge';
-import { getCampusList, getSports, getCategories, getPlayers, hasCampusData } from '../data/lineup';
+import {
+    getCampusList,
+    getPlayers,
+    getAllSports,
+    getAllCategoriesForSport,
+} from '../data/lineup';
 import { CAMPUS_COLORS } from '../data';
+
+const CAMPUS_FILTER_ALL = '__all';
 
 function PlayerRow({ player }) {
     return (
         <li className={`lp-row ${player.bench ? 'is-bench' : ''}`}>
-            {/* 번호는 추후 정식 등번호 들어오면 다시 노출 */}
             {player.grade != null && <span className="lp-grade">{player.grade}</span>}
             <span className="lp-name">{player.name}</span>
             {player.role && <span className="lp-role">{player.role}</span>}
@@ -26,23 +32,24 @@ function sortByGrade(players) {
     });
 }
 
-function CategoryCard({ campus, category, players }) {
+function CampusCategoryCard({ campus, sport, category }) {
+    const players = getPlayers(campus, sport, category);
     const color = CAMPUS_COLORS[campus];
     const cardStyle = color ? { '--card-tint': color.soft, '--card-accent': color.bg } : {};
     const starters = sortByGrade(players.filter((p) => !p.bench));
     const bench = sortByGrade(players.filter((p) => p.bench));
+    const isEmpty = players.length === 0;
 
     return (
-        <article className="lp-card" style={cardStyle}>
+        <article className={`lp-card ${isEmpty ? 'is-empty' : ''}`} style={cardStyle}>
             <header className="lp-card-head">
-                <h3 className="lp-card-title">{category}</h3>
+                <CampusBadge campus={campus} size="md" />
                 <span className="lp-card-count">
-                    {starters.length}
-                    {bench.length > 0 && <span className="lp-bench-count"> · 후보 {bench.length}</span>}
+                    {isEmpty ? '미입력' : `${starters.length}명${bench.length > 0 ? ` · 후보 ${bench.length}` : ''}`}
                 </span>
             </header>
-            {players.length === 0 ? (
-                <div className="lp-empty">선수 미입력</div>
+            {isEmpty ? (
+                <div className="lp-empty">선수 데이터 입력 대기중</div>
             ) : (
                 <ul className="lp-list">
                     {starters.map((p, i) => (
@@ -59,19 +66,20 @@ function CategoryCard({ campus, category, players }) {
 }
 
 export default function LineupPage() {
+    const sports = useMemo(() => getAllSports(), []);
     const campuses = getCampusList();
-    const [campus, setCampus] = useState(
-        campuses.find((c) => hasCampusData(c)) || campuses[0]
-    );
-    const sports = useMemo(() => getSports(campus), [campus]);
+
     const [sport, setSport] = useState(sports[0] || '');
+    const categories = useMemo(() => getAllCategoriesForSport(sport), [sport]);
+    const [category, setCategory] = useState(categories[0] || '');
+    const [campusFilter, setCampusFilter] = useState(CAMPUS_FILTER_ALL);
 
-    // 캠퍼스 바뀌면 sport 도 재선택
-    const visibleSports = sports;
-    const activeSport = visibleSports.includes(sport) ? sport : visibleSports[0];
-    const categories = activeSport ? getCategories(campus, activeSport) : [];
+    // 종목 바뀌면 카테고리도 첫번째로
+    const activeCategory = categories.includes(category) ? category : categories[0] || '';
 
-    const isEmpty = !hasCampusData(campus);
+    const visibleCampuses = campusFilter === CAMPUS_FILTER_ALL
+        ? campuses
+        : [campusFilter];
 
     return (
         <div className="page lineup-page">
@@ -79,76 +87,85 @@ export default function LineupPage() {
                 <PageHeader
                     eyebrow="GLOBAL SPORTS FESTIVAL"
                     title="라인업"
-                    description="캠퍼스 · 종목별 출전 선수를 확인하세요."
+                    description="종목 → 카테고리 순으로 선택하고, 원하는 캠퍼스만 골라 보세요."
                 />
 
-                {/* 캠퍼스 탭 */}
-                <div className="lp-campus-tabs">
-                    {campuses.map((c) => {
-                        const enabled = hasCampusData(c);
-                        return (
+                {/* 종목 탭 */}
+                <div className="lp-sport-tabs">
+                    {sports.map((s) => (
+                        <button
+                            key={s}
+                            type="button"
+                            className={`lp-sport-tab ${sport === s ? 'active' : ''}`}
+                            onClick={() => setSport(s)}
+                        >
+                            {s}
+                        </button>
+                    ))}
+                </div>
+
+                {/* 카테고리 칩 */}
+                {categories.length > 0 && (
+                    <div className="lp-cat-chips">
+                        {categories.map((c) => (
                             <button
                                 key={c}
                                 type="button"
-                                className={`lp-campus-tab ${campus === c ? 'active' : ''} ${enabled ? '' : 'is-disabled'}`}
-                                onClick={() => enabled && setCampus(c)}
-                                disabled={!enabled}
+                                className={`chip ${activeCategory === c ? 'active' : ''}`}
+                                onClick={() => setCategory(c)}
                             >
-                                <CampusBadge campus={c} size="md" />
-                                {!enabled && <span className="lp-disabled-tag">준비중</span>}
+                                {c}
                             </button>
-                        );
-                    })}
-                </div>
-
-                {isEmpty ? (
-                    <div className="empty-state">
-                        <div className="empty-tag">라인업 준비중</div>
-                        <p>이 캠퍼스의 라인업 데이터가 아직 등록되지 않았습니다.</p>
+                        ))}
                     </div>
-                ) : (
-                    <>
-                        {/* 종목 칩 */}
-                        <div className="lp-sport-chips">
-                            {visibleSports.map((s) => (
-                                <button
-                                    key={s}
-                                    type="button"
-                                    className={`chip ${activeSport === s ? 'active' : ''}`}
-                                    onClick={() => setSport(s)}
-                                >
-                                    {s}
-                                </button>
-                            ))}
-                        </div>
-
-                        {/* 카테고리 카드 그리드 */}
-                        <div className="lp-grid">
-                            {categories.map((cat) => (
-                                <CategoryCard
-                                    key={cat}
-                                    campus={campus}
-                                    category={cat}
-                                    players={getPlayers(campus, activeSport, cat)}
-                                />
-                            ))}
-                            {categories.length === 0 && (
-                                <div className="empty-state">
-                                    <div className="empty-tag">데이터 없음</div>
-                                    <p>이 종목의 라인업이 아직 없습니다.</p>
-                                </div>
-                            )}
-                        </div>
-                    </>
                 )}
 
-                {/* 도움말 */}
-                <div className="lp-help">
-                    <span>
-                        ⓘ 음성·세종 캠퍼스 라인업이 등록되면 자동으로 탭이 활성화됩니다. (현재 문경 데이터만 입력)
-                    </span>
+                {/* 캠퍼스 필터 */}
+                <div className="lp-campus-filter">
+                    <span className="lp-filter-label">캠퍼스</span>
+                    <div className="lp-campus-pills">
+                        <button
+                            type="button"
+                            className={`lp-campus-pill ${campusFilter === CAMPUS_FILTER_ALL ? 'active' : ''}`}
+                            onClick={() => setCampusFilter(CAMPUS_FILTER_ALL)}
+                        >
+                            전체
+                        </button>
+                        {campuses.map((c) => (
+                            <button
+                                key={c}
+                                type="button"
+                                className={`lp-campus-pill ${campusFilter === c ? 'active' : ''}`}
+                                onClick={() => setCampusFilter(c)}
+                            >
+                                <CampusBadge campus={c} size="sm" />
+                            </button>
+                        ))}
+                    </div>
                 </div>
 
+                {/* 캠퍼스 카드 그리드 */}
+                {activeCategory ? (
+                    <div className={`lp-grid ${campusFilter !== CAMPUS_FILTER_ALL ? 'is-single' : ''}`}>
+                        {visibleCampuses.map((campus) => (
+                            <CampusCategoryCard
+                                key={campus}
+                                campus={campus}
+                                sport={sport}
+                                category={activeCategory}
+                            />
+                        ))}
+                    </div>
+                ) : (
+                    <div className="empty-state">
+                        <div className="empty-tag">카테고리 없음</div>
+                        <p>이 종목의 카테고리가 아직 등록되지 않았습니다.</p>
+                    </div>
+                )}
+
+                <div className="lp-help">
+                    <span>ⓘ 음성·세종 라인업 데이터가 입력되면 해당 캠퍼스 카드에 자동으로 표시됩니다.</span>
+                </div>
             </div>
         </div>
     );

@@ -391,6 +391,36 @@ export function getCategories(campus, sport) {
     return Object.keys(LINEUP[campus]?.[sport] || {});
 }
 
+/** 모든 캠퍼스의 종목 합집합 (입력 순서 유지) */
+export function getAllSports() {
+    const out = [];
+    const seen = new Set();
+    for (const campus of SUPPORTED_CAMPUSES) {
+        for (const sport of Object.keys(LINEUP[campus] || {})) {
+            if (!seen.has(sport)) {
+                seen.add(sport);
+                out.push(sport);
+            }
+        }
+    }
+    return out;
+}
+
+/** 한 종목에서 모든 캠퍼스의 카테고리 합집합 */
+export function getAllCategoriesForSport(sport) {
+    const out = [];
+    const seen = new Set();
+    for (const campus of SUPPORTED_CAMPUSES) {
+        for (const cat of Object.keys(LINEUP[campus]?.[sport] || {})) {
+            if (!seen.has(cat)) {
+                seen.add(cat);
+                out.push(cat);
+            }
+        }
+    }
+    return out;
+}
+
 export function getPlayers(campus, sport, category) {
     return LINEUP[campus]?.[sport]?.[category] || [];
 }
