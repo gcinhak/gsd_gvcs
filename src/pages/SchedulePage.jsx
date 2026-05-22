@@ -5,6 +5,30 @@ import { SCHEDULE } from '../data';
 
 const DAY_ORDER = ['thursday', 'friday', 'saturday'];
 
+/* 파란색에 흰색 반스푼 섞은 부드러운 파스텔톤 컬러 스타일 정의 */
+const PILL_STYLES = {
+    final: {
+        backgroundColor: '#e0e7ff', // 부드러운 연파랑 (인디고 틴트)
+        color: '#4338ca',           // 가독성을 위한 네이비-블루 글자색
+        border: '1px solid #c7d2fe',
+        padding: '2px 8px',
+        borderRadius: '4px',
+        fontSize: '12px',
+        fontWeight: '600',
+        display: 'inline-block'
+    },
+    prelim: {
+        backgroundColor: '#f1f5f9', // 차분하고 부드러운 그레이-블루 틴트
+        color: '#475569',           // 정돈된 글자색
+        border: '1px solid #cbd5e1',
+        padding: '2px 8px',
+        borderRadius: '4px',
+        fontSize: '12px',
+        fontWeight: '600',
+        display: 'inline-block'
+    }
+};
+
 /* "문경 VS 음성" → 배지로 렌더 */
 function renderMatch(text) {
     if (!text) return null;
@@ -44,7 +68,7 @@ function MatchTable({ matches }) {
                         <tr key={i} className={m.round === '결선' ? 'is-final' : ''}>
                             <td className="mt-num">{m.num}</td>
                             <td>
-                                <span className={`round-pill round-${m.round === '결선' ? 'final' : 'prelim'}`}>
+                                <span style={m.round === '결선' ? PILL_STYLES.final : PILL_STYLES.prelim}>
                                     {m.round}
                                 </span>
                             </td>
@@ -68,7 +92,15 @@ function TimelineList({ items }) {
                         <span className="tl-end">~ {it.end}</span>
                     </div>
                     <div className="tl-content">
-                        <span className="tl-label">{it.label}</span>
+                        {/* 배지를 텍스트(label) 내부로 이동시켜 위치를 맞추고, 높이(길이)가 길어지는 현상 방지 */}
+                        <span className="tl-label">
+                            {it.round && (
+                                <span style={{ ... (it.round === '결선' ? PILL_STYLES.final : PILL_STYLES.prelim), marginRight: '6px', verticalAlign: 'middle' }}>
+                                    {it.round}
+                                </span>
+                            )}
+                            <span style={{ verticalAlign: 'middle' }}>{it.label}</span>
+                        </span>
                         {it.sub && <span className="tl-sub">{renderMatch(it.sub)}</span>}
                     </div>
                     {it.meta && <span className="tl-meta">{it.meta}</span>}
@@ -103,7 +135,15 @@ function CourtsTable({ courtNames, rows }) {
                                 <td key={ci} className={c ? 'ct-cell' : 'ct-cell ct-empty'}>
                                     {c ? (
                                         <>
-                                            <div className="ct-category">{c.category}</div>
+                                            <div className="ct-category">
+                                                {/* 배지를 텍스트 내부로 이동시켜 위치를 맞추고, 높이(길이)가 길어지는 현상 방지 */}
+                                                {c.round && (
+                                                    <span style={{ ... (c.round === '결선' ? PILL_STYLES.final : PILL_STYLES.prelim), marginRight: '4px', verticalAlign: 'middle' }}>
+                                                        {c.round}
+                                                    </span>
+                                                )}
+                                                <span style={{ verticalAlign: 'middle' }}>{c.category}</span>
+                                            </div>
                                             <div className="ct-match">{renderMatch(c.match)}</div>
                                         </>
                                     ) : (
