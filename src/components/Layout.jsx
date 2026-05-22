@@ -7,7 +7,7 @@ const NAV_ITEMS = [
     { to: '/', label: '홈', end: true },
     { to: '/schedule', label: '경기 일정' },
     { to: '/cheers', label: '응원전' },
-    { to: '/games', label: '경기 영상' },
+    //{ to: '/games', label: '경기 영상' },
     { to: '/history', label: '역대 전적' },
     { to: '/popcat', label: '팝캣' },
     { to: '/upcoming', label: '예정 기능' },
