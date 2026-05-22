@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import CampusBadge from '../components/CampusBadge';
 import { LIVE_MATCHES, CAMPUS_COLORS, getQuarters } from '../data';
@@ -53,16 +53,6 @@ function LineupCard({ team, members }) {
 }
 
 function CommentaryFeed({ comments }) {
-    const scrollRef = useRef(null);
-    const lastLengthRef = useRef(0);
-
-    useEffect(() => {
-        if (comments.length > lastLengthRef.current && scrollRef.current) {
-            scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-        }
-        lastLengthRef.current = comments.length;
-    }, [comments.length]);
-
     if (comments.length === 0) {
         return (
             <div className="cf-empty">
@@ -72,9 +62,12 @@ function CommentaryFeed({ comments }) {
         );
     }
 
+    // 최신이 맨 위로
+    const ordered = comments.slice().reverse();
+
     return (
-        <div className="cf-list" ref={scrollRef}>
-            {comments.map((c) => (
+        <div className="cf-list">
+            {ordered.map((c) => (
                 <div key={c.id} className={`cf-msg type-${c.type || 'normal'}`}>
                     {c.quarter && <span className="cf-quarter">{c.quarter}</span>}
                     <span className="cf-time">{formatTime(c.ts)}</span>
