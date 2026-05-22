@@ -3,15 +3,17 @@ import PageHeader from '../components/PageHeader';
 import CampusBadge from '../components/CampusBadge';
 import { HISTORY, CAMPUS_COLORS, EVENT_ORDER } from '../data';
 
+// 윤지 공주가 수정함.
+// git add .
+// git commit -m "역대 전적 페이지 구현 (2024 데이터까지)"
+// git push origin main
+
 function eventOrderIdx(name) {
     const idx = EVENT_ORDER.indexOf(name);
     return idx === -1 ? EVENT_ORDER.length : idx;
 }
 
-const TABS = [
-    { key: 'events', label: '종목 결과' },
-    { key: 'cheer', label: '응원전' },
-];
+const TABS = [{ key: 'events', label: '종목 결과' }];
 
 function Tally({ items }) {
     const tally = useMemo(() => {
@@ -262,7 +264,7 @@ export default function HistoryPage() {
 
                 <div className="sub-tabs">
                     {TABS.map((t) => {
-                        const disabled = t.key === 'cheer' && !yearData?.cheer?.scores;
+                        const disabled = false;
                         return (
                             <button
                                 key={t.key}
@@ -306,7 +308,7 @@ export default function HistoryPage() {
                         <Tally items={overallItems} />
                     </div>
                     <div className="hs-card">
-                        <div className="hs-label">📣 응원전 승리 누적</div>
+                        <div className="hs-label">📣 응원전 우승 누적</div>
                         <Tally items={cheerItems} />
                     </div>
                 </section>

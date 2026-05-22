@@ -33,12 +33,17 @@ function readLocal() {
 
 function getOrCreateUUID() {
     if (typeof window === 'undefined') return null;
-    let uuid = window.localStorage.getItem(MY_UUID_KEY);
-    if (!uuid) {
-        uuid = crypto.randomUUID();
-        window.localStorage.setItem(MY_UUID_KEY, uuid);
+    try {
+        let uuid = window.localStorage.getItem(MY_UUID_KEY);
+        if (!uuid) {
+            uuid = crypto.randomUUID();
+            window.localStorage.setItem(MY_UUID_KEY, uuid);
+        }
+        return uuid;
+    } catch {
+        // 시크릿 모드 또는 localStorage 차단 환경
+        return null;
     }
-    return uuid;
 }
 
 function readMyClicks() {
@@ -61,12 +66,23 @@ export default function PopcatPage() {
     const [pops, setPops] = useState([]);
     const [serverState, setServerState] = useState(isPopcatApiConfigured ? 'connecting' : 'offline');
     const [pendingTotal, setPendingTotal] = useState(0);
-    const [banUntil, setBanUntil] = useState(() => Number(window.localStorage.getItem(BAN_KEY)) || 0);
-    const [isBanned, setIsBanned] = useState(() => {
-        const storedBan = Number(window.localStorage.getItem(BAN_KEY)) || 0;
-        return Date.now() < storedBan;
+    const [banUntil, setBanUntil] = useState(() => {
+        try {
+            return Number(window.localStorage.getItem(BAN_KEY)) || 0;
+        } catch {
+            return 0;
+        }
     });
-    const uiDisabled = IS_DISABLED || isBanned;
+    const [hasUuid] = useState(() => getOrCreateUUID() !== null);
+    const [isBanned, setIsBanned] = useState(() => {
+        try {
+            const storedBan = Number(window.localStorage.getItem(BAN_KEY)) || 0;
+            return Date.now() < storedBan;
+        } catch {
+            return false;
+        }
+    });
+    const uiDisabled = IS_DISABLED || isBanned || !hasUuid; // 💡 !hasUuid 추가
     const popIdRef = useRef(0);
     const releaseTimers = useRef({});
     const pendingRef = useRef({ ...ZERO });
@@ -95,7 +111,11 @@ export default function PopcatPage() {
     /* localStorage 캐시 (로컬모드 한정) */
     useEffect(() => {
         if (isPopcatApiConfigured) return;
-        window.localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(counts));
+        try {
+            window.localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(counts));
+        } catch {
+            /* 무시 */
+        }
     }, [counts]);
 
     /* UUID 초기화 — 최초 방문 시 생성, 이후 유지 */
@@ -105,7 +125,11 @@ export default function PopcatPage() {
 
     /* 내 클릭 수 localStorage 저장 */
     useEffect(() => {
-        window.localStorage.setItem(MY_CLICKS_KEY, JSON.stringify(myCounts));
+        try {
+            window.localStorage.setItem(MY_CLICKS_KEY, JSON.stringify(myCounts));
+        } catch {
+            /* 무시 */
+        }
     }, [myCounts]);
 
     /* 20초 배치 플러시 — flush 와 scheduler 가 같은 클로저 안에서 작동 */
@@ -138,15 +162,27 @@ export default function PopcatPage() {
 
                         // 2. 🛑 429 매크로 차단 응답이 왔을 때 알림창 띄우기
                         if (response.status === 429) {
-                            const unbanTime = Date.now() + 5 * 60 * 1000; // 현재 시간 + 5분
-                            window.localStorage.setItem(BAN_KEY, unbanTime);
-                            setBanUntil(unbanTime);
+                            // 💡 pending 완전 초기화 — 재전송 시도 차단
+                            pendingRef.current = { ...ZERO };
+                            setPendingTotal(0);
+                            if (flushTimerRef.current) {
+                                clearTimeout(flushTimerRef.current);
+                                flushTimerRef.current = null;
+                            }
+
+                            try {
+                                const unbanTime = Date.now() + 5 * 60 * 1000;
+                                window.localStorage.setItem(BAN_KEY, unbanTime);
+                                setBanUntil(unbanTime);
+                            } catch {
+                                /* 무시 */
+                            }
                             setIsBanned(true);
 
                             alert(
                                 '🚨 [경고] 비정상적인 요청 속도가 감지되었습니다.\n\n매크로 방지를 위해 5분간 팝캣 참여가 차단됩니다.'
                             );
-                            return; // 팝캣 데이터 전송만 중단하고 페이지는 유지
+                            return;
                         }
 
                         // 3. 그 외 서버 에러 시 catch 문으로 보내기
@@ -168,6 +204,7 @@ export default function PopcatPage() {
 
         schedulerRef.current = () => {
             if (flushTimerRef.current) return;
+            if (isBanned) return; // 💡 밴 상태면 예약 자체를 하지 않음
             flushTimerRef.current = setTimeout(() => {
                 flushTimerRef.current = null;
                 flush();
@@ -414,6 +451,16 @@ export default function PopcatPage() {
                         })}
                     </div>
                 </section>
+
+                {!hasUuid && (
+                    <div className="popcat-uuid-warning">
+                        <span className="uuid-warning-icon">🔒</span>
+                        <div className="uuid-warning-text">
+                            <strong>시크릿 모드 또는 개인정보 보호 브라우저에서는 참여할 수 없습니다.</strong>
+                            <p>일반 모드로 접속하면 팝캣에 참여할 수 있어요.</p>
+                        </div>
+                    </div>
+                )}
 
                 <section className="pop-battle">
                     {CAMPUSES.map((campus) => {

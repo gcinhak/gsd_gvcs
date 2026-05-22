@@ -110,7 +110,7 @@ export const YEARS = [
         videos: [
             { id: 'CzpsyfWmh_g', campus: '문경', label: '문경 1부' },
             { id: 'wfpbMMd3NCw', campus: '문경', label: '문경 2부' },
-            { id: 'lcOMDlnLQ_g', campus: '음성', label: '음성 3부' },
+            { id: 'lcOMDlnLQ_g', campus: '문경', label: '문경 3부' },
         ],
     },
 ];
@@ -878,6 +878,58 @@ export const HISTORY = [
     //         note: '2020년 응원전 우승은 음성캠퍼스입니다.',
     //     },
     // },
+];
+
+/* ──────────────────────────────────────────────────────────
+   종목별 경기 방식 (쿼터/세트/판)
+   - LIVE 중계의 쿼터 탭과 관리자 페이지에서 사용.
+────────────────────────────────────────────────────────── */
+export const QUARTERS_BY_SPORT = {
+    농구: ['1쿼터', '2쿼터'],
+    축구: ['전반', '후반'],
+    배구: ['1세트', '2세트', '3세트'],
+    탁구: ['1세트', '2세트', '3세트'],
+    체스: ['1경기'],
+    태권도: ['1라운드', '2라운드', '3라운드'],
+    중거리: ['전체'],
+    중거리달리기: ['전체'],
+    이어달리기: ['전체'],
+    줄다리기: ['1판', '2판', '3판'],
+};
+
+export function getQuarters(sport) {
+    return QUARTERS_BY_SPORT[sport] || ['전체'];
+}
+
+/* ──────────────────────────────────────────────────────────
+   LIVE 중계 매치 카탈로그
+   - 기본 메타데이터(시간/장소/팀)는 여기서 관리.
+   - 실제 status / youtubeId / score 는 워커(D1)에 저장되며 관리자 페이지에서 토글.
+   - lineup 은 데이터 들어오면 home/away 배열에 { number, name, position } 형태로 채우면
+     LiveMatchPage 가 자동으로 라인업 카드를 렌더링함.
+────────────────────────────────────────────────────────── */
+export const LIVE_MATCHES = [
+    // ─── 5/28 (목) 농구 ───
+    { id: 'thu-bb-1', day: '2026-05-28', startTime: null, sport: '농구', round: '예선', category: '남자 고등', venue: '체육관', teams: { home: '문경', away: '음성' }, lineup: { home: [], away: [] } },
+    { id: 'thu-bb-2', day: '2026-05-28', startTime: null, sport: '농구', round: '결선', category: '여자 연합', venue: '체육관', teams: { home: '문경', away: '음성' }, lineup: { home: [], away: [] } },
+    { id: 'thu-bb-3', day: '2026-05-28', startTime: null, sport: '농구', round: '결선', category: '남자 중등', venue: '체육관', teams: { home: '문경', away: '음성' }, lineup: { home: [], away: [] } },
+    { id: 'thu-bb-4', day: '2026-05-28', startTime: null, sport: '농구', round: '결선', category: '남자 고등', venue: '체육관', teams: { home: '세종', away: '예선 승리 팀' }, lineup: { home: [], away: [] } },
+
+    // ─── 5/29 (금) 배구 ───
+    { id: 'fri-vb-1', day: '2026-05-29', startTime: null, sport: '배구', round: '예선', category: '남중', venue: '체육관', teams: { home: '문경', away: '음성' }, lineup: { home: [], away: [] } },
+    { id: 'fri-vb-2', day: '2026-05-29', startTime: null, sport: '배구', round: '예선', category: '여연합', venue: '체육관', teams: { home: '음성', away: '세종' }, lineup: { home: [], away: [] } },
+    { id: 'fri-vb-3', day: '2026-05-29', startTime: null, sport: '배구', round: '예선', category: '남고', venue: '체육관', teams: { home: '문경', away: '음성' }, lineup: { home: [], away: [] } },
+    { id: 'fri-vb-4', day: '2026-05-29', startTime: null, sport: '배구', round: '결선', category: '남중', venue: '체육관', teams: { home: '세종', away: '예선 승리 팀' }, lineup: { home: [], away: [] } },
+    { id: 'fri-vb-5', day: '2026-05-29', startTime: null, sport: '배구', round: '결선', category: '여연합', venue: '체육관', teams: { home: '문경', away: '예선 승리 팀' }, lineup: { home: [], away: [] } },
+    { id: 'fri-vb-6', day: '2026-05-29', startTime: null, sport: '배구', round: '결선', category: '남고', venue: '체육관', teams: { home: '세종', away: '예선 승리 팀' }, lineup: { home: [], away: [] } },
+
+    // ─── 5/30 (토) 본선 — 팀이 확정된 경기만 ───
+    { id: 'sat-fb-1', day: '2026-05-30', startTime: '11:40', sport: '축구', round: '예선', category: '남고부', venue: '보조경기장', teams: { home: '음성', away: '세종' }, lineup: { home: [], away: [] } },
+    { id: 'sat-fb-2', day: '2026-05-30', startTime: '12:30', sport: '축구', round: '결선', category: '남중부', venue: '보조경기장', teams: { home: '음성', away: '문경' }, lineup: { home: [], away: [] } },
+    { id: 'sat-fb-3', day: '2026-05-30', startTime: '13:20', sport: '축구', round: '결선', category: '여자연합', venue: '보조경기장', teams: { home: '음성', away: '문경' }, lineup: { home: [], away: [] } },
+    { id: 'sat-fb-4', day: '2026-05-30', startTime: '14:00', sport: '축구', round: '결선', category: '남고부', venue: '보조경기장', teams: { home: '문경', away: '예선 승리 팀' }, lineup: { home: [], away: [] } },
+    { id: 'sat-tk-1', day: '2026-05-30', startTime: '11:45', sport: '태권도', round: '결선', category: '겨루기 여자', venue: '보조실내체육관 1층', teams: { home: '문경', away: '음성' }, lineup: { home: [], away: [] } },
+    { id: 'sat-tk-2', day: '2026-05-30', startTime: '12:05', sport: '태권도', round: '결선', category: '겨루기 남자', venue: '보조실내체육관 1층', teams: { home: '문경', away: '음성' }, lineup: { home: [], away: [] } },
 ];
 
 /* ──────────────────────────────────────────────────────────

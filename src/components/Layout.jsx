@@ -3,11 +3,15 @@ import { NavLink, Outlet, Link } from 'react-router-dom';
 import ThemeSwitcher from './ThemeSwitcher';
 import SyncLogo from './SyncLogo';
 
+// LIVE 탭은 dev 빌드에서만 노출. 운영 빌드에서는 숨김 — 페이지는 /live URL 직접 접근으로는 계속 동작.
+const SHOW_LIVE_TAB = import.meta.env.DEV;
+
 const NAV_ITEMS = [
     { to: '/', label: '홈', end: true },
+    ...(SHOW_LIVE_TAB ? [{ to: '/live', label: 'LIVE', live: true }] : []),
     { to: '/schedule', label: '경기 일정' },
     { to: '/cheers', label: '응원전' },
-    { to: '/games', label: '경기 영상' },
+    //{ to: '/games', label: '경기 영상' },
     { to: '/history', label: '역대 전적' },
     { to: '/popcat', label: '팝캣' },
     { to: '/upcoming', label: '예정 기능' },
@@ -31,9 +35,12 @@ export default function Layout() {
                                 key={item.to}
                                 to={item.to}
                                 end={item.end}
-                                className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+                                className={({ isActive }) =>
+                                    `nav-link ${isActive ? 'active' : ''} ${item.live ? 'is-live' : ''}`
+                                }
                                 onClick={() => setMenuOpen(false)}
                             >
+                                {item.live && <span className="live-dot" aria-hidden />}
                                 {item.label}
                             </NavLink>
                         ))}
