@@ -8,6 +8,9 @@ import GamesPage from './pages/GamesPage';
 import HistoryPage from './pages/HistoryPage';
 import PopcatPage from './pages/PopcatPage';
 import UpcomingPage from './pages/UpcomingPage';
+import LivePage from './pages/LivePage';
+import LiveMatchPage from './pages/LiveMatchPage';
+import AdminRelayPage from './pages/AdminRelayPage';
 import './App.css';
 
 export default function App() {
@@ -15,8 +18,13 @@ export default function App() {
         <BrowserRouter>
             <div className="app">
                 <Routes>
+                    {/* 관리자 — Layout 없이 단독 노출 (네비/푸터에서 숨김) */}
+                    <Route path="/admin/relay" element={<AdminRelayPage />} />
+
                     <Route element={<Layout />}>
                         <Route path="/" element={<HomePage />} />
+                        <Route path="/live" element={<LivePage />} />
+                        <Route path="/live/:matchId" element={<LiveMatchPage />} />
                         <Route path="/schedule" element={<SchedulePage />} />
                         <Route path="/cheers" element={<CheersYearPage />} />
                         <Route path="/cheers/:yearId" element={<CheersVideoPage />} />
