@@ -162,15 +162,27 @@ export default function PopcatPage() {
 
                         // 2. 🛑 429 매크로 차단 응답이 왔을 때 알림창 띄우기
                         if (response.status === 429) {
-                            const unbanTime = Date.now() + 5 * 60 * 1000; // 현재 시간 + 5분
-                            window.localStorage.setItem(BAN_KEY, unbanTime);
-                            setBanUntil(unbanTime);
+                            // 💡 pending 완전 초기화 — 재전송 시도 차단
+                            pendingRef.current = { ...ZERO };
+                            setPendingTotal(0);
+                            if (flushTimerRef.current) {
+                                clearTimeout(flushTimerRef.current);
+                                flushTimerRef.current = null;
+                            }
+
+                            try {
+                                const unbanTime = Date.now() + 5 * 60 * 1000;
+                                window.localStorage.setItem(BAN_KEY, unbanTime);
+                                setBanUntil(unbanTime);
+                            } catch {
+                                /* 무시 */
+                            }
                             setIsBanned(true);
 
                             alert(
                                 '🚨 [경고] 비정상적인 요청 속도가 감지되었습니다.\n\n매크로 방지를 위해 5분간 팝캣 참여가 차단됩니다.'
                             );
-                            return; // 팝캣 데이터 전송만 중단하고 페이지는 유지
+                            return;
                         }
 
                         // 3. 그 외 서버 에러 시 catch 문으로 보내기
@@ -192,6 +204,7 @@ export default function PopcatPage() {
 
         schedulerRef.current = () => {
             if (flushTimerRef.current) return;
+            if (isBanned) return; // 💡 밴 상태면 예약 자체를 하지 않음
             flushTimerRef.current = setTimeout(() => {
                 flushTimerRef.current = null;
                 flush();
