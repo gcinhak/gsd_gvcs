@@ -7,6 +7,19 @@ import { fetchLiveStates } from '../lib/liveApi';
 
 const POLL_MS = 3000;
 
+const SPORT_EMOJI = {
+    '농구': '🏀',
+    '배구': '🏐',
+    '축구': '⚽',
+    '태권도': '🥋',
+    '탁구': '🏓',
+    '체스': '♟️',
+    '계주': '🏃',
+    '이어달리기': '🏃',
+    '중거리달리기': '🏃',
+    '줄다리기': '🪢',
+};
+
 function dayLabel(day) {
     const map = {
         '2026-05-28': '5/28 (목)',
@@ -20,32 +33,46 @@ function MatchCard({ match, state }) {
     const status = state?.status || 'upcoming';
     const isLive = status === 'live';
     const isFinished = status === 'finished';
+    const showScore = !!state && (isLive || isFinished);
 
     return (
-        <Link to={`/live/${match.id}`} className={`live-card status-${status}`}>
-            <div className="lc-head">
-                <span className="lc-day">{dayLabel(match.day)}</span>
-                {match.startTime && <span className="lc-time">{match.startTime}</span>}
-                <span className={`lc-status ${isLive ? 'is-live' : ''}`}>
-                    {isLive && <span className="lc-live-dot" aria-hidden />}
-                    {isLive ? 'LIVE' : isFinished ? '종료' : '예정'}
+        <Link to={`/live/${match.id}`} className={`mc status-${status}`}>
+            <header className="mc-head">
+                {isLive ? (
+                    <span className="mc-live">
+                        <span className="mc-live-dot" aria-hidden />
+                        LIVE
+                    </span>
+                ) : (
+                    <span className={`mc-time-tag ${isFinished ? 'is-finished' : ''}`}>
+                        {isFinished ? '종료' : match.startTime ? `${match.startTime} 예정` : '예정'}
+                    </span>
+                )}
+                <span className="mc-day">{dayLabel(match.day)}</span>
+            </header>
+
+            <div className="mc-event">
+                <span className="mc-sport">
+                    <span className="mc-sport-emoji" aria-hidden>{SPORT_EMOJI[match.sport] || '🎽'}</span>
+                    <span className="mc-sport-name">{match.sport}</span>
+                </span>
+                <span className={`mc-round round-${match.round === '결선' ? 'final' : 'prelim'}`}>
+                    {match.round}
                 </span>
             </div>
-            <div className="lc-body">
-                <div className="lc-sport">
-                    <span className={`lc-sport-tag round-${match.round === '결선' ? 'final' : 'prelim'}`}>
-                        {match.round}
-                    </span>
-                    <span className="lc-sport-name">{match.sport}</span>
-                    <span className="lc-category">{match.category}</span>
-                </div>
-                <div className="lc-vs">
+
+            <div className="mc-teams">
+                <div className="mc-team">
                     <CampusBadge campus={match.teams.home} size="md" />
-                    <span className="lc-vs-text">VS</span>
-                    <CampusBadge campus={match.teams.away} size="md" />
+                    {showScore && <span className="mc-score">{state.homeScore || 0}</span>}
                 </div>
-                <div className="lc-venue">📍 {match.venue}</div>
+                <div className="mc-team">
+                    <CampusBadge campus={match.teams.away} size="md" />
+                    {showScore && <span className="mc-score">{state.awayScore || 0}</span>}
+                </div>
             </div>
+
+            <div className="mc-category-line">{match.category}</div>
         </Link>
     );
 }
@@ -61,9 +88,7 @@ export default function LivePage() {
                 const data = await fetchLiveStates();
                 if (cancelled) return;
                 const map = {};
-                for (const row of data.matches || []) {
-                    map[row.matchId] = row;
-                }
+                for (const row of data.matches || []) map[row.matchId] = row;
                 setStatesMap(map);
                 setServerState('online');
             } catch {
@@ -78,13 +103,28 @@ export default function LivePage() {
         };
     }, []);
 
-    const { live, upcoming, finished } = useMemo(() => {
-        const buckets = { live: [], upcoming: [], finished: [] };
+    /* LIVE 가 맨 위, 그 다음 시간 순. 종료는 맨 아래. */
+    const { live, scheduled, finished } = useMemo(() => {
+        const byTime = (a, b) => {
+            if (a.day !== b.day) return a.day < b.day ? -1 : 1;
+            if (a.startTime && b.startTime) return a.startTime < b.startTime ? -1 : 1;
+            if (a.startTime) return -1;
+            if (b.startTime) return 1;
+            return 0;
+        };
+        const liveArr = [];
+        const upcomingArr = [];
+        const finishedArr = [];
         for (const m of LIVE_MATCHES) {
-            const s = statesMap[m.id]?.status || 'upcoming';
-            buckets[s]?.push(m);
+            const st = statesMap[m.id]?.status || 'upcoming';
+            if (st === 'live') liveArr.push(m);
+            else if (st === 'finished') finishedArr.push(m);
+            else upcomingArr.push(m);
         }
-        return buckets;
+        liveArr.sort(byTime);
+        upcomingArr.sort(byTime);
+        finishedArr.sort(byTime);
+        return { live: liveArr, scheduled: upcomingArr, finished: finishedArr };
     }, [statesMap]);
 
     return (
@@ -98,7 +138,7 @@ export default function LivePage() {
                         </span>
                     }
                     title="실시간 중계"
-                    description="진행 중인 경기와 곧 시작될 경기를 한눈에 확인하세요."
+                    description="진행 중인 경기와 다음 경기를 한눈에 확인하세요."
                 />
 
                 {serverState === 'error' && (
@@ -107,12 +147,13 @@ export default function LivePage() {
 
                 {live.length > 0 && (
                     <section className="live-section">
-                        <h2 className="live-section-title">
-                            <span className="live-section-dot is-live" aria-hidden />
-                            현재 LIVE
-                            <span className="live-section-count">{live.length}</span>
-                        </h2>
-                        <div className="live-grid">
+                        <header className="lb-head">
+                            <span className="lb-pill is-live">
+                                <span className="mc-live-dot" aria-hidden />
+                                LIVE {live.length}
+                            </span>
+                        </header>
+                        <div className="mc-grid">
                             {live.map((m) => (
                                 <MatchCard key={m.id} match={m} state={statesMap[m.id]} />
                             ))}
@@ -121,19 +162,18 @@ export default function LivePage() {
                 )}
 
                 <section className="live-section">
-                    <h2 className="live-section-title">
-                        <span className="live-section-dot" aria-hidden />
-                        예정 경기
-                        <span className="live-section-count">{upcoming.length}</span>
-                    </h2>
-                    {upcoming.length === 0 ? (
+                    <header className="lb-head">
+                        <span className="lb-pill">다가오는 경기</span>
+                        <span className="lb-total">{scheduled.length}경기</span>
+                    </header>
+                    {scheduled.length === 0 ? (
                         <div className="empty-state">
                             <div className="empty-tag">예정 경기 없음</div>
                             <p>경기가 추가되면 이곳에 자동으로 나타납니다.</p>
                         </div>
                     ) : (
-                        <div className="live-grid">
-                            {upcoming.map((m) => (
+                        <div className="mc-grid">
+                            {scheduled.map((m) => (
                                 <MatchCard key={m.id} match={m} state={statesMap[m.id]} />
                             ))}
                         </div>
@@ -142,12 +182,11 @@ export default function LivePage() {
 
                 {finished.length > 0 && (
                     <section className="live-section is-muted">
-                        <h2 className="live-section-title">
-                            <span className="live-section-dot" aria-hidden />
-                            종료된 경기
-                            <span className="live-section-count">{finished.length}</span>
-                        </h2>
-                        <div className="live-grid">
+                        <header className="lb-head">
+                            <span className="lb-pill is-finished">종료</span>
+                            <span className="lb-total">{finished.length}경기</span>
+                        </header>
+                        <div className="mc-grid">
                             {finished.map((m) => (
                                 <MatchCard key={m.id} match={m} state={statesMap[m.id]} />
                             ))}

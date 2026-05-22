@@ -290,13 +290,18 @@ async function getLiveState(env, req, ctx) {
     if (cached) return cached;
 
     const { results } = await env.DB
-        .prepare('SELECT match_id, status, youtube_id, updated_at FROM live_match_state')
+        .prepare(
+            'SELECT match_id, status, youtube_id, home_score, away_score, current_quarter, updated_at FROM live_match_state'
+        )
         .all();
 
     const matches = (results || []).map((r) => ({
         matchId: r.match_id,
         status: r.status,
         youtubeId: r.youtube_id,
+        homeScore: Number(r.home_score) || 0,
+        awayScore: Number(r.away_score) || 0,
+        currentQuarter: r.current_quarter || null,
         updatedAt: Number(r.updated_at),
     }));
 
@@ -316,27 +321,53 @@ async function updateMatch(matchId, req, env) {
     const body = await req.json().catch(() => null);
     if (!body) return json({ error: 'invalid json' }, 400);
 
-    const status = body.status;
-    const youtubeId = body.youtubeId == null ? null : String(body.youtubeId);
+    // 행이 없으면 기본값으로 만들어 두고, 그 위에 partial UPDATE
+    await env.DB
+        .prepare('INSERT INTO live_match_state (match_id) VALUES (?) ON CONFLICT(match_id) DO NOTHING')
+        .bind(matchId)
+        .run();
 
-    if (status != null && !ALLOWED_STATUS.includes(status)) {
-        return json({ error: 'invalid status' }, 400);
+    const sets = [];
+    const params = [];
+
+    if (body.status !== undefined) {
+        if (!ALLOWED_STATUS.includes(body.status)) return json({ error: 'invalid status' }, 400);
+        sets.push('status = ?');
+        params.push(body.status);
+    }
+    if (body.youtubeId !== undefined) {
+        sets.push('youtube_id = ?');
+        params.push(body.youtubeId == null || body.youtubeId === '' ? null : String(body.youtubeId));
+    }
+    if (body.homeScore !== undefined) {
+        const v = Math.max(0, Math.min(Number(body.homeScore) || 0, 9999));
+        sets.push('home_score = ?');
+        params.push(v);
+    }
+    if (body.awayScore !== undefined) {
+        const v = Math.max(0, Math.min(Number(body.awayScore) || 0, 9999));
+        sets.push('away_score = ?');
+        params.push(v);
+    }
+    if (body.currentQuarter !== undefined) {
+        sets.push('current_quarter = ?');
+        params.push(body.currentQuarter == null || body.currentQuarter === '' ? null : String(body.currentQuarter).slice(0, 32));
     }
 
+    if (sets.length === 0) return json({ error: 'no updates' }, 400);
+
+    sets.push('updated_at = unixepoch()');
+    params.push(matchId);
+
     await env.DB
-        .prepare(
-            'INSERT INTO live_match_state (match_id, status, youtube_id, updated_at) ' +
-            'VALUES (?, COALESCE(?, ?), ?, unixepoch()) ' +
-            'ON CONFLICT(match_id) DO UPDATE SET ' +
-            '  status = COALESCE(excluded.status, live_match_state.status), ' +
-            '  youtube_id = excluded.youtube_id, ' +
-            '  updated_at = unixepoch()'
-        )
-        .bind(matchId, status, status || 'upcoming', youtubeId)
+        .prepare(`UPDATE live_match_state SET ${sets.join(', ')} WHERE match_id = ?`)
+        .bind(...params)
         .run();
 
     const row = await env.DB
-        .prepare('SELECT match_id, status, youtube_id, updated_at FROM live_match_state WHERE match_id = ?')
+        .prepare(
+            'SELECT match_id, status, youtube_id, home_score, away_score, current_quarter, updated_at FROM live_match_state WHERE match_id = ?'
+        )
         .bind(matchId)
         .first();
 
@@ -344,6 +375,9 @@ async function updateMatch(matchId, req, env) {
         matchId: row.match_id,
         status: row.status,
         youtubeId: row.youtube_id,
+        homeScore: Number(row.home_score) || 0,
+        awayScore: Number(row.away_score) || 0,
+        currentQuarter: row.current_quarter || null,
         updatedAt: Number(row.updated_at),
     });
 }
@@ -353,7 +387,7 @@ async function getComments(matchId, url, env) {
     const since = Number(url.searchParams.get('since')) || 0;
     const { results } = await env.DB
         .prepare(
-            'SELECT id, ts, type, content FROM live_comments ' +
+            'SELECT id, ts, type, content, quarter FROM live_comments ' +
             'WHERE match_id = ? AND ts >= ? ORDER BY id ASC LIMIT 500'
         )
         .bind(matchId, since)
@@ -363,6 +397,7 @@ async function getComments(matchId, url, env) {
         ts: Number(r.ts),
         type: r.type,
         content: r.content,
+        quarter: r.quarter || null,
     }));
     return json({ matchId, comments });
 }
@@ -374,24 +409,31 @@ async function addComment(matchId, req, env) {
     const type = ALLOWED_TYPES.includes(body.type) ? body.type : 'normal';
     const content = String(body.content || '').trim().slice(0, 500);
     if (!content) return json({ error: 'empty content' }, 400);
+    const quarter = body.quarter == null || body.quarter === '' ? null : String(body.quarter).slice(0, 32);
 
     const result = await env.DB
         .prepare(
-            'INSERT INTO live_comments (match_id, ts, type, content) ' +
-            'VALUES (?, unixepoch(), ?, ?)'
+            'INSERT INTO live_comments (match_id, ts, type, content, quarter) ' +
+            'VALUES (?, unixepoch(), ?, ?, ?)'
         )
-        .bind(matchId, type, content)
+        .bind(matchId, type, content, quarter)
         .run();
 
     const id = result?.meta?.last_row_id ? Number(result.meta.last_row_id) : 0;
     const row = await env.DB
-        .prepare('SELECT id, ts, type, content FROM live_comments WHERE id = ?')
+        .prepare('SELECT id, ts, type, content, quarter FROM live_comments WHERE id = ?')
         .bind(id)
         .first();
 
     return json({
         comment: row
-            ? { id: Number(row.id), ts: Number(row.ts), type: row.type, content: row.content }
+            ? {
+                  id: Number(row.id),
+                  ts: Number(row.ts),
+                  type: row.type,
+                  content: row.content,
+                  quarter: row.quarter || null,
+              }
             : null,
     });
 }

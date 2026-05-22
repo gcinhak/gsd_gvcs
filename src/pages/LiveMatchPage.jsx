@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import CampusBadge from '../components/CampusBadge';
-import { LIVE_MATCHES, CAMPUS_COLORS } from '../data';
+import { LIVE_MATCHES, CAMPUS_COLORS, getQuarters } from '../data';
 import { fetchLiveStates, fetchComments } from '../lib/liveApi';
 
 const POLL_STATE_MS = 3000;
@@ -21,8 +21,7 @@ function formatTime(ts) {
     const d = new Date(ts * 1000);
     const hh = String(d.getHours()).padStart(2, '0');
     const mm = String(d.getMinutes()).padStart(2, '0');
-    const ss = String(d.getSeconds()).padStart(2, '0');
-    return `${hh}:${mm}:${ss}`;
+    return `${hh}:${mm}`;
 }
 
 function LineupCard({ team, members }) {
@@ -67,7 +66,7 @@ function CommentaryFeed({ comments }) {
     if (comments.length === 0) {
         return (
             <div className="cf-empty">
-                <p>아직 중계 메시지가 없습니다.</p>
+                <p>이 쿼터의 중계 메시지가 없습니다.</p>
                 <p className="cf-empty-sub">관리자가 중계를 시작하면 여기에 실시간으로 표시됩니다.</p>
             </div>
         );
@@ -77,9 +76,72 @@ function CommentaryFeed({ comments }) {
         <div className="cf-list" ref={scrollRef}>
             {comments.map((c) => (
                 <div key={c.id} className={`cf-msg type-${c.type || 'normal'}`}>
+                    {c.quarter && <span className="cf-quarter">{c.quarter}</span>}
                     <span className="cf-time">{formatTime(c.ts)}</span>
                     <span className="cf-content">{c.content}</span>
                 </div>
+            ))}
+        </div>
+    );
+}
+
+function ScoreHeader({ match, state }) {
+    const home = match.teams.home;
+    const away = match.teams.away;
+    const isLive = state.status === 'live';
+    const isFinished = state.status === 'finished';
+    const isUpcoming = state.status === 'upcoming';
+
+    return (
+        <div className={`scoreboard status-${state.status}`}>
+            <div className="sb-status">
+                {isLive && (
+                    <span className="sb-live-tag">
+                        <span className="lm-live-dot" aria-hidden /> LIVE
+                    </span>
+                )}
+                {isFinished && <span className="sb-status-tag">종료</span>}
+                {isUpcoming && <span className="sb-status-tag is-upcoming">예정</span>}
+                {state.currentQuarter && <span className="sb-quarter-tag">{state.currentQuarter}</span>}
+            </div>
+            <div className="sb-row">
+                <div className="sb-team">
+                    <CampusBadge campus={home} size="lg" />
+                </div>
+                <div className="sb-score">
+                    <span className="sb-num">{state.homeScore || 0}</span>
+                    <span className="sb-sep">:</span>
+                    <span className="sb-num">{state.awayScore || 0}</span>
+                </div>
+                <div className="sb-team sb-team-away">
+                    <CampusBadge campus={away} size="lg" />
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function QuarterTabs({ quarters, selected, onSelect, counts }) {
+    return (
+        <div className="qt-tabs">
+            <button
+                type="button"
+                className={`qt-tab ${selected === '__all' ? 'active' : ''}`}
+                onClick={() => onSelect('__all')}
+            >
+                전체
+                <span className="qt-tab-count">{counts.__all || 0}</span>
+            </button>
+            {quarters.map((q) => (
+                <button
+                    key={q}
+                    type="button"
+                    className={`qt-tab ${selected === q ? 'active' : ''}`}
+                    onClick={() => onSelect(q)}
+                >
+                    {q}
+                    {counts[q] > 0 && <span className="qt-tab-count">{counts[q]}</span>}
+                </button>
             ))}
         </div>
     );
@@ -90,8 +152,15 @@ export default function LiveMatchPage() {
     const navigate = useNavigate();
     const match = LIVE_MATCHES.find((m) => m.id === matchId);
 
-    const [state, setState] = useState({ status: 'upcoming', youtubeId: null });
+    const [state, setState] = useState({
+        status: 'upcoming',
+        youtubeId: null,
+        homeScore: 0,
+        awayScore: 0,
+        currentQuarter: null,
+    });
     const [comments, setComments] = useState([]);
+    const [selectedQuarter, setSelectedQuarter] = useState('__all');
 
     /* state 폴링 */
     useEffect(() => {
@@ -102,7 +171,15 @@ export default function LiveMatchPage() {
                 const data = await fetchLiveStates();
                 if (cancelled) return;
                 const row = (data.matches || []).find((r) => r.matchId === matchId);
-                if (row) setState({ status: row.status, youtubeId: row.youtubeId || null });
+                if (row) {
+                    setState({
+                        status: row.status,
+                        youtubeId: row.youtubeId || null,
+                        homeScore: Number(row.homeScore) || 0,
+                        awayScore: Number(row.awayScore) || 0,
+                        currentQuarter: row.currentQuarter || null,
+                    });
+                }
             } catch {
                 /* ignore */
             }
@@ -115,9 +192,10 @@ export default function LiveMatchPage() {
         };
     }, [matchId]);
 
-    /* comments 폴링 (LIVE 일 때만 자주) */
+    /* comments 폴링 (LIVE / 종료 일 때) */
     useEffect(() => {
-        if (!matchId || state.status !== 'live') return;
+        if (!matchId) return;
+        if (state.status === 'upcoming') return;
         let cancelled = false;
         const pull = async () => {
             try {
@@ -136,6 +214,18 @@ export default function LiveMatchPage() {
         };
     }, [matchId, state.status]);
 
+    const quarters = match ? getQuarters(match.sport) : ['전체'];
+
+    // 매번 계산해도 가벼움 — React Compiler 가 알아서 최적화하도록
+    const counts = { __all: comments.length };
+    for (const q of quarters) counts[q] = 0;
+    for (const m of comments) {
+        if (m.quarter && counts[m.quarter] != null) counts[m.quarter]++;
+    }
+    const filteredComments = selectedQuarter === '__all'
+        ? comments
+        : comments.filter((m) => m.quarter === selectedQuarter);
+
     if (!match) {
         return (
             <div className="page live-match-page">
@@ -153,7 +243,10 @@ export default function LiveMatchPage() {
     }
 
     const isLive = state.status === 'live';
-    const youtubeId = state.youtubeId;
+    const isUpcoming = state.status === 'upcoming';
+    const hasVideo = !!state.youtubeId;
+    const hasCommentary = comments.length > 0;
+    const showRelayUi = isLive || (state.status === 'finished' && hasCommentary);
 
     return (
         <div className="page live-match-page">
@@ -166,67 +259,56 @@ export default function LiveMatchPage() {
                     <div className="lm-meta">
                         <span className="lm-day">{dayLabel(match.day)}</span>
                         {match.startTime && <span className="lm-time">{match.startTime}</span>}
-                        <span className={`lm-status status-${state.status}`}>
-                            {isLive && <span className="lm-live-dot" aria-hidden />}
-                            {isLive ? 'LIVE' : state.status === 'finished' ? '종료' : '예정'}
-                        </span>
+                        <span className="lm-cat-label">{match.sport} · {match.round} · {match.category}</span>
                     </div>
-                    <h1 className="lm-title">
-                        <span className="lm-sport">{match.sport}</span>
-                        <span className="lm-cat">
-                            {match.round} · {match.category}
-                        </span>
-                    </h1>
-                    <div className="lm-teams">
-                        <CampusBadge campus={match.teams.home} size="lg" />
-                        <span className="lm-vs">VS</span>
-                        <CampusBadge campus={match.teams.away} size="lg" />
-                    </div>
+                    <ScoreHeader match={match} state={state} />
                     <div className="lm-venue">📍 {match.venue}</div>
                 </header>
 
-                {isLive ? (
-                    <div className="lm-live-layout">
-                        <div className="lm-video">
-                            {youtubeId ? (
+                {showRelayUi ? (
+                    <div className={`lm-live-layout ${!hasVideo ? 'no-video' : ''}`}>
+                        {hasVideo && (
+                            <div className="lm-video">
                                 <div className="video-frame">
                                     <iframe
-                                        src={`https://www.youtube.com/embed/${youtubeId}?autoplay=1&rel=0&modestbranding=1`}
+                                        src={`https://www.youtube.com/embed/${state.youtubeId}?autoplay=1&rel=0&modestbranding=1`}
                                         title={`${match.sport} ${match.category} 중계`}
                                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                                         allowFullScreen
                                     />
                                 </div>
-                            ) : (
-                                <div className="video-placeholder">
-                                    <div className="vp-icon">📺</div>
-                                    <div className="vp-text">영상 중계 준비중</div>
-                                    <div className="vp-sub">관리자가 YouTube 링크를 연결하면 여기에 표시됩니다.</div>
-                                </div>
-                            )}
-                        </div>
+                            </div>
+                        )}
                         <aside className="lm-chat">
                             <header className="cf-head">
                                 <span className="cf-title">📣 문자 중계</span>
-                                <span className="cf-live-badge">
-                                    <span className="lm-live-dot" aria-hidden /> LIVE
-                                </span>
+                                {isLive && (
+                                    <span className="cf-live-badge">
+                                        <span className="lm-live-dot" aria-hidden /> LIVE
+                                    </span>
+                                )}
                             </header>
-                            <CommentaryFeed comments={comments} />
+                            <QuarterTabs
+                                quarters={quarters}
+                                selected={selectedQuarter}
+                                onSelect={setSelectedQuarter}
+                                counts={counts}
+                            />
+                            <CommentaryFeed comments={filteredComments} />
                         </aside>
                     </div>
                 ) : (
                     <div className="lm-lineup-layout">
                         <div className="lm-pre-banner">
-                            <div className="lm-pre-icon">{state.status === 'finished' ? '🏁' : '⏰'}</div>
+                            <div className="lm-pre-icon">{isUpcoming ? '⏰' : '🏁'}</div>
                             <div className="lm-pre-text">
                                 <div className="lm-pre-title">
-                                    {state.status === 'finished' ? '경기 종료' : '경기 시작 대기중'}
+                                    {isUpcoming ? '경기 시작 대기중' : '경기 종료'}
                                 </div>
                                 <div className="lm-pre-sub">
-                                    {state.status === 'finished'
-                                        ? '경기 영상이 추가되면 다시 확인하실 수 있습니다.'
-                                        : '아래는 양 팀 라인업입니다. 경기가 시작되면 실시간 중계로 전환됩니다.'}
+                                    {isUpcoming
+                                        ? '아래는 양 팀 라인업입니다. 경기가 시작되면 실시간 중계로 전환됩니다.'
+                                        : '중계 기록이 없습니다.'}
                                 </div>
                             </div>
                         </div>

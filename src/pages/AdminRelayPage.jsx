@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { LIVE_MATCHES, CAMPUS_COLORS } from '../data';
+import { LIVE_MATCHES, CAMPUS_COLORS, getQuarters } from '../data';
 import CampusBadge from '../components/CampusBadge';
 import {
     adminPing,
@@ -70,7 +70,6 @@ function PinGate({ onSuccess }) {
 }
 
 function MatchAdminCard({ match, state, comments, onUpdate, onAddComment, onDeleteComment }) {
-    // 초기값은 prop 기준. 서버 state 가 갱신되면 부모가 key 로 remount 시키므로 useEffect 불필요.
     const [status, setStatus] = useState(state?.status || 'upcoming');
     const [youtubeId, setYoutubeId] = useState(state?.youtubeId || '');
     const [dirty, setDirty] = useState(false);
@@ -78,20 +77,47 @@ function MatchAdminCard({ match, state, comments, onUpdate, onAddComment, onDele
 
     const [type, setType] = useState('normal');
     const [content, setContent] = useState('');
+    const [msgQuarter, setMsgQuarter] = useState(state?.currentQuarter || '');
     const [posting, setPosting] = useState(false);
 
+    const quarters = getQuarters(match.sport);
     const colors = CAMPUS_COLORS[match.teams.home];
     const cardStyle = colors ? { borderTopColor: colors.bg } : {};
 
     const save = async () => {
         setSaving(true);
         try {
-            await onUpdate(match.id, { status, youtubeId: youtubeId || null });
+            await onUpdate(match.id, {
+                status,
+                youtubeId: youtubeId || null,
+            });
             setDirty(false);
         } catch (e) {
             alert('저장 실패: ' + e.message);
         }
         setSaving(false);
+    };
+
+    // 빠른 점수 +/- (즉시 서버 반영)
+    const quickScore = async (side, delta) => {
+        const cur = side === 'home' ? state?.homeScore || 0 : state?.awayScore || 0;
+        const next = Math.max(0, cur + delta);
+        const patch = side === 'home' ? { homeScore: next } : { awayScore: next };
+        try {
+            await onUpdate(match.id, patch);
+        } catch (err) {
+            alert('점수 변경 실패: ' + err.message);
+        }
+    };
+
+    // 빠른 쿼터 변경 (즉시 서버 반영)
+    const quickQuarter = async (q) => {
+        try {
+            await onUpdate(match.id, { currentQuarter: q || null });
+            setMsgQuarter(q || '');
+        } catch (err) {
+            alert('쿼터 변경 실패: ' + err.message);
+        }
     };
 
     const post = async (e) => {
@@ -100,7 +126,11 @@ function MatchAdminCard({ match, state, comments, onUpdate, onAddComment, onDele
         if (!text) return;
         setPosting(true);
         try {
-            await onAddComment(match.id, { type, content: text });
+            await onAddComment(match.id, {
+                type,
+                content: text,
+                quarter: msgQuarter || null,
+            });
             setContent('');
         } catch (err) {
             alert('전송 실패: ' + err.message);
@@ -109,6 +139,8 @@ function MatchAdminCard({ match, state, comments, onUpdate, onAddComment, onDele
     };
 
     const isLive = status === 'live';
+    const serverHome = state?.homeScore || 0;
+    const serverAway = state?.awayScore || 0;
 
     return (
         <article className={`admin-card ${isLive ? 'is-live' : ''}`} style={cardStyle}>
@@ -117,7 +149,9 @@ function MatchAdminCard({ match, state, comments, onUpdate, onAddComment, onDele
                     <span className="ac-day">{match.day.slice(5)}</span>
                     {match.startTime && <span className="ac-time">{match.startTime}</span>}
                     <span className="ac-sport">{match.sport}</span>
-                    <span className="ac-cat">{match.round} · {match.category}</span>
+                    <span className="ac-cat">
+                        {match.round} · {match.category}
+                    </span>
                 </div>
                 <div className="ac-vs">
                     <CampusBadge campus={match.teams.home} size="sm" />
@@ -139,27 +173,80 @@ function MatchAdminCard({ match, state, comments, onUpdate, onAddComment, onDele
                     </select>
                 </label>
                 <label className="ac-field flex-1">
-                    <span>YouTube ID</span>
+                    <span>YouTube ID (선택)</span>
                     <input
                         type="text"
-                        placeholder="예: fEnq3d-uKXA"
+                        placeholder="비우면 문자 중계만"
                         value={youtubeId}
                         onChange={(e) => { setYoutubeId(e.target.value); setDirty(true); }}
                     />
                 </label>
-                <button
-                    type="button"
-                    className="ac-save"
-                    onClick={save}
-                    disabled={!dirty || saving}
-                >
+                <button type="button" className="ac-save" onClick={save} disabled={!dirty || saving}>
                     {saving ? '저장중…' : '저장'}
                 </button>
+            </div>
+
+            {/* 점수 빠른 컨트롤 */}
+            <div className="ac-score-row">
+                <div className="ac-score-side">
+                    <div className="ac-score-label">
+                        <CampusBadge campus={match.teams.home} size="sm" />
+                        <span className="ac-score-server">{serverHome}</span>
+                    </div>
+                    <div className="ac-score-btns">
+                        <button type="button" onClick={() => quickScore('home', -1)}>−1</button>
+                        <button type="button" onClick={() => quickScore('home', 1)}>+1</button>
+                        <button type="button" onClick={() => quickScore('home', 2)}>+2</button>
+                        <button type="button" onClick={() => quickScore('home', 3)}>+3</button>
+                    </div>
+                </div>
+                <div className="ac-score-side">
+                    <div className="ac-score-label">
+                        <CampusBadge campus={match.teams.away} size="sm" />
+                        <span className="ac-score-server">{serverAway}</span>
+                    </div>
+                    <div className="ac-score-btns">
+                        <button type="button" onClick={() => quickScore('away', -1)}>−1</button>
+                        <button type="button" onClick={() => quickScore('away', 1)}>+1</button>
+                        <button type="button" onClick={() => quickScore('away', 2)}>+2</button>
+                        <button type="button" onClick={() => quickScore('away', 3)}>+3</button>
+                    </div>
+                </div>
+            </div>
+
+            {/* 현재 쿼터 빠른 변경 */}
+            <div className="ac-quarter-row">
+                <span className="ac-quarter-label">현재 쿼터</span>
+                <div className="ac-quarter-btns">
+                    <button
+                        type="button"
+                        className={!state?.currentQuarter ? 'active' : ''}
+                        onClick={() => quickQuarter(null)}
+                    >
+                        없음
+                    </button>
+                    {quarters.map((q) => (
+                        <button
+                            key={q}
+                            type="button"
+                            className={state?.currentQuarter === q ? 'active' : ''}
+                            onClick={() => quickQuarter(q)}
+                        >
+                            {q}
+                        </button>
+                    ))}
+                </div>
             </div>
 
             {isLive && (
                 <>
                     <form onSubmit={post} className="ac-msg-form">
+                        <select value={msgQuarter} onChange={(e) => setMsgQuarter(e.target.value)}>
+                            <option value="">쿼터 없음</option>
+                            {quarters.map((q) => (
+                                <option key={q} value={q}>{q}</option>
+                            ))}
+                        </select>
                         <select value={type} onChange={(e) => setType(e.target.value)}>
                             {COMMENT_TYPES.map((t) => (
                                 <option key={t.key} value={t.key}>{t.label}</option>
@@ -181,7 +268,10 @@ function MatchAdminCard({ match, state, comments, onUpdate, onAddComment, onDele
                         ) : (
                             comments.slice().reverse().map((c) => (
                                 <div key={c.id} className={`ac-msg type-${c.type}`}>
-                                    <span className="ac-msg-type">{COMMENT_TYPES.find((t) => t.key === c.type)?.label || c.type}</span>
+                                    {c.quarter && <span className="ac-msg-quarter">{c.quarter}</span>}
+                                    <span className="ac-msg-type">
+                                        {COMMENT_TYPES.find((t) => t.key === c.type)?.label || c.type}
+                                    </span>
                                     <span className="ac-msg-content">{c.content}</span>
                                     <button
                                         type="button"
@@ -208,9 +298,8 @@ function MatchAdminCard({ match, state, comments, onUpdate, onAddComment, onDele
 export default function AdminRelayPage() {
     const [authed, setAuthed] = useState(false);
     const [statesMap, setStatesMap] = useState({});
-    const [commentsMap, setCommentsMap] = useState({}); // matchId → comments[]
+    const [commentsMap, setCommentsMap] = useState({});
 
-    /* 저장된 PIN 있으면 자동 검증 */
     useEffect(() => {
         const stored = getStoredPin();
         if (!stored) return;
@@ -220,7 +309,6 @@ export default function AdminRelayPage() {
         });
     }, []);
 
-    /* state + 라이브 매치별 comments 폴링 */
     useEffect(() => {
         if (!authed) return;
         let cancelled = false;
@@ -233,7 +321,6 @@ export default function AdminRelayPage() {
                 for (const row of data.matches || []) map[row.matchId] = row;
                 setStatesMap(map);
 
-                // live 인 매치만 comments 폴링
                 const liveIds = Object.values(map).filter((r) => r.status === 'live').map((r) => r.matchId);
                 const newComments = {};
                 for (const id of liveIds) {
@@ -260,8 +347,8 @@ export default function AdminRelayPage() {
     }, [authed]);
 
     const onUpdate = async (matchId, patch) => {
-        await adminUpdateMatch(matchId, patch);
-        setStatesMap((m) => ({ ...m, [matchId]: { ...m[matchId], ...patch, matchId } }));
+        const updated = await adminUpdateMatch(matchId, patch);
+        setStatesMap((m) => ({ ...m, [matchId]: { ...m[matchId], ...updated } }));
     };
 
     const onAddComment = async (matchId, comment) => {
@@ -302,7 +389,6 @@ export default function AdminRelayPage() {
                 <div className="ar-grid">
                     {LIVE_MATCHES.map((m) => {
                         const s = statesMap[m.id];
-                        // updatedAt 가 바뀌면 카드 remount 되어 form 자동 동기화
                         const key = `${m.id}-${s?.updatedAt || 0}`;
                         return (
                             <MatchAdminCard

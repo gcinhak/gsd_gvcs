@@ -24,6 +24,9 @@ CREATE TABLE IF NOT EXISTS live_match_state (
     match_id TEXT PRIMARY KEY,
     status TEXT NOT NULL DEFAULT 'upcoming',    -- upcoming | live | finished
     youtube_id TEXT,                             -- 영상 중계용 YouTube ID
+    home_score INTEGER NOT NULL DEFAULT 0,       -- 홈팀 현재 점수
+    away_score INTEGER NOT NULL DEFAULT 0,       -- 어웨이팀 현재 점수
+    current_quarter TEXT,                        -- 현재 쿼터/세트/판 (sport 별로 다름)
     updated_at INTEGER NOT NULL DEFAULT (unixepoch())
 );
 
@@ -33,7 +36,8 @@ CREATE TABLE IF NOT EXISTS live_comments (
     match_id TEXT NOT NULL,
     ts INTEGER NOT NULL DEFAULT (unixepoch()),
     type TEXT NOT NULL DEFAULT 'normal',         -- normal | score | miss | sub
-    content TEXT NOT NULL
+    content TEXT NOT NULL,
+    quarter TEXT                                  -- 쿼터/세트/판 라벨 (선택)
 );
 
 CREATE INDEX IF NOT EXISTS idx_live_comments_match_ts
