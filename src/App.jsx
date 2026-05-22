@@ -12,6 +12,8 @@ import LivePage from './pages/LivePage';
 import LiveMatchPage from './pages/LiveMatchPage';
 import AdminRelayPage from './pages/AdminRelayPage';
 import LineupPage from './pages/LineupPage';
+import DashboardPage from './pages/dashboard.jsx';
+import AdminDashboardPage from './pages/AdminDashboardPage';
 import './App.css';
 
 export default function App() {
@@ -21,12 +23,14 @@ export default function App() {
                 <Routes>
                     {/* 관리자 — Layout 없이 단독 노출 (네비/푸터에서 숨김) */}
                     <Route path="/admin/relay" element={<AdminRelayPage />} />
+                    <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
 
                     <Route element={<Layout />}>
                         <Route path="/" element={<HomePage />} />
                         <Route path="/live" element={<LivePage />} />
                         <Route path="/live/:matchId" element={<LiveMatchPage />} />
                         <Route path="/schedule" element={<SchedulePage />} />
+                        <Route path="/dashboard" element={<DashboardPage />} />
                         <Route path="/lineup" element={<LineupPage />} />
                         <Route path="/cheers" element={<CheersYearPage />} />
                         <Route path="/cheers/:yearId" element={<CheersVideoPage />} />
