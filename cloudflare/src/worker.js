@@ -6,8 +6,8 @@ const CAMPUSES = ['문경', '음성', '세종'];
 const GET_CACHE_TTL = 2; // 초
 
 // 매크로 감지 임계값
-const INSTANT_BAN_DELTA = 2001; // 이 이상이면 즉시 5분 밴
-const SOFT_BAN_DELTA = 800; // 이 이상이면 누적 카운터 +1
+const INSTANT_BAN_DELTA = 1000; // 이 이상이면 즉시 5분 밴
+const SOFT_BAN_DELTA = 600; // 이 이상이면 누적 카운터 +1
 const SOFT_BAN_COUNT = 3; // 누적 3회 도달 시 5분 밴
 
 const CORS_HEADERS = {
@@ -20,7 +20,7 @@ const CORS_HEADERS = {
 // 💡 IP별 접속 기록과 차단 목록을 서버 메모리에 임시 저장
 const ipRequestHistory = new Map();
 const blockedIPs = new Map();
-const macroDeltaCount = new Map(); // 💡 누적 카운터용 (800~2000 구간)
+const macroDeltaCount = new Map(); // 💡 누적 카운터용 (600~1000 구간)
 
 export default {
     async fetch(req, env, ctx) {
