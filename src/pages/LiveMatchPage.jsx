@@ -25,10 +25,19 @@ function formatTime(ts) {
     return `${hh}:${mm}`;
 }
 
+function sortByGrade(arr) {
+    // 학년 높은 순(12 → 7), 학년 없는 인원은 맨 아래
+    return arr.slice().sort((a, b) => {
+        const ga = a.grade ?? -Infinity;
+        const gb = b.grade ?? -Infinity;
+        return gb - ga;
+    });
+}
+
 function LineupCard({ team, members }) {
     const color = CAMPUS_COLORS[team];
-    const starters = members.filter((m) => !m.bench);
-    const bench = members.filter((m) => m.bench);
+    const starters = sortByGrade(members.filter((m) => !m.bench));
+    const bench = sortByGrade(members.filter((m) => m.bench));
 
     return (
         <article
@@ -45,9 +54,7 @@ function LineupCard({ team, members }) {
                 <ul className="lu-list">
                     {starters.map((m, i) => (
                         <li key={`s-${i}`} className="lu-row">
-                            {(m.no != null || m.number != null) && (
-                                <span className="lu-num">{m.no ?? m.number}</span>
-                            )}
+                            {/* 번호는 정식 등번호 들어오면 다시 노출 */}
                             {m.grade != null && <span className="lu-grade">{m.grade}</span>}
                             <span className="lu-name">{m.name}</span>
                             {m.role && <span className="lu-role">{m.role}</span>}
@@ -58,9 +65,6 @@ function LineupCard({ team, members }) {
                     {bench.length > 0 && <li className="lu-divider">후보</li>}
                     {bench.map((m, i) => (
                         <li key={`b-${i}`} className="lu-row is-bench">
-                            {(m.no != null || m.number != null) && (
-                                <span className="lu-num">{m.no ?? m.number}</span>
-                            )}
                             {m.grade != null && <span className="lu-grade">{m.grade}</span>}
                             <span className="lu-name">{m.name}</span>
                             {m.role && <span className="lu-role">{m.role}</span>}

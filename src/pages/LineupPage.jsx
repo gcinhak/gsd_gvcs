@@ -7,7 +7,7 @@ import { CAMPUS_COLORS } from '../data';
 function PlayerRow({ player }) {
     return (
         <li className={`lp-row ${player.bench ? 'is-bench' : ''}`}>
-            {player.no != null && <span className="lp-num">{player.no}</span>}
+            {/* 번호는 추후 정식 등번호 들어오면 다시 노출 */}
             {player.grade != null && <span className="lp-grade">{player.grade}</span>}
             <span className="lp-name">{player.name}</span>
             {player.role && <span className="lp-role">{player.role}</span>}
@@ -17,11 +17,20 @@ function PlayerRow({ player }) {
     );
 }
 
+function sortByGrade(players) {
+    // 학년 높은 순(12 → 7), 학년 없는 인원은 맨 아래
+    return players.slice().sort((a, b) => {
+        const ga = a.grade ?? -Infinity;
+        const gb = b.grade ?? -Infinity;
+        return gb - ga;
+    });
+}
+
 function CategoryCard({ campus, category, players }) {
     const color = CAMPUS_COLORS[campus];
     const cardStyle = color ? { '--card-tint': color.soft, '--card-accent': color.bg } : {};
-    const starters = players.filter((p) => !p.bench);
-    const bench = players.filter((p) => p.bench);
+    const starters = sortByGrade(players.filter((p) => !p.bench));
+    const bench = sortByGrade(players.filter((p) => p.bench));
 
     return (
         <article className="lp-card" style={cardStyle}>
