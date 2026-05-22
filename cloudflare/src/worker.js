@@ -161,22 +161,20 @@ async function incrementPopcat(req, env, ctx) {
         return json({ error: 'invalid json' }, 400);
     }
 
-    const campus = body?.campus;
-    let delta = Number(body?.delta);
-
     // IP / UUID 추출 (로그용)
     const clientIp = req.headers.get('cf-connecting-ip') || 'unknown';
     const uuid = body?.uuid || 'none';
 
-    // [3] uuid 없거나 none이면 차단
+    // uuid 없거나 none이면 차단
     if (!uuid || uuid === 'none') {
         return json({ error: 'Forbidden' }, 403);
     }
 
-    const rateKey = `rate:${clientIp}`;
+    // 💡 [수정 포인트 1] 공용 와이파이 피해를 막기 위해 기준을 clientIp에서 uuid로 변경
+    const rateKey = `rate:${uuid}`;
     const now = Date.now();
 
-    // 1) 이미 밴된 IP 차단
+    // 1) 이미 밴된 유저 차단
     if (blockedIPs.has(rateKey)) {
         const unblockTime = blockedIPs.get(rateKey);
         if (now < unblockTime) {
@@ -197,7 +195,7 @@ async function incrementPopcat(req, env, ctx) {
                 env.DB.prepare(
                     'INSERT INTO abnormal_logs (uuid, ip, campus, attempted_delta, reason, created_at) VALUES (?, ?, ?, ?, ?, unixepoch())'
                 )
-                    .bind(uuid, clientIp, campus || 'none', delta, 'RATE_LIMIT_EXCEEDED')
+                    .bind(uuid, clientIp, 'batch', 0, 'RATE_LIMIT_EXCEEDED')
                     .run()
                     .catch(() => {})
             );
@@ -208,78 +206,101 @@ async function incrementPopcat(req, env, ctx) {
     timestamps.push(now);
     ipRequestHistory.set(rateKey, timestamps);
 
-    if (isNaN(delta) || delta <= 0) {
-        return json({ error: 'Invalid request' }, 400);
+    // 💡 [수정 포인트 2] 배열(Batch) 형태의 다중 캠퍼스 업데이트 처리
+    let updates = body?.updates;
+
+    // 구버전 프론트엔드(새로고침 안 한 유저)와의 호환성 유지
+    if (!updates && body?.campus) {
+        updates = [{ campus: body.campus, delta: Number(body.delta) }];
     }
 
-    // 3) 600타 초과 매크로 삭감
+    if (!Array.isArray(updates) || updates.length === 0) {
+        return json({ error: 'Invalid request: updates array required' }, 400);
+    }
+
     const MAX_DELTA = 600;
+    const statements = [];
 
-    if (delta > MAX_DELTA) {
-        const macroKey = `macro:${clientIp}`;
+    // 전송된 각 캠퍼스별 클릭 데이터 순회
+    for (let item of updates) {
+        const campus = item.campus;
+        let delta = Number(item.delta);
 
-        // [1] 즉시 밴 — delta가 INSTANT_BAN_DELTA 이상이면 바로 5분 밴
-        if (delta >= INSTANT_BAN_DELTA) {
-            blockedIPs.set(rateKey, now + 5 * 60 * 1000);
-            ctx.waitUntil(
-                env.DB.prepare(
-                    'INSERT INTO abnormal_logs (uuid, ip, campus, attempted_delta, reason, created_at) VALUES (?, ?, ?, ?, ?, unixepoch())'
-                )
-                    .bind(uuid, clientIp, campus, delta, 'INSTANT_BAN')
-                    .run()
-                    .catch(() => {})
-            );
-            return json({ error: 'Macro detected. Blocked for 5 minutes.' }, 429);
-        }
+        if (isNaN(delta) || delta <= 0 || !CAMPUSES.includes(campus)) continue;
 
-        // [2] 누적 밴 — delta가 SOFT_BAN_DELTA 이상이면 카운터 +1, 3회 시 5분 밴
-        if (delta >= SOFT_BAN_DELTA) {
-            const count = (macroDeltaCount.get(macroKey) || 0) + 1;
-            macroDeltaCount.set(macroKey, count);
+        // 3) 매크로 삭감 및 밴 처리 (질문자님의 기존 로직 유지)
+        if (delta > MAX_DELTA) {
+            // 매크로 감지도 IP 대신 UUID 기준으로 변경하여 기숙사 등에서 한 명 때문에 전체가 차단되는 것 방지
+            const macroKey = `macro:${uuid}`;
 
-            if (count >= SOFT_BAN_COUNT) {
-                macroDeltaCount.delete(macroKey);
+            // [1] 즉시 밴 — delta가 INSTANT_BAN_DELTA 이상이면 바로 5분 밴
+            if (delta >= INSTANT_BAN_DELTA) {
                 blockedIPs.set(rateKey, now + 5 * 60 * 1000);
+                if (ctx?.waitUntil) {
+                    ctx.waitUntil(
+                        env.DB.prepare(
+                            'INSERT INTO abnormal_logs (uuid, ip, campus, attempted_delta, reason, created_at) VALUES (?, ?, ?, ?, ?, unixepoch())'
+                        )
+                            .bind(uuid, clientIp, campus, delta, 'INSTANT_BAN')
+                            .run()
+                            .catch(() => {})
+                    );
+                }
+                return json({ error: 'Macro detected. Blocked for 5 minutes.' }, 429);
+            }
+
+            // [2] 누적 밴 — delta가 SOFT_BAN_DELTA 이상이면 카운터 +1, 3회 시 5분 밴
+            if (delta >= SOFT_BAN_DELTA) {
+                const count = (macroDeltaCount.get(macroKey) || 0) + 1;
+                macroDeltaCount.set(macroKey, count);
+
+                if (count >= SOFT_BAN_COUNT) {
+                    macroDeltaCount.delete(macroKey);
+                    blockedIPs.set(rateKey, now + 5 * 60 * 1000);
+                    if (ctx?.waitUntil) {
+                        ctx.waitUntil(
+                            env.DB.prepare(
+                                'INSERT INTO abnormal_logs (uuid, ip, campus, attempted_delta, reason, created_at) VALUES (?, ?, ?, ?, ?, unixepoch())'
+                            )
+                                .bind(uuid, clientIp, campus, delta, 'SOFT_BAN_3X')
+                                .run()
+                                .catch(() => {})
+                        );
+                    }
+                    return json({ error: 'Repeated macro detected. Blocked for 5 minutes.' }, 429);
+                }
+            }
+
+            // 밴 조건 미달 시 — 600으로 삭감 후 처리 기록
+            if (ctx?.waitUntil) {
                 ctx.waitUntil(
                     env.DB.prepare(
                         'INSERT INTO abnormal_logs (uuid, ip, campus, attempted_delta, reason, created_at) VALUES (?, ?, ?, ?, ?, unixepoch())'
                     )
-                        .bind(uuid, clientIp, campus, delta, 'SOFT_BAN_3X')
+                        .bind(uuid, clientIp, campus, delta, 'MACRO_LIMIT_TRIGGERED')
                         .run()
                         .catch(() => {})
                 );
-                return json({ error: 'Repeated macro detected. Blocked for 5 minutes.' }, 429);
             }
+            delta = MAX_DELTA;
         }
 
-        // 밴 조건 미달 시 — 600으로 삭감 후 처리
-        ctx.waitUntil(
+        // DB 저장용 쿼리 누적 (ON CONFLICT DO UPDATE)
+        statements.push(
             env.DB.prepare(
-                'INSERT INTO abnormal_logs (uuid, ip, campus, attempted_delta, reason, created_at) VALUES (?, ?, ?, ?, ?, unixepoch())'
-            )
-                .bind(uuid, clientIp, campus, delta, 'MACRO_LIMIT_TRIGGERED')
-                .run()
-                .catch(() => {})
+                'INSERT INTO popcat_counts (campus, count, updated_at) VALUES (?, ?, unixepoch()) ' +
+                    'ON CONFLICT(campus) DO UPDATE SET count = count + excluded.count, updated_at = unixepoch()'
+            ).bind(campus, delta)
         );
-        delta = MAX_DELTA;
     }
 
-    if (!CAMPUSES.includes(campus)) {
-        return json({ error: 'invalid campus' }, 400);
+    // 💡 [수정 포인트 3] 누적된 쿼리를 한 번에 실행 (성능 최적화 및 횟수 절감)
+    if (statements.length > 0) {
+        await env.DB.batch(statements);
     }
 
-    await env.DB.prepare(
-        'INSERT INTO popcat_counts (campus, count, updated_at) VALUES (?, ?, unixepoch()) ' +
-        'ON CONFLICT(campus) DO UPDATE SET count = count + excluded.count, updated_at = unixepoch()'
-    )
-        .bind(campus, delta)
-        .run();
-
-    const row = await env.DB
-        .prepare('SELECT count FROM popcat_counts WHERE campus = ?')
-        .bind(campus)
-        .first();
-    return json({ campus, count: Number(row?.count) || 0 });
+    // 프론트엔드에 처리 완료 응답
+    return json({ ok: true, processed: statements.length });
 }
 
 /* ─── Live state ─── */
@@ -289,11 +310,9 @@ async function getLiveState(env, req, ctx) {
     const cached = await cache.match(cacheKey);
     if (cached) return cached;
 
-    const { results } = await env.DB
-        .prepare(
-            'SELECT match_id, status, youtube_id, home_score, away_score, current_quarter, updated_at FROM live_match_state'
-        )
-        .all();
+    const { results } = await env.DB.prepare(
+        'SELECT match_id, status, youtube_id, home_score, away_score, current_quarter, updated_at FROM live_match_state'
+    ).all();
 
     const matches = (results || []).map((r) => ({
         matchId: r.match_id,
@@ -322,8 +341,7 @@ async function updateMatch(matchId, req, env) {
     if (!body) return json({ error: 'invalid json' }, 400);
 
     // 행이 없으면 기본값으로 만들어 두고, 그 위에 partial UPDATE
-    await env.DB
-        .prepare('INSERT INTO live_match_state (match_id) VALUES (?) ON CONFLICT(match_id) DO NOTHING')
+    await env.DB.prepare('INSERT INTO live_match_state (match_id) VALUES (?) ON CONFLICT(match_id) DO NOTHING')
         .bind(matchId)
         .run();
 
@@ -351,7 +369,9 @@ async function updateMatch(matchId, req, env) {
     }
     if (body.currentQuarter !== undefined) {
         sets.push('current_quarter = ?');
-        params.push(body.currentQuarter == null || body.currentQuarter === '' ? null : String(body.currentQuarter).slice(0, 32));
+        params.push(
+            body.currentQuarter == null || body.currentQuarter === '' ? null : String(body.currentQuarter).slice(0, 32)
+        );
     }
 
     if (sets.length === 0) return json({ error: 'no updates' }, 400);
@@ -359,15 +379,13 @@ async function updateMatch(matchId, req, env) {
     sets.push('updated_at = unixepoch()');
     params.push(matchId);
 
-    await env.DB
-        .prepare(`UPDATE live_match_state SET ${sets.join(', ')} WHERE match_id = ?`)
+    await env.DB.prepare(`UPDATE live_match_state SET ${sets.join(', ')} WHERE match_id = ?`)
         .bind(...params)
         .run();
 
-    const row = await env.DB
-        .prepare(
-            'SELECT match_id, status, youtube_id, home_score, away_score, current_quarter, updated_at FROM live_match_state WHERE match_id = ?'
-        )
+    const row = await env.DB.prepare(
+        'SELECT match_id, status, youtube_id, home_score, away_score, current_quarter, updated_at FROM live_match_state WHERE match_id = ?'
+    )
         .bind(matchId)
         .first();
 
@@ -385,11 +403,10 @@ async function updateMatch(matchId, req, env) {
 /* ─── Comments ─── */
 async function getComments(matchId, url, env) {
     const since = Number(url.searchParams.get('since')) || 0;
-    const { results } = await env.DB
-        .prepare(
-            'SELECT id, ts, type, content, quarter, score_team, score_amount, score_side FROM live_comments ' +
+    const { results } = await env.DB.prepare(
+        'SELECT id, ts, type, content, quarter, score_team, score_amount, score_side FROM live_comments ' +
             'WHERE match_id = ? AND ts >= ? ORDER BY id ASC LIMIT 500'
-        )
+    )
         .bind(matchId, since)
         .all();
     const comments = (results || []).map((r) => ({
@@ -410,7 +427,9 @@ async function addComment(matchId, req, env) {
     if (!body) return json({ error: 'invalid json' }, 400);
 
     const type = ALLOWED_TYPES.includes(body.type) ? body.type : 'normal';
-    const content = String(body.content || '').trim().slice(0, 500);
+    const content = String(body.content || '')
+        .trim()
+        .slice(0, 500);
     if (!content) return json({ error: 'empty content' }, 400);
     const quarter = body.quarter == null || body.quarter === '' ? null : String(body.quarter).slice(0, 32);
 
@@ -419,34 +438,30 @@ async function addComment(matchId, req, env) {
     const scoreAmount = Math.max(0, Math.min(Number(body.scoreAmount) || 0, 999));
     const scoreSide = body.scoreSide === 'home' || body.scoreSide === 'away' ? body.scoreSide : null;
 
-    const result = await env.DB
-        .prepare(
-            'INSERT INTO live_comments (match_id, ts, type, content, quarter, score_team, score_amount, score_side) ' +
+    const result = await env.DB.prepare(
+        'INSERT INTO live_comments (match_id, ts, type, content, quarter, score_team, score_amount, score_side) ' +
             'VALUES (?, unixepoch(), ?, ?, ?, ?, ?, ?)'
-        )
+    )
         .bind(matchId, type, content, quarter, scoreTeam, scoreAmount, scoreSide)
         .run();
 
     // 점수가 있고 home/away 가 지정되어 있으면 매치 스코어 증가
     if (scoreAmount > 0 && scoreSide) {
         const column = scoreSide === 'home' ? 'home_score' : 'away_score';
-        await env.DB
-            .prepare('INSERT INTO live_match_state (match_id) VALUES (?) ON CONFLICT(match_id) DO NOTHING')
+        await env.DB.prepare('INSERT INTO live_match_state (match_id) VALUES (?) ON CONFLICT(match_id) DO NOTHING')
             .bind(matchId)
             .run();
-        await env.DB
-            .prepare(
-                `UPDATE live_match_state SET ${column} = ${column} + ?, updated_at = unixepoch() WHERE match_id = ?`
-            )
+        await env.DB.prepare(
+            `UPDATE live_match_state SET ${column} = ${column} + ?, updated_at = unixepoch() WHERE match_id = ?`
+        )
             .bind(scoreAmount, matchId)
             .run();
     }
 
     const id = result?.meta?.last_row_id ? Number(result.meta.last_row_id) : 0;
-    const row = await env.DB
-        .prepare(
-            'SELECT id, ts, type, content, quarter, score_team, score_amount, score_side FROM live_comments WHERE id = ?'
-        )
+    const row = await env.DB.prepare(
+        'SELECT id, ts, type, content, quarter, score_team, score_amount, score_side FROM live_comments WHERE id = ?'
+    )
         .bind(id)
         .first();
 
@@ -468,8 +483,7 @@ async function addComment(matchId, req, env) {
 
 async function deleteComment(matchId, commentId, env) {
     // 점수가 연동된 메시지면 먼저 매치 점수 롤백
-    const row = await env.DB
-        .prepare('SELECT score_amount, score_side FROM live_comments WHERE id = ? AND match_id = ?')
+    const row = await env.DB.prepare('SELECT score_amount, score_side FROM live_comments WHERE id = ? AND match_id = ?')
         .bind(commentId, matchId)
         .first();
 
@@ -478,19 +492,15 @@ async function deleteComment(matchId, commentId, env) {
         const side = row.score_side === 'home' || row.score_side === 'away' ? row.score_side : null;
         if (amount > 0 && side) {
             const column = side === 'home' ? 'home_score' : 'away_score';
-            await env.DB
-                .prepare(
-                    `UPDATE live_match_state SET ${column} = MAX(0, ${column} - ?), updated_at = unixepoch() WHERE match_id = ?`
-                )
+            await env.DB.prepare(
+                `UPDATE live_match_state SET ${column} = MAX(0, ${column} - ?), updated_at = unixepoch() WHERE match_id = ?`
+            )
                 .bind(amount, matchId)
                 .run();
         }
     }
 
-    await env.DB
-        .prepare('DELETE FROM live_comments WHERE id = ? AND match_id = ?')
-        .bind(commentId, matchId)
-        .run();
+    await env.DB.prepare('DELETE FROM live_comments WHERE id = ? AND match_id = ?').bind(commentId, matchId).run();
     return json({ ok: true });
 }
 

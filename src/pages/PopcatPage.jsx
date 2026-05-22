@@ -144,55 +144,61 @@ export default function PopcatPage() {
             pendingRef.current = { ...ZERO };
             setPendingTotal(0);
 
-            for (const c of CAMPUSES) {
-                const delta = toSend[c];
-                if (delta > 0) {
-                    try {
-                        // 1. API 응답 상태 코드를 직접 확인하기 위해 fetch를 사용합니다.
-                        const url =
-                            (
-                                import.meta.env.VITE_POPCAT_API_URL || 'https://gsd-gvcs-popcat.gcinhak.workers.dev'
-                            ).replace(/\/$/, '') + '/api/popcat/increment';
+            // 💡 1. 캠퍼스별 반복문(for)을 삭제하고, 보낼 데이터를 하나의 배열(Batch)로 모읍니다.
+            const updates = CAMPUSES.map((c) => ({ campus: c, delta: toSend[c] })).filter((item) => item.delta > 0);
 
-                        const response = await fetch(url, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ campus: c, delta, uuid: getOrCreateUUID() }),
-                        });
+            // 💡 2. 보낼 데이터가 없다면 여기서 종료
+            if (updates.length === 0) return;
 
-                        // 2. 🛑 429 매크로 차단 응답이 왔을 때 알림창 띄우기
-                        if (response.status === 429) {
-                            // 💡 pending 완전 초기화 — 재전송 시도 차단
-                            pendingRef.current = { ...ZERO };
-                            setPendingTotal(0);
-                            if (flushTimerRef.current) {
-                                clearTimeout(flushTimerRef.current);
-                                flushTimerRef.current = null;
-                            }
+            try {
+                const url =
+                    (import.meta.env.VITE_POPCAT_API_URL || 'https://gsd-gvcs-popcat.gcinhak.workers.dev').replace(
+                        /\/$/,
+                        ''
+                    ) + '/api/popcat/increment';
 
-                            try {
-                                const unbanTime = Date.now() + 5 * 60 * 1000;
-                                window.localStorage.setItem(BAN_KEY, unbanTime);
-                                setBanUntil(unbanTime);
-                            } catch {
-                                /* 무시 */
-                            }
-                            setIsBanned(true);
+                // 💡 3. 루프 없이 단 한 번의 API 호출만 실행!
+                // 기존 { campus, delta, uuid } 대신 { updates, uuid } 를 보냅니다.
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ updates, uuid: getOrCreateUUID() }),
+                });
 
-                            alert(
-                                '🚨 [경고] 비정상적인 요청 속도가 감지되었습니다.\n\n매크로 방지를 위해 5분간 팝캣 참여가 차단됩니다.'
-                            );
-                            return;
-                        }
-
-                        // 3. 그 외 서버 에러 시 catch 문으로 보내기
-                        if (!response.ok) {
-                            throw new Error('서버 또는 네트워크 에러');
-                        }
-                    } catch {
-                        pendingRef.current[c] += delta;
+                // 4. 🛑 429 매크로 차단 응답이 왔을 때 알림창 띄우기 (기존 로직 유지)
+                if (response.status === 429) {
+                    // pending 완전 초기화 — 재전송 시도 차단
+                    pendingRef.current = { ...ZERO };
+                    setPendingTotal(0);
+                    if (flushTimerRef.current) {
+                        clearTimeout(flushTimerRef.current);
+                        flushTimerRef.current = null;
                     }
+
+                    try {
+                        const unbanTime = Date.now() + 5 * 60 * 1000;
+                        window.localStorage.setItem(BAN_KEY, unbanTime);
+                        setBanUntil(unbanTime);
+                    } catch {
+                        /* 무시 */
+                    }
+                    setIsBanned(true);
+
+                    alert(
+                        '🚨 [경고] 비정상적인 요청 속도가 감지되었습니다.\n\n매크로 방지를 위해 5분간 팝캣 참여가 차단됩니다.'
+                    );
+                    return;
                 }
+
+                // 5. 그 외 서버 에러 시 catch 문으로 보내기
+                if (!response.ok) {
+                    throw new Error('서버 또는 네트워크 에러');
+                }
+            } catch {
+                // 💡 에러 발생 시, 실패한 모든 캠퍼스 수치를 다시 누적
+                updates.forEach(({ campus, delta }) => {
+                    pendingRef.current[campus] += delta;
+                });
             }
 
             const remaining = CAMPUSES.reduce((s, c) => s + pendingRef.current[c], 0);
@@ -217,7 +223,7 @@ export default function PopcatPage() {
                 flushTimerRef.current = null;
             }
         };
-    }, []);
+    }, [isBanned]);
 
     /* 페이지 이탈 시 마지막 저장 시도 (keepalive fetch) */
     useEffect(() => {
@@ -239,7 +245,6 @@ export default function PopcatPage() {
             if (restoredTotal > 0) {
                 window.localStorage.removeItem(SPA_PENDING_KEY);
                 setTimeout(() => setPendingTotal((p) => p + restoredTotal), 0);
-                // 복원된 데이터를 다음 flush 주기에 전송 예약
                 schedulerRef.current();
             }
         } catch {
@@ -247,28 +252,30 @@ export default function PopcatPage() {
         }
 
         // ─────────────────────────────────────────────────────────────
-        // 실제 탭/브라우저 닫기(beforeunload, pagehide)에서만 keepalive POST
-        // SPA 라우터 이탈(컴포넌트 언마운트)에서는 이 핸들러가 호출되지 않음
+        // 💡 [변경 완료] 실제 탭/브라우저 닫기 시 1번의 묶음(Batch) POST만 전송
         // ─────────────────────────────────────────────────────────────
         const flushToServer = () => {
             const pending = pendingRef.current;
-            const url =
-                (import.meta.env.VITE_POPCAT_API_URL || 'https://gsd-gvcs-popcat.gcinhak.workers.dev').replace(
-                    /\/$/,
-                    ''
-                ) + '/api/popcat/increment';
-            for (const c of CAMPUSES) {
-                if (pending[c] > 0) {
-                    try {
-                        fetch(url, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ campus: c, delta: pending[c], uuid: getOrCreateUUID() }),
-                            keepalive: true,
-                        });
-                    } catch {
-                        /* ignore */
-                    }
+
+            // 보낼 데이터 배열 구성
+            const updates = CAMPUSES.map((c) => ({ campus: c, delta: pending[c] })).filter((item) => item.delta > 0);
+
+            if (updates.length > 0) {
+                const url =
+                    (import.meta.env.VITE_POPCAT_API_URL || 'https://gsd-gvcs-popcat.gcinhak.workers.dev').replace(
+                        /\/$/,
+                        ''
+                    ) + '/api/popcat/increment';
+                try {
+                    // 한 번의 POST 요청만 전송
+                    fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ updates, uuid: getOrCreateUUID() }),
+                        keepalive: true,
+                    });
+                } catch {
+                    /* ignore */
                 }
             }
             pendingRef.current = { ...ZERO };
@@ -283,8 +290,6 @@ export default function PopcatPage() {
 
             // ─────────────────────────────────────────────────────────
             // SPA 이탈(컴포넌트 언마운트): POST 금지 — localStorage에 보존
-            // 탭을 닫는 게 아니므로 keep-alive POST를 보내지 않는다.
-            // 보존된 데이터는 다음 번 이 페이지에 들어올 때 위 복원 로직이 처리함.
             // ─────────────────────────────────────────────────────────
             const pending = pendingRef.current;
             const hasData = CAMPUSES.some((c) => pending[c] > 0);
