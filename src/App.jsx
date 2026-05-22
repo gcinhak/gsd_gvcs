@@ -11,6 +11,7 @@ import UpcomingPage from './pages/UpcomingPage';
 import LivePage from './pages/LivePage';
 import LiveMatchPage from './pages/LiveMatchPage';
 import AdminRelayPage from './pages/AdminRelayPage';
+import LineupPage from './pages/LineupPage';
 import './App.css';
 
 export default function App() {
@@ -26,6 +27,7 @@ export default function App() {
                         <Route path="/live" element={<LivePage />} />
                         <Route path="/live/:matchId" element={<LiveMatchPage />} />
                         <Route path="/schedule" element={<SchedulePage />} />
+                        <Route path="/lineup" element={<LineupPage />} />
                         <Route path="/cheers" element={<CheersYearPage />} />
                         <Route path="/cheers/:yearId" element={<CheersVideoPage />} />
                         <Route path="/games" element={<GamesPage />} />

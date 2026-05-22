@@ -10,6 +10,7 @@ const NAV_ITEMS = [
     { to: '/', label: '홈', end: true },
     ...(SHOW_LIVE_TAB ? [{ to: '/live', label: 'LIVE', live: true }] : []),
     { to: '/schedule', label: '경기 일정' },
+    { to: '/lineup', label: '라인업' },
     { to: '/cheers', label: '응원전' },
     //{ to: '/games', label: '경기 영상' },
     { to: '/history', label: '역대 전적' },

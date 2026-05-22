@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import CampusBadge from '../components/CampusBadge';
 import { LIVE_MATCHES, CAMPUS_COLORS, getQuarters } from '../data';
+import { getLineupForMatch } from '../data/lineup';
 import { fetchLiveStates, fetchComments } from '../lib/liveApi';
 
 const POLL_STATE_MS = 3000;
@@ -26,6 +27,9 @@ function formatTime(ts) {
 
 function LineupCard({ team, members }) {
     const color = CAMPUS_COLORS[team];
+    const starters = members.filter((m) => !m.bench);
+    const bench = members.filter((m) => m.bench);
+
     return (
         <article
             className="lineup-card"
@@ -33,17 +37,34 @@ function LineupCard({ team, members }) {
         >
             <header className="lu-head">
                 <CampusBadge campus={team} size="lg" />
-                <span className="lu-count">{members.length}명</span>
+                <span className="lu-count">{starters.length}명{bench.length > 0 && ` · 후보 ${bench.length}`}</span>
             </header>
             {members.length === 0 ? (
                 <div className="lu-empty">라인업 데이터 입력 대기중</div>
             ) : (
                 <ul className="lu-list">
-                    {members.map((m, i) => (
-                        <li key={i} className="lu-row">
-                            {m.number != null && <span className="lu-num">{m.number}</span>}
+                    {starters.map((m, i) => (
+                        <li key={`s-${i}`} className="lu-row">
+                            {(m.no != null || m.number != null) && (
+                                <span className="lu-num">{m.no ?? m.number}</span>
+                            )}
+                            {m.grade != null && <span className="lu-grade">{m.grade}</span>}
                             <span className="lu-name">{m.name}</span>
+                            {m.role && <span className="lu-role">{m.role}</span>}
+                            {m.alt && <span className="lu-alt">{m.alt}</span>}
                             {m.position && <span className="lu-pos">{m.position}</span>}
+                        </li>
+                    ))}
+                    {bench.length > 0 && <li className="lu-divider">후보</li>}
+                    {bench.map((m, i) => (
+                        <li key={`b-${i}`} className="lu-row is-bench">
+                            {(m.no != null || m.number != null) && (
+                                <span className="lu-num">{m.no ?? m.number}</span>
+                            )}
+                            {m.grade != null && <span className="lu-grade">{m.grade}</span>}
+                            <span className="lu-name">{m.name}</span>
+                            {m.role && <span className="lu-role">{m.role}</span>}
+                            {m.alt && <span className="lu-alt">{m.alt}</span>}
                         </li>
                     ))}
                 </ul>
@@ -306,8 +327,22 @@ export default function LiveMatchPage() {
                             </div>
                         </div>
                         <div className="lineup-grid">
-                            <LineupCard team={match.teams.home} members={match.lineup?.home || []} />
-                            <LineupCard team={match.teams.away} members={match.lineup?.away || []} />
+                            <LineupCard
+                                team={match.teams.home}
+                                members={
+                                    (match.lineup?.home && match.lineup.home.length > 0)
+                                        ? match.lineup.home
+                                        : getLineupForMatch(match.teams.home, match.sport, match.category)
+                                }
+                            />
+                            <LineupCard
+                                team={match.teams.away}
+                                members={
+                                    (match.lineup?.away && match.lineup.away.length > 0)
+                                        ? match.lineup.away
+                                        : getLineupForMatch(match.teams.away, match.sport, match.category)
+                                }
+                            />
                         </div>
                     </div>
                 )}

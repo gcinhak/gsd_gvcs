@@ -4139,3 +4139,252 @@ img {
     .adm-row-btn { grid-column: 1 / -1; }
 }
 
+/* ──────────────────────────────────────────────────────────
+   PAGE — LINEUP
+────────────────────────────────────────────────────────── */
+.lineup-page { padding: 2rem 0 4rem; }
+.lineup-inner {
+    max-width: 1240px;
+    margin: 0 auto;
+    padding: 0 clamp(1rem, 3vw, 1.5rem);
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+/* 캠퍼스 탭 */
+.lp-campus-tabs {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+.lp-campus-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.55rem 1rem;
+    background: var(--surface);
+    border: 2px solid var(--border);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all 0.12s;
+    box-shadow: var(--shadow-xs);
+}
+.lp-campus-tab:hover:not(:disabled) {
+    border-color: var(--border-strong);
+    transform: translateY(-1px);
+}
+.lp-campus-tab.active {
+    border-color: var(--primary);
+    background: var(--primary-soft);
+}
+.lp-campus-tab.is-disabled,
+.lp-campus-tab:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+.lp-disabled-tag {
+    font-size: 0.7rem;
+    padding: 0.1rem 0.45rem;
+    background: var(--bg-soft);
+    color: var(--muted);
+    border-radius: 10px;
+    font-weight: 600;
+}
+
+/* 종목 칩 */
+.lp-sport-chips {
+    display: flex;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+    padding: 0.85rem 1rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-xs);
+}
+
+/* 카테고리 카드 그리드 */
+.lp-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 0.95rem;
+}
+.lp-card {
+    background: var(--card-tint, var(--surface));
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--card-accent, var(--border-strong));
+    border-radius: var(--radius-md);
+    padding: 0.95rem 1.1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+    box-shadow: var(--shadow-xs);
+}
+.lp-card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.6);
+}
+.lp-card-title {
+    font-size: 1.05rem;
+    color: var(--text);
+    font-weight: 700;
+}
+.lp-card-count {
+    font-size: 0.78rem;
+    color: var(--text-3);
+    padding: 0.18rem 0.55rem;
+    background: rgba(255, 255, 255, 0.65);
+    border-radius: 20px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+.lp-bench-count {
+    color: var(--muted);
+    font-weight: 500;
+}
+.lp-empty {
+    padding: 1.2rem 0.5rem;
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.88rem;
+    background: rgba(255, 255, 255, 0.5);
+    border: 1px dashed var(--border-strong);
+    border-radius: 8px;
+}
+.lp-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+.lp-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    padding: 0.45rem 0.65rem;
+    background: rgba(255, 255, 255, 0.7);
+    border-radius: 6px;
+    font-size: 0.88rem;
+}
+.lp-row.is-bench {
+    background: rgba(255, 255, 255, 0.4);
+    color: var(--text-3);
+}
+.lp-num {
+    flex-shrink: 0;
+    width: 26px;
+    height: 26px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Black Han Sans', sans-serif;
+    font-weight: 400;
+    color: var(--text);
+    font-size: 0.95rem;
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 6px;
+    letter-spacing: 0;
+}
+.lp-grade {
+    flex-shrink: 0;
+    font-size: 0.7rem;
+    padding: 0.1rem 0.45rem;
+    background: var(--bg-soft);
+    color: var(--text-3);
+    border-radius: 10px;
+    font-weight: 600;
+    border: 1px solid var(--border);
+}
+.lp-name {
+    color: var(--text);
+    font-weight: 600;
+    flex: 1;
+    min-width: 0;
+}
+.lp-role {
+    font-size: 0.7rem;
+    padding: 0.1rem 0.45rem;
+    background: #dbeafe;
+    color: #1e40af;
+    border-radius: 10px;
+    font-weight: 600;
+}
+.lp-alt {
+    font-size: 0.72rem;
+    color: var(--muted);
+    font-style: italic;
+}
+.lp-bench-tag {
+    font-size: 0.68rem;
+    padding: 0.1rem 0.45rem;
+    background: var(--bg-soft);
+    color: var(--muted);
+    border-radius: 10px;
+}
+.lp-divider {
+    margin-top: 0.4rem;
+    padding: 0.3rem 0.65rem;
+    font-size: 0.7rem;
+    color: var(--muted);
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    border-top: 1px dashed var(--border);
+}
+
+.lp-help {
+    font-size: 0.8rem;
+    color: var(--muted);
+    padding: 0.6rem 0.85rem;
+    background: var(--bg-soft);
+    border-radius: 8px;
+}
+
+/* LineupCard (LIVE 라이브 매치 페이지 내부) — 새 필드 보강 */
+.lu-grade {
+    flex-shrink: 0;
+    font-size: 0.7rem;
+    padding: 0.08rem 0.4rem;
+    background: var(--bg-soft);
+    color: var(--text-3);
+    border-radius: 10px;
+    font-weight: 600;
+}
+.lu-role {
+    font-size: 0.7rem;
+    padding: 0.08rem 0.4rem;
+    background: #dbeafe;
+    color: #1e40af;
+    border-radius: 10px;
+    font-weight: 600;
+}
+.lu-alt {
+    font-size: 0.7rem;
+    color: var(--muted);
+    font-style: italic;
+}
+.lu-row.is-bench {
+    opacity: 0.7;
+    background: rgba(255, 255, 255, 0.4);
+}
+.lu-divider {
+    margin-top: 0.3rem;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.7rem;
+    color: var(--muted);
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    border-top: 1px dashed var(--border);
+    list-style: none;
+}
+
+@media (max-width: 480px) {
+    .lp-grid { grid-template-columns: 1fr; }
+}
+
