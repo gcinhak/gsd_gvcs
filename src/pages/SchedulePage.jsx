@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, Fragment } from 'react';
 import PageHeader from '../components/PageHeader';
 import CampusBadge from '../components/CampusBadge';
 import { SCHEDULE } from '../data';
@@ -15,7 +15,8 @@ const PILL_STYLES = {
         borderRadius: '4px',
         fontSize: '12px',
         fontWeight: '600',
-        display: 'inline-block'
+        display: 'inline-block',
+        verticalAlign: 'middle'
     },
     prelim: {
         backgroundColor: '#f1f5f9', // 차분하고 부드러운 그레이-블루 틴트
@@ -25,16 +26,15 @@ const PILL_STYLES = {
         borderRadius: '4px',
         fontSize: '12px',
         fontWeight: '600',
-        display: 'inline-block'
+        display: 'inline-block',
+        verticalAlign: 'middle'
     }
 };
 
-/* "문경 VS 음성" → 배지로 렌더 */
+/* "문경 VS 음성" 또는 "문경 VS 음성 VS 세종" → 배지들로 유연하게 렌더 */
 function renderMatch(text) {
     if (!text) return null;
     const parts = text.split(/\s*VS\s*/i);
-    if (parts.length !== 2) return <span className="match-plain">{text}</span>;
-    const [left, right] = parts.map((s) => s.trim());
 
     const renderSide = (side) => {
         const known = ['문경', '음성', '세종'].find((c) => side === c);
@@ -44,9 +44,12 @@ function renderMatch(text) {
 
     return (
         <span className="match-pair">
-            {renderSide(left)}
-            <span className="match-vs">VS</span>
-            {renderSide(right)}
+            {parts.map((part, index) => (
+                <Fragment key={index}>
+                    {renderSide(part.trim())}
+                    {index < parts.length - 1 && <span className="match-vs">VS</span>}
+                </Fragment>
+            ))}
         </span>
     );
 }
@@ -68,6 +71,7 @@ function MatchTable({ matches }) {
                         <tr key={i} className={m.round === '결선' ? 'is-final' : ''}>
                             <td className="mt-num">{m.num}</td>
                             <td>
+                                {/* MatchTable 예선/결선 파스텔 배지 적용 */}
                                 <span style={m.round === '결선' ? PILL_STYLES.final : PILL_STYLES.prelim}>
                                     {m.round}
                                 </span>
@@ -82,30 +86,43 @@ function MatchTable({ matches }) {
     );
 }
 
-function TimelineList({ items }) {
+function TimelineList({ items, venueName }) {
     return (
         <ol className="timeline-list">
-            {items.map((it, i) => (
-                <li key={i} className={`timeline-row ${it.highlight ? 'is-highlight' : ''}`}>
-                    <div className="tl-time">
-                        <span className="tl-start">{it.start}</span>
-                        <span className="tl-end">~ {it.end}</span>
-                    </div>
-                    <div className="tl-content">
-                        {/* 배지를 텍스트(label) 내부로 이동시켜 위치를 맞추고, 높이(길이)가 길어지는 현상 방지 */}
-                        <span className="tl-label">
-                            {it.round && (
-                                <span style={{ ... (it.round === '결선' ? PILL_STYLES.final : PILL_STYLES.prelim), marginRight: '6px', verticalAlign: 'middle' }}>
-                                    {it.round}
-                                </span>
-                            )}
-                            <span style={{ verticalAlign: 'middle' }}>{it.label}</span>
-                        </span>
-                        {it.sub && <span className="tl-sub">{renderMatch(it.sub)}</span>}
-                    </div>
-                    {it.meta && <span className="tl-meta">{it.meta}</span>}
-                </li>
-            ))}
+            {items.map((it, i) => {
+                // 3개 캠퍼스가 모두 참여하는 대상 장소 정의
+                const targetVenues = ['보조경기장', '보조실내체육관 1층', '조치원복합커뮤니티센터 · 중회의실'];
+                // 3개 캠퍼스 매치 표시에서 제외할 항목들 정의
+                const excludeLabels = ['개회식', '폐회식', '태권도 시범', '응원전', '줄다리기·이어달리기 선수 확인'];
+                
+                let matchText = it.sub;
+                // 기존 vs 내용이 없고, 대상 장소에 포함되며, 제외 대상 단어가 아닐 때 "문경 VS 음성 VS 세종"을 자동으로 부여
+                if (!matchText && targetVenues.includes(venueName) && !excludeLabels.includes(it.label)) {
+                    matchText = '문경 VS 음성 VS 세종';
+                }
+
+                return (
+                    <li key={i} className={`timeline-row ${it.highlight ? 'is-highlight' : ''}`}>
+                        <div className="tl-time">
+                            <span className="tl-start">{it.start}</span>
+                            <span className="tl-end">~ {it.end}</span>
+                        </div>
+                        <div className="tl-content">
+                            <span className="tl-label">
+                                {/* TimelineList 예선/결선 파스텔 배지 텍스트 앞 적용 */}
+                                {it.round && (
+                                    <span style={{ ...(it.round === '결선' ? PILL_STYLES.final : PILL_STYLES.prelim), marginRight: '6px' }}>
+                                        {it.round}
+                                    </span>
+                                )}
+                                <span style={{ verticalAlign: 'middle' }}>{it.label}</span>
+                            </span>
+                            {matchText && <span className="tl-sub">{renderMatch(matchText)}</span>}
+                        </div>
+                        {it.meta && <span className="tl-meta">{it.meta}</span>}
+                    </li>
+                );
+            })}
         </ol>
     );
 }
@@ -136,9 +153,9 @@ function CourtsTable({ courtNames, rows }) {
                                     {c ? (
                                         <>
                                             <div className="ct-category">
-                                                {/* 배지를 텍스트 내부로 이동시켜 위치를 맞추고, 높이(길이)가 길어지는 현상 방지 */}
+                                                {/* CourtsTable 예선/결선 파스텔 배지 텍스트 앞 적용 */}
                                                 {c.round && (
-                                                    <span style={{ ... (c.round === '결선' ? PILL_STYLES.final : PILL_STYLES.prelim), marginRight: '4px', verticalAlign: 'middle' }}>
+                                                    <span style={{ ...(c.round === '결선' ? PILL_STYLES.final : PILL_STYLES.prelim), marginRight: '4px' }}>
                                                         {c.round}
                                                     </span>
                                                 )}
@@ -167,7 +184,7 @@ function VenueSection({ venue }) {
                 {venue.subtitle && <span className="venue-sub">{venue.subtitle}</span>}
             </header>
 
-            {venue.kind === 'timeline' && <TimelineList items={venue.items} />}
+            {venue.kind === 'timeline' && <TimelineList items={venue.items} venueName={venue.name} />}
             {venue.kind === 'courts' && <CourtsTable courtNames={venue.courtNames} rows={venue.rows} />}
 
             {venue.byes && venue.byes.length > 0 && (
