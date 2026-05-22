@@ -37,11 +37,21 @@ const SOFT_BAN_DELTA = 600; // 이 이상이면 누적 카운터 +1
 const SOFT_BAN_COUNT = 3; // 누적 3회 도달 시 5분 밴
 
 const CORS_HEADERS = {
-    'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, X-Admin-Pin',
     'Access-Control-Max-Age': '86400',
 };
+
+// Origin별로 허용 도메인 동적 설정
+function getCorsHeaders(req) {
+    const origin = req.headers.get('Origin') || '';
+    const isLocal = origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:');
+    const allowedOrigin = origin === ALLOWED_DOMAIN || isLocal ? origin : ALLOWED_DOMAIN;
+    return {
+        ...CORS_HEADERS,
+        'Access-Control-Allow-Origin': allowedOrigin,
+    };
+}
 
 // 💡 IP별 접속 기록과 차단 목록을 서버 메모리에 임시 저장
 const ipRequestHistory = new Map();
@@ -66,12 +76,12 @@ function isOriginAllowed(req) {
 export default {
     async fetch(req, env, ctx) {
         if (req.method === 'OPTIONS') {
-            return new Response(null, { headers: CORS_HEADERS });
+            return new Response(null, { headers: getCorsHeaders(req) });
         }
 
         // 도메인 검증
         if (!isOriginAllowed(req)) {
-            return new Response('Forbidden: Invalid Origin', { status: 403, headers: CORS_HEADERS });
+            return new Response('Forbidden: Invalid Origin', { status: 403, headers: getCorsHeaders(req) });
         }
 
         const url = new URL(req.url);
@@ -174,7 +184,15 @@ async function incrementPopcat(req, env, ctx) {
     const rateKey = `rate:${uuid}`;
     const now = Date.now();
 
-    // 1) 이미 밴된 유저 차단
+    // 1-A) D1에서 영구 밴 체크 (Worker 재시작돼도 유지됨)
+    const banRow = await env.DB.prepare('SELECT ban_until FROM popcat_bans WHERE uuid = ? AND ban_until > unixepoch()')
+        .bind(uuid)
+        .first();
+    if (banRow) {
+        return json({ error: 'Too many requests. Blocked.' }, 429);
+    }
+
+    // 1-B) 메모리 밴 체크 (같은 인스턴스 내에서 빠른 차단)
     if (blockedIPs.has(rateKey)) {
         const unblockTime = blockedIPs.get(rateKey);
         if (now < unblockTime) {
@@ -191,6 +209,16 @@ async function incrementPopcat(req, env, ctx) {
     if (timestamps.length >= RATE_LIMIT) {
         blockedIPs.set(rateKey, now + 5 * 60 * 1000);
         if (ctx?.waitUntil) {
+            // D1에 밴 저장 (영구적)
+            ctx.waitUntil(
+                env.DB.prepare(
+                    'INSERT INTO popcat_bans (uuid, ban_until) VALUES (?, unixepoch() + 300) ' +
+                        'ON CONFLICT(uuid) DO UPDATE SET ban_until = unixepoch() + 300'
+                )
+                    .bind(uuid)
+                    .run()
+                    .catch(() => {})
+            );
             ctx.waitUntil(
                 env.DB.prepare(
                     'INSERT INTO abnormal_logs (uuid, ip, campus, attempted_delta, reason, created_at) VALUES (?, ?, ?, ?, ?, unixepoch())'
@@ -237,6 +265,16 @@ async function incrementPopcat(req, env, ctx) {
             if (delta >= INSTANT_BAN_DELTA) {
                 blockedIPs.set(rateKey, now + 5 * 60 * 1000);
                 if (ctx?.waitUntil) {
+                    // D1에 밴 저장 (영구적)
+                    ctx.waitUntil(
+                        env.DB.prepare(
+                            'INSERT INTO popcat_bans (uuid, ban_until) VALUES (?, unixepoch() + 300) ' +
+                                'ON CONFLICT(uuid) DO UPDATE SET ban_until = unixepoch() + 300'
+                        )
+                            .bind(uuid)
+                            .run()
+                            .catch(() => {})
+                    );
                     ctx.waitUntil(
                         env.DB.prepare(
                             'INSERT INTO abnormal_logs (uuid, ip, campus, attempted_delta, reason, created_at) VALUES (?, ?, ?, ?, ?, unixepoch())'
@@ -258,6 +296,16 @@ async function incrementPopcat(req, env, ctx) {
                     macroDeltaCount.delete(macroKey);
                     blockedIPs.set(rateKey, now + 5 * 60 * 1000);
                     if (ctx?.waitUntil) {
+                        // D1에 밴 저장 (영구적)
+                        ctx.waitUntil(
+                            env.DB.prepare(
+                                'INSERT INTO popcat_bans (uuid, ban_until) VALUES (?, unixepoch() + 300) ' +
+                                    'ON CONFLICT(uuid) DO UPDATE SET ban_until = unixepoch() + 300'
+                            )
+                                .bind(uuid)
+                                .run()
+                                .catch(() => {})
+                        );
                         ctx.waitUntil(
                             env.DB.prepare(
                                 'INSERT INTO abnormal_logs (uuid, ip, campus, attempted_delta, reason, created_at) VALUES (?, ?, ?, ?, ?, unixepoch())'

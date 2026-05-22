@@ -211,6 +211,7 @@ export default function PopcatPage() {
         schedulerRef.current = () => {
             if (flushTimerRef.current) return;
             if (isBanned) return; // 💡 밴 상태면 예약 자체를 하지 않음
+
             flushTimerRef.current = setTimeout(() => {
                 flushTimerRef.current = null;
                 flush();
@@ -344,7 +345,8 @@ export default function PopcatPage() {
 
             // 다음 정해진 시간(매 00초, 20초, 40초...)까지 남은 시간 계산
             const nextTick = Math.ceil(now / INTERVAL) * INTERVAL;
-            const delay = nextTick - now;
+            const jitter = Math.random() * 2500; // 0~2.5초 랜덤 지연
+            const delay = nextTick - now + jitter;
 
             timeoutId = setTimeout(pull, delay);
         };
