@@ -37,6 +37,7 @@ const SOFT_BAN_DELTA = 600; // 이 이상이면 누적 카운터 +1
 const SOFT_BAN_COUNT = 3; // 누적 3회 도달 시 5분 밴
 
 const CORS_HEADERS = {
+    'Access-Control-Allow-Origin': ALLOWED_DOMAIN, // 'https://gsd.gvcs.kr'
     'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, X-Admin-Pin',
     'Access-Control-Max-Age': '86400',
