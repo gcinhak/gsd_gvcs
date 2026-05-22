@@ -33,12 +33,17 @@ function readLocal() {
 
 function getOrCreateUUID() {
     if (typeof window === 'undefined') return null;
-    let uuid = window.localStorage.getItem(MY_UUID_KEY);
-    if (!uuid) {
-        uuid = crypto.randomUUID();
-        window.localStorage.setItem(MY_UUID_KEY, uuid);
+    try {
+        let uuid = window.localStorage.getItem(MY_UUID_KEY);
+        if (!uuid) {
+            uuid = crypto.randomUUID();
+            window.localStorage.setItem(MY_UUID_KEY, uuid);
+        }
+        return uuid;
+    } catch {
+        // 시크릿 모드 또는 localStorage 차단 환경
+        return null;
     }
-    return uuid;
 }
 
 function readMyClicks() {
@@ -62,11 +67,12 @@ export default function PopcatPage() {
     const [serverState, setServerState] = useState(isPopcatApiConfigured ? 'connecting' : 'offline');
     const [pendingTotal, setPendingTotal] = useState(0);
     const [banUntil, setBanUntil] = useState(() => Number(window.localStorage.getItem(BAN_KEY)) || 0);
+    const [hasUuid] = useState(() => getOrCreateUUID() !== null); // 💡 추가
     const [isBanned, setIsBanned] = useState(() => {
         const storedBan = Number(window.localStorage.getItem(BAN_KEY)) || 0;
         return Date.now() < storedBan;
     });
-    const uiDisabled = IS_DISABLED || isBanned;
+    const uiDisabled = IS_DISABLED || isBanned || !hasUuid; // 💡 !hasUuid 추가
     const popIdRef = useRef(0);
     const releaseTimers = useRef({});
     const pendingRef = useRef({ ...ZERO });
@@ -414,6 +420,16 @@ export default function PopcatPage() {
                         })}
                     </div>
                 </section>
+
+                {!hasUuid && (
+                    <div className="popcat-uuid-warning">
+                        <span className="uuid-warning-icon">🔒</span>
+                        <div className="uuid-warning-text">
+                            <strong>시크릿 모드 또는 개인정보 보호 브라우저에서는 참여할 수 없습니다.</strong>
+                            <p>일반 모드로 접속하면 팝캣에 참여할 수 있어요.</p>
+                        </div>
+                    </div>
+                )}
 
                 <section className="pop-battle">
                     {CAMPUSES.map((campus) => {
