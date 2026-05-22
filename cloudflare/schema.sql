@@ -37,7 +37,10 @@ CREATE TABLE IF NOT EXISTS live_comments (
     ts INTEGER NOT NULL DEFAULT (unixepoch()),
     type TEXT NOT NULL DEFAULT 'normal',         -- normal | score | miss | sub
     content TEXT NOT NULL,
-    quarter TEXT                                  -- 쿼터/세트/판 라벨 (선택)
+    quarter TEXT,                                 -- 쿼터/세트/판 라벨 (선택)
+    score_team TEXT,                              -- 득점 팀 이름 (표시용)
+    score_amount INTEGER NOT NULL DEFAULT 0,      -- 가산 점수 (삭제 시 롤백)
+    score_side TEXT                               -- 'home' | 'away' (매치 스코어 어느 칸에 누적했는지)
 );
 
 CREATE INDEX IF NOT EXISTS idx_live_comments_match_ts

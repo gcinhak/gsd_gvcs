@@ -387,7 +387,7 @@ async function getComments(matchId, url, env) {
     const since = Number(url.searchParams.get('since')) || 0;
     const { results } = await env.DB
         .prepare(
-            'SELECT id, ts, type, content, quarter FROM live_comments ' +
+            'SELECT id, ts, type, content, quarter, score_team, score_amount, score_side FROM live_comments ' +
             'WHERE match_id = ? AND ts >= ? ORDER BY id ASC LIMIT 500'
         )
         .bind(matchId, since)
@@ -398,6 +398,9 @@ async function getComments(matchId, url, env) {
         type: r.type,
         content: r.content,
         quarter: r.quarter || null,
+        scoreTeam: r.score_team || null,
+        scoreAmount: Number(r.score_amount) || 0,
+        scoreSide: r.score_side || null,
     }));
     return json({ matchId, comments });
 }
@@ -411,17 +414,39 @@ async function addComment(matchId, req, env) {
     if (!content) return json({ error: 'empty content' }, 400);
     const quarter = body.quarter == null || body.quarter === '' ? null : String(body.quarter).slice(0, 32);
 
+    // 점수 메타 (선택)
+    const scoreTeam = body.scoreTeam ? String(body.scoreTeam).slice(0, 32) : null;
+    const scoreAmount = Math.max(0, Math.min(Number(body.scoreAmount) || 0, 999));
+    const scoreSide = body.scoreSide === 'home' || body.scoreSide === 'away' ? body.scoreSide : null;
+
     const result = await env.DB
         .prepare(
-            'INSERT INTO live_comments (match_id, ts, type, content, quarter) ' +
-            'VALUES (?, unixepoch(), ?, ?, ?)'
+            'INSERT INTO live_comments (match_id, ts, type, content, quarter, score_team, score_amount, score_side) ' +
+            'VALUES (?, unixepoch(), ?, ?, ?, ?, ?, ?)'
         )
-        .bind(matchId, type, content, quarter)
+        .bind(matchId, type, content, quarter, scoreTeam, scoreAmount, scoreSide)
         .run();
+
+    // 점수가 있고 home/away 가 지정되어 있으면 매치 스코어 증가
+    if (scoreAmount > 0 && scoreSide) {
+        const column = scoreSide === 'home' ? 'home_score' : 'away_score';
+        await env.DB
+            .prepare('INSERT INTO live_match_state (match_id) VALUES (?) ON CONFLICT(match_id) DO NOTHING')
+            .bind(matchId)
+            .run();
+        await env.DB
+            .prepare(
+                `UPDATE live_match_state SET ${column} = ${column} + ?, updated_at = unixepoch() WHERE match_id = ?`
+            )
+            .bind(scoreAmount, matchId)
+            .run();
+    }
 
     const id = result?.meta?.last_row_id ? Number(result.meta.last_row_id) : 0;
     const row = await env.DB
-        .prepare('SELECT id, ts, type, content, quarter FROM live_comments WHERE id = ?')
+        .prepare(
+            'SELECT id, ts, type, content, quarter, score_team, score_amount, score_side FROM live_comments WHERE id = ?'
+        )
         .bind(id)
         .first();
 
@@ -433,12 +458,35 @@ async function addComment(matchId, req, env) {
                   type: row.type,
                   content: row.content,
                   quarter: row.quarter || null,
+                  scoreTeam: row.score_team || null,
+                  scoreAmount: Number(row.score_amount) || 0,
+                  scoreSide: row.score_side || null,
               }
             : null,
     });
 }
 
 async function deleteComment(matchId, commentId, env) {
+    // 점수가 연동된 메시지면 먼저 매치 점수 롤백
+    const row = await env.DB
+        .prepare('SELECT score_amount, score_side FROM live_comments WHERE id = ? AND match_id = ?')
+        .bind(commentId, matchId)
+        .first();
+
+    if (row) {
+        const amount = Number(row.score_amount) || 0;
+        const side = row.score_side === 'home' || row.score_side === 'away' ? row.score_side : null;
+        if (amount > 0 && side) {
+            const column = side === 'home' ? 'home_score' : 'away_score';
+            await env.DB
+                .prepare(
+                    `UPDATE live_match_state SET ${column} = MAX(0, ${column} - ?), updated_at = unixepoch() WHERE match_id = ?`
+                )
+                .bind(amount, matchId)
+                .run();
+        }
+    }
+
     await env.DB
         .prepare('DELETE FROM live_comments WHERE id = ? AND match_id = ?')
         .bind(commentId, matchId)
