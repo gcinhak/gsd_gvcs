@@ -66,11 +66,21 @@ export default function PopcatPage() {
     const [pops, setPops] = useState([]);
     const [serverState, setServerState] = useState(isPopcatApiConfigured ? 'connecting' : 'offline');
     const [pendingTotal, setPendingTotal] = useState(0);
-    const [banUntil, setBanUntil] = useState(() => Number(window.localStorage.getItem(BAN_KEY)) || 0);
-    const [hasUuid] = useState(() => getOrCreateUUID() !== null); // 💡 추가
+    const [banUntil, setBanUntil] = useState(() => {
+        try {
+            return Number(window.localStorage.getItem(BAN_KEY)) || 0;
+        } catch {
+            return 0;
+        }
+    });
+    const [hasUuid] = useState(() => getOrCreateUUID() !== null);
     const [isBanned, setIsBanned] = useState(() => {
-        const storedBan = Number(window.localStorage.getItem(BAN_KEY)) || 0;
-        return Date.now() < storedBan;
+        try {
+            const storedBan = Number(window.localStorage.getItem(BAN_KEY)) || 0;
+            return Date.now() < storedBan;
+        } catch {
+            return false;
+        }
     });
     const uiDisabled = IS_DISABLED || isBanned || !hasUuid; // 💡 !hasUuid 추가
     const popIdRef = useRef(0);
@@ -101,7 +111,11 @@ export default function PopcatPage() {
     /* localStorage 캐시 (로컬모드 한정) */
     useEffect(() => {
         if (isPopcatApiConfigured) return;
-        window.localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(counts));
+        try {
+            window.localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(counts));
+        } catch {
+            /* 무시 */
+        }
     }, [counts]);
 
     /* UUID 초기화 — 최초 방문 시 생성, 이후 유지 */
@@ -111,7 +125,11 @@ export default function PopcatPage() {
 
     /* 내 클릭 수 localStorage 저장 */
     useEffect(() => {
-        window.localStorage.setItem(MY_CLICKS_KEY, JSON.stringify(myCounts));
+        try {
+            window.localStorage.setItem(MY_CLICKS_KEY, JSON.stringify(myCounts));
+        } catch {
+            /* 무시 */
+        }
     }, [myCounts]);
 
     /* 20초 배치 플러시 — flush 와 scheduler 가 같은 클로저 안에서 작동 */
