@@ -154,7 +154,7 @@ async function getPopcatCounts(env, req, ctx) {
     const res = new Response(JSON.stringify(out), {
         status: 200,
         headers: {
-            ...CORS_HEADERS,
+            ...getCorsHeaders(req),
             'Content-Type': 'application/json',
             'Cache-Control': `public, max-age=${GET_CACHE_TTL}`,
         },
@@ -375,9 +375,9 @@ async function getLiveState(env, req, ctx) {
     const res = new Response(JSON.stringify({ matches }), {
         status: 200,
         headers: {
-            ...CORS_HEADERS,
+            ...getCorsHeaders(req),
             'Content-Type': 'application/json',
-            'Cache-Control': 'public, max-age=2',
+            'Cache-Control': `public, max-age=${GET_CACHE_TTL}`,
         },
     });
     if (ctx?.waitUntil) ctx.waitUntil(cache.put(cacheKey, res.clone()));
