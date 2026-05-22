@@ -3543,39 +3543,13 @@ img {
 
 .ac-msg-form {
     display: flex;
-    align-items: center;
+    flex-direction: column;
     gap: 0.5rem;
     padding: 0.7rem;
     background: #fef2f2;
     border-radius: 8px;
     border: 1px dashed #fecaca;
 }
-.ac-msg-form select {
-    padding: 0.4rem 0.55rem;
-    border: 1px solid #fecaca;
-    border-radius: 6px;
-    background: #fff;
-    font-size: 0.85rem;
-}
-.ac-msg-form input {
-    flex: 1;
-    padding: 0.5rem 0.7rem;
-    border: 1px solid #fecaca;
-    border-radius: 6px;
-    background: #fff;
-    font-size: 0.9rem;
-}
-.ac-msg-form button {
-    padding: 0.5rem 0.85rem;
-    background: #dc2626;
-    color: #fff;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    font-weight: 700;
-    font-size: 0.85rem;
-}
-.ac-msg-form button:disabled { background: #f3a8a8; cursor: not-allowed; }
 
 .ac-feed {
     max-height: 240px;
@@ -3806,7 +3780,96 @@ img {
     font-size: 0.78rem;
 }
 
-/* 관리자 - 점수 빠른 컨트롤 */
+/* 관리자 - 현재 점수 요약 (읽기 전용) */
+.ac-score-summary {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    padding: 0.6rem 0.95rem;
+    background: var(--bg-soft);
+    border-radius: 8px;
+    flex-wrap: wrap;
+}
+.ac-score-summary-label {
+    font-size: 0.75rem;
+    color: var(--muted);
+    font-weight: 700;
+    letter-spacing: 0.08em;
+}
+.ac-score-summary-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-left: auto;
+}
+.ac-ss-team {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+.ac-ss-team strong {
+    font-family: 'Black Han Sans', sans-serif;
+    font-size: 1.3rem;
+    color: var(--text);
+    line-height: 1;
+    letter-spacing: 0.02em;
+}
+.ac-ss-sep {
+    font-family: 'Black Han Sans', sans-serif;
+    color: var(--muted-2);
+    font-size: 1.1rem;
+}
+
+/* 관리자 메시지 폼 - 2행 레이아웃 (쿼터/팀/점수/타입 → 메시지+전송) */
+.ac-msg-row {
+    display: flex;
+    gap: 0.4rem;
+}
+.ac-msg-row select,
+.ac-msg-row input {
+    padding: 0.45rem 0.6rem;
+    border: 1px solid #fecaca;
+    border-radius: 6px;
+    background: #fff;
+    font-size: 0.85rem;
+    color: var(--text);
+}
+.ac-msg-form.is-scoring {
+    background: linear-gradient(135deg, #fff7ed, #ffedd5);
+    border-color: #fdba74;
+}
+.ac-msg-form.is-scoring .ac-msg-row select,
+.ac-msg-form.is-scoring .ac-msg-row input {
+    border-color: #fdba74;
+}
+.ac-msg-row-1 { flex-wrap: wrap; }
+.ac-field-quarter { flex: 1 1 90px; min-width: 0; }
+.ac-field-team { flex: 1 1 90px; min-width: 0; }
+.ac-field-score {
+    flex: 0 0 70px;
+    text-align: center;
+    font-family: 'Black Han Sans', sans-serif;
+    font-size: 1rem;
+    font-weight: 400;
+    letter-spacing: 0.02em;
+}
+.ac-field-type { flex: 0 0 80px; }
+.ac-msg-row-2 input { flex: 1; min-width: 0; }
+.ac-msg-row-2 button {
+    flex-shrink: 0;
+    padding: 0.5rem 1rem;
+    background: #dc2626;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 0.85rem;
+}
+.ac-msg-form.is-scoring .ac-msg-row-2 button { background: #c2410c; }
+.ac-msg-row-2 button:disabled { background: #f3a8a8; cursor: not-allowed; }
+
+/* legacy — 더 이상 사용 안하지만 다른 클래스 참조 가능성 위해 남김 */
 .ac-score-row {
     display: grid;
     grid-template-columns: 1fr 1fr;

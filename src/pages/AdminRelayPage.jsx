@@ -78,11 +78,16 @@ function MatchAdminCard({ match, state, comments, onUpdate, onAddComment, onDele
     const [type, setType] = useState('normal');
     const [content, setContent] = useState('');
     const [msgQuarter, setMsgQuarter] = useState(state?.currentQuarter || '');
+    const [scoreTeam, setScoreTeam] = useState('');
+    const [scoreAmount, setScoreAmount] = useState('');
     const [posting, setPosting] = useState(false);
 
     const quarters = getQuarters(match.sport);
     const colors = CAMPUS_COLORS[match.teams.home];
     const cardStyle = colors ? { borderTopColor: colors.bg } : {};
+
+    // 팀 셀렉트는 항상 3캠퍼스, 단 매치의 home/away 와 일치할 때만 점수가 반영됨
+    const ALL_CAMPUSES = ['문경', '음성', '세종'];
 
     const save = async () => {
         setSaving(true);
@@ -98,18 +103,6 @@ function MatchAdminCard({ match, state, comments, onUpdate, onAddComment, onDele
         setSaving(false);
     };
 
-    // 빠른 점수 +/- (즉시 서버 반영)
-    const quickScore = async (side, delta) => {
-        const cur = side === 'home' ? state?.homeScore || 0 : state?.awayScore || 0;
-        const next = Math.max(0, cur + delta);
-        const patch = side === 'home' ? { homeScore: next } : { awayScore: next };
-        try {
-            await onUpdate(match.id, patch);
-        } catch (err) {
-            alert('점수 변경 실패: ' + err.message);
-        }
-    };
-
     // 빠른 쿼터 변경 (즉시 서버 반영)
     const quickQuarter = async (q) => {
         try {
@@ -122,16 +115,44 @@ function MatchAdminCard({ match, state, comments, onUpdate, onAddComment, onDele
 
     const post = async (e) => {
         e.preventDefault();
-        const text = content.trim();
-        if (!text) return;
+        const amount = Number(scoreAmount) || 0;
+        const extra = content.trim();
+        const isScoring = !!scoreTeam && amount > 0;
+
+        if (!isScoring && !extra) return;
+
         setPosting(true);
         try {
-            await onAddComment(match.id, {
-                type,
-                content: text,
-                quarter: msgQuarter || null,
-            });
-            setContent('');
+            if (isScoring) {
+                // 1) 점수 업데이트 (선택 팀이 home/away 일 때만)
+                const patch = {};
+                if (scoreTeam === match.teams.home) {
+                    patch.homeScore = (state?.homeScore || 0) + amount;
+                } else if (scoreTeam === match.teams.away) {
+                    patch.awayScore = (state?.awayScore || 0) + amount;
+                }
+                if (Object.keys(patch).length > 0) {
+                    await onUpdate(match.id, patch);
+                }
+
+                // 2) 자동 메시지 (+ 추가 코멘트가 있으면 뒤에 붙임)
+                const baseMsg = `${scoreTeam} ${amount}점 득점!`;
+                const fullMsg = extra ? `${baseMsg} ${extra}` : baseMsg;
+                await onAddComment(match.id, {
+                    type: 'score',
+                    content: fullMsg,
+                    quarter: msgQuarter || null,
+                });
+                setScoreAmount('');
+                setContent('');
+            } else {
+                await onAddComment(match.id, {
+                    type,
+                    content: extra,
+                    quarter: msgQuarter || null,
+                });
+                setContent('');
+            }
         } catch (err) {
             alert('전송 실패: ' + err.message);
         }
@@ -141,6 +162,7 @@ function MatchAdminCard({ match, state, comments, onUpdate, onAddComment, onDele
     const isLive = status === 'live';
     const serverHome = state?.homeScore || 0;
     const serverAway = state?.awayScore || 0;
+    const isScoringMode = !!scoreTeam && Number(scoreAmount) > 0;
 
     return (
         <article className={`admin-card ${isLive ? 'is-live' : ''}`} style={cardStyle}>
@@ -186,35 +208,22 @@ function MatchAdminCard({ match, state, comments, onUpdate, onAddComment, onDele
                 </button>
             </div>
 
-            {/* 점수 빠른 컨트롤 */}
-            <div className="ac-score-row">
-                <div className="ac-score-side">
-                    <div className="ac-score-label">
+            {/* 현재 점수 표시 (읽기 전용) + 쿼터 빠른 변경 */}
+            <div className="ac-score-summary">
+                <span className="ac-score-summary-label">현재 점수</span>
+                <div className="ac-score-summary-row">
+                    <span className="ac-ss-team">
                         <CampusBadge campus={match.teams.home} size="sm" />
-                        <span className="ac-score-server">{serverHome}</span>
-                    </div>
-                    <div className="ac-score-btns">
-                        <button type="button" onClick={() => quickScore('home', -1)}>−1</button>
-                        <button type="button" onClick={() => quickScore('home', 1)}>+1</button>
-                        <button type="button" onClick={() => quickScore('home', 2)}>+2</button>
-                        <button type="button" onClick={() => quickScore('home', 3)}>+3</button>
-                    </div>
-                </div>
-                <div className="ac-score-side">
-                    <div className="ac-score-label">
+                        <strong>{serverHome}</strong>
+                    </span>
+                    <span className="ac-ss-sep">:</span>
+                    <span className="ac-ss-team">
+                        <strong>{serverAway}</strong>
                         <CampusBadge campus={match.teams.away} size="sm" />
-                        <span className="ac-score-server">{serverAway}</span>
-                    </div>
-                    <div className="ac-score-btns">
-                        <button type="button" onClick={() => quickScore('away', -1)}>−1</button>
-                        <button type="button" onClick={() => quickScore('away', 1)}>+1</button>
-                        <button type="button" onClick={() => quickScore('away', 2)}>+2</button>
-                        <button type="button" onClick={() => quickScore('away', 3)}>+3</button>
-                    </div>
+                    </span>
                 </div>
             </div>
 
-            {/* 현재 쿼터 빠른 변경 */}
             <div className="ac-quarter-row">
                 <span className="ac-quarter-label">현재 쿼터</span>
                 <div className="ac-quarter-btns">
@@ -240,27 +249,71 @@ function MatchAdminCard({ match, state, comments, onUpdate, onAddComment, onDele
 
             {isLive && (
                 <>
-                    <form onSubmit={post} className="ac-msg-form">
-                        <select value={msgQuarter} onChange={(e) => setMsgQuarter(e.target.value)}>
-                            <option value="">쿼터 없음</option>
-                            {quarters.map((q) => (
-                                <option key={q} value={q}>{q}</option>
-                            ))}
-                        </select>
-                        <select value={type} onChange={(e) => setType(e.target.value)}>
-                            {COMMENT_TYPES.map((t) => (
-                                <option key={t.key} value={t.key}>{t.label}</option>
-                            ))}
-                        </select>
-                        <input
-                            type="text"
-                            placeholder="중계 메시지 입력 (Enter 전송)"
-                            value={content}
-                            onChange={(e) => setContent(e.target.value)}
-                        />
-                        <button type="submit" disabled={posting || !content.trim()}>
-                            {posting ? '…' : '전송'}
-                        </button>
+                    <form onSubmit={post} className={`ac-msg-form ${isScoringMode ? 'is-scoring' : ''}`}>
+                        <div className="ac-msg-row ac-msg-row-1">
+                            <select
+                                className="ac-field-quarter"
+                                value={msgQuarter}
+                                onChange={(e) => setMsgQuarter(e.target.value)}
+                                aria-label="쿼터"
+                            >
+                                <option value="">쿼터 없음</option>
+                                {quarters.map((q) => (
+                                    <option key={q} value={q}>{q}</option>
+                                ))}
+                            </select>
+
+                            <select
+                                className="ac-field-team"
+                                value={scoreTeam}
+                                onChange={(e) => setScoreTeam(e.target.value)}
+                                aria-label="득점 팀"
+                            >
+                                <option value="">팀 (득점)</option>
+                                {ALL_CAMPUSES.map((c) => (
+                                    <option key={c} value={c}>{c}</option>
+                                ))}
+                            </select>
+
+                            <input
+                                type="number"
+                                className="ac-field-score"
+                                placeholder="점수"
+                                min="0"
+                                max="100"
+                                value={scoreAmount}
+                                onChange={(e) => setScoreAmount(e.target.value)}
+                                aria-label="추가 점수"
+                            />
+
+                            <select
+                                className="ac-field-type"
+                                value={isScoringMode ? 'score' : type}
+                                onChange={(e) => setType(e.target.value)}
+                                disabled={isScoringMode}
+                                aria-label="메시지 타입"
+                            >
+                                {COMMENT_TYPES.map((t) => (
+                                    <option key={t.key} value={t.key}>{t.label}</option>
+                                ))}
+                            </select>
+                        </div>
+
+                        <div className="ac-msg-row ac-msg-row-2">
+                            <input
+                                type="text"
+                                placeholder={
+                                    isScoringMode
+                                        ? `자동 메시지: "${scoreTeam} ${scoreAmount}점 득점!"  (추가 코멘트 선택)`
+                                        : '메시지 입력 (Enter 전송)'
+                                }
+                                value={content}
+                                onChange={(e) => setContent(e.target.value)}
+                            />
+                            <button type="submit" disabled={posting || (!isScoringMode && !content.trim())}>
+                                {posting ? '…' : isScoringMode ? '득점 전송' : '전송'}
+                            </button>
+                        </div>
                     </form>
                     <div className="ac-feed">
                         {comments.length === 0 ? (
