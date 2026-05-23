@@ -46,6 +46,19 @@ function formatDashboardScore(event, division, state) {
     return `${home}:${away}`;
 }
 
+function formatMatchup(match) {
+    if (!match?.teams?.home || !match?.teams?.away) return '';
+    return `${match.teams.home} VS ${match.teams.away}`;
+}
+
+function getPendingMatchup(event, division, match) {
+    const relayMatchup = formatMatchup(match);
+    if (relayMatchup) return relayMatchup;
+    if (event.id === 'middle-distance' || event.id === 'relay') return '문경 VS 음성 VS 세종';
+    if (event.id === 'taekwondo' && !division.id.includes('sparring')) return '문경 VS 음성 VS 세종';
+    return '문경 VS 음성';
+}
+
 function getDivisionDisplayState(division, relayState) {
     if (relayState?.status === 'live') return 'live';
     if (relayState?.status === 'finished') return 'done';
@@ -73,10 +86,12 @@ function getCellBadgeCampus(division, displayState) {
     return getCampus('pending');
 }
 
-function ResultCell({ event, division, relayState, onOpen }) {
+function ResultCell({ event, division, match, relayState, onOpen }) {
     const displayState = getDivisionDisplayState(division, relayState);
     const campus = getCellBadgeCampus(division, displayState);
     const finalScore = formatDashboardScore(event, division, relayState);
+    const matchup = getPendingMatchup(event, division, match);
+    const hasWinner = division.winnerKey !== 'pending';
 
     return (
         <button
@@ -88,7 +103,11 @@ function ResultCell({ event, division, relayState, onOpen }) {
             <span className="db-division-label">{division.label}</span>
             {displayState === 'live' && <span className="db-live-label">LIVE</span>}
             <span className="db-final-score-box">{finalScore}</span>
-            <CampusBadge campus={campus} size="sm" />
+            {hasWinner ? (
+                <CampusBadge campus={campus} size="sm" />
+            ) : (
+                <span className="db-matchup-line">{matchup}</span>
+            )}
         </button>
     );
 }
@@ -164,15 +183,13 @@ function ScoreDetailModal({ detail, relayState, comments, loading, onClose }) {
                     </button>
                 </header>
 
-                {match ? (
+                {match && score ? (
                     <div className="db-detail-score">
                         <span>{match.teams.home}</span>
                         <strong>{score || '0 : 0'}</strong>
                         <span>{match.teams.away}</span>
                     </div>
-                ) : (
-                    <div className="db-detail-empty">연결된 admin relay 경기가 아직 없습니다.</div>
-                )}
+                ) : null}
 
                 {relayState?.currentQuarter && (
                     <div className="db-detail-quarter">현재 구간: {relayState.currentQuarter}</div>
@@ -329,9 +346,11 @@ export default function DashboardPage() {
                                         <span className="db-event-status">{event.status}</span>
                                         <h2>{event.sport}</h2>
                                     </div>
-                                    <div className={`db-winner-box ${isEventDone ? 'is-final' : 'is-pending'}`}>
-                                        <CampusBadge campus={eventCampus} size="sm" />
-                                    </div>
+                                    {isEventDone && (
+                                        <div className="db-winner-box is-final">
+                                            <CampusBadge campus={eventCampus} size="sm" />
+                                        </div>
+                                    )}
                                 </div>
 
                                 {event.groups ? (
