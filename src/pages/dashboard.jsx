@@ -8,6 +8,7 @@ import {
     readDashboardEvents,
 } from '../lib/dashboardStore';
 import { fetchComments, fetchLiveStates } from '../lib/liveApi';
+<<<<<<< HEAD
 import { LIVE_MATCHES } from '../data/data';
 
 const DIVISION_RELAY_MATCHES = {
@@ -23,6 +24,15 @@ const DIVISION_RELAY_MATCHES = {
     'tk-sparring-mid': 'sat-tk-1',
     'tk-sparring-high': 'sat-tk-2',
 };
+=======
+import { LIVE_MATCHES } from '../data';
+import {
+    getEffectiveDivisionWinnerKey,
+    getRelayDisplayState,
+    getRelayMatchId,
+    getScorePair,
+} from '../lib/dashboardRelay';
+>>>>>>> 7c27c8a4347a4e1da7432d532b77f5c21d89ccca
 
 const STATUS_LABELS = {
     upcoming: '경기 전',
@@ -30,20 +40,21 @@ const STATUS_LABELS = {
     finished: '경기 종료',
 };
 
-function getRelayMatchId(division) {
-    return division.relayMatchId || DIVISION_RELAY_MATCHES[division.id] || null;
-}
-
 function formatRelayScore(state) {
     if (!state || state.status === 'upcoming') return '';
     return `${Number(state.homeScore) || 0} : ${Number(state.awayScore) || 0}`;
 }
 
 function formatDashboardScore(event, division, state) {
-    const home = Number(state?.homeScore) || 0;
-    const away = Number(state?.awayScore) || 0;
+    const { home, away } = getScorePair(state);
 
     return `${home}:${away}`;
+}
+
+function shouldShowDashboardScore(event, division) {
+    if (event.id === 'middle-distance' || event.id === 'relay') return false;
+    if (event.id === 'taekwondo' && !division.id.includes('sparring')) return false;
+    return true;
 }
 
 function formatMatchup(match) {
@@ -59,16 +70,6 @@ function getPendingMatchup(event, division, match) {
     return '문경 VS 음성';
 }
 
-function getDivisionDisplayState(division, relayState) {
-    if (relayState?.status === 'live') return 'live';
-    if (relayState?.status === 'finished') return 'done';
-    return division.state || 'ready';
-}
-
-function isDivisionFinished(division, relayState) {
-    return relayState?.status === 'finished' || division.state === 'done';
-}
-
 function formatCommentTime(ts) {
     if (!ts) return '';
     const date = new Date(ts);
@@ -80,18 +81,20 @@ function CampusBadge({ campus, size = 'md' }) {
     return <span className={`db-campus-badge ${campus.className} size-${size}`}>{campus.name}</span>;
 }
 
-function getCellBadgeCampus(division, displayState) {
-    if (division.winnerKey !== 'pending') return getCampus(division.winnerKey);
+function getCellBadgeCampus(winnerKey, displayState) {
+    if (winnerKey !== 'pending') return getCampus(winnerKey);
     if (displayState === 'live') return CAMPUS.live;
     return getCampus('pending');
 }
 
 function ResultCell({ event, division, match, relayState, onOpen }) {
-    const displayState = getDivisionDisplayState(division, relayState);
-    const campus = getCellBadgeCampus(division, displayState);
+    const displayState = getRelayDisplayState(division, relayState);
+    const winnerKey = getEffectiveDivisionWinnerKey(division, match, relayState);
+    const campus = getCellBadgeCampus(winnerKey, displayState);
     const finalScore = formatDashboardScore(event, division, relayState);
+    const showScore = shouldShowDashboardScore(event, division);
     const matchup = getPendingMatchup(event, division, match);
-    const hasWinner = division.winnerKey !== 'pending';
+    const hasWinner = winnerKey !== 'pending';
 
     return (
         <button
@@ -102,8 +105,17 @@ function ResultCell({ event, division, match, relayState, onOpen }) {
         >
             <span className="db-division-label">{division.label}</span>
             {displayState === 'live' && <span className="db-live-label">LIVE</span>}
+<<<<<<< HEAD
             <span className="db-final-score-box">{finalScore}</span>
             {hasWinner ? <CampusBadge campus={campus} size="sm" /> : <span className="db-matchup-line">{matchup}</span>}
+=======
+            {showScore && <span className="db-final-score-box">{finalScore}</span>}
+            {hasWinner ? (
+                <CampusBadge campus={campus} size="sm" />
+            ) : (
+                <span className="db-matchup-line">{matchup}</span>
+            )}
+>>>>>>> 7c27c8a4347a4e1da7432d532b77f5c21d89ccca
         </button>
     );
 }
@@ -132,15 +144,49 @@ function TaekwondoGroups({ event, groups, liveMatchMap, relayStatesMap, onOpenDe
     );
 }
 
-function getCampusWinCounts(events) {
+function getEventRelayContext(event, liveMatchMap, relayStatesMap) {
+    const divisions = getEventDivisions(event);
+    const enriched = divisions.map((division) => {
+        const matchId = getRelayMatchId(division);
+        const match = matchId ? liveMatchMap[matchId] : null;
+        const relayState = matchId ? relayStatesMap[matchId] : null;
+        return {
+            division,
+            match,
+            relayState,
+            displayState: getRelayDisplayState(division, relayState),
+            winnerKey: getEffectiveDivisionWinnerKey(division, match, relayState),
+        };
+    });
+    const isDone = enriched.length > 0 && enriched.every((item) => item.displayState === 'done');
+    const isLive = enriched.some((item) => item.displayState === 'live');
+    const winnerKey = event.manualWinnerKey || getLeadingCampusFromDivisions(enriched);
+
+    return { divisions, enriched, isDone, isLive, winnerKey };
+}
+
+function getLeadingCampusFromDivisions(items) {
+    const scores = CAMPUS_OPTIONS.reduce((acc, campus) => ({ ...acc, [campus.key]: 0 }), {});
+    for (const item of items) {
+        if (item.displayState !== 'done') continue;
+        if (scores[item.winnerKey] === undefined) continue;
+        scores[item.winnerKey] += 1;
+    }
+
+    const sorted = Object.entries(scores).sort((a, b) => b[1] - a[1]);
+    if (sorted[0][1] === 0) return 'pending';
+    if (sorted[0][1] === sorted[1][1]) return 'pending';
+    return sorted[0][0];
+}
+
+function getCampusWinCounts(events, liveMatchMap, relayStatesMap) {
     const counts = CAMPUS_OPTIONS.reduce((acc, campus) => ({ ...acc, [campus.key]: 0 }), {});
 
     for (const event of events) {
-        const divisions = getEventDivisions(event);
-        const isDone = divisions.length > 0 && divisions.every((division) => division.state === 'done');
-        if (!isDone) continue;
-        if (counts[event.winnerKey] === undefined) continue;
-        counts[event.winnerKey] += 1;
+        const context = getEventRelayContext(event, liveMatchMap, relayStatesMap);
+        if (!context.isDone) continue;
+        if (counts[context.winnerKey] === undefined) continue;
+        counts[context.winnerKey] += 1;
     }
 
     return counts;
@@ -285,14 +331,15 @@ export default function DashboardPage() {
     }, [selectedDetail]);
 
     const stats = useMemo(() => {
-        const divisions = events.flatMap(getEventDivisions);
+        const contexts = events.map((event) => getEventRelayContext(event, liveMatchMap, relayStatesMap));
+        const divisions = contexts.flatMap((context) => context.enriched);
         return {
             total: divisions.length,
-            done: divisions.filter((division) => division.state === 'done').length,
-            live: divisions.filter((division) => division.state === 'live').length,
-            campusWins: getCampusWinCounts(events),
+            done: divisions.filter((item) => item.displayState === 'done').length,
+            live: divisions.filter((item) => item.displayState === 'live').length,
+            campusWins: getCampusWinCounts(events, liveMatchMap, relayStatesMap),
         };
-    }, [events]);
+    }, [events, liveMatchMap, relayStatesMap]);
 
     return (
         <div className="page dashboard-page">
@@ -324,6 +371,7 @@ export default function DashboardPage() {
             <section className="db-board" aria-label="종목별 결과 현황">
                 <div className="db-event-list">
                     {events.map((event) => {
+<<<<<<< HEAD
                         const divisions = getEventDivisions(event);
                         const hasLive = divisions.some((division) => {
                             const matchId = getRelayMatchId(division);
@@ -336,18 +384,23 @@ export default function DashboardPage() {
                                 return isDivisionFinished(division, relayStatesMap[matchId]);
                             });
                         const eventCampus = isEventDone ? getCampus(event.winnerKey) : getCampus('pending');
+=======
+                        const context = getEventRelayContext(event, liveMatchMap, relayStatesMap);
+                        const isChampion = context.isDone && context.winnerKey !== 'pending';
+                        const eventCampus = isChampion ? getCampus(context.winnerKey) : getCampus('pending');
+>>>>>>> 7c27c8a4347a4e1da7432d532b77f5c21d89ccca
 
                         return (
                             <article
-                                className={`db-event-card event-${event.id} ${hasLive ? 'has-live' : ''} ${isEventDone ? `is-champion ${eventCampus.className}` : ''}`}
+                                className={`db-event-card event-${event.id} ${context.isLive ? 'has-live' : ''} ${isChampion ? `is-champion ${eventCampus.className}` : ''}`}
                                 key={event.id}
                             >
                                 <div className="db-event-top">
-                                    <div>
-                                        <span className="db-event-status">{event.status}</span>
+                                    <div className="db-event-title-row">
                                         <h2>{event.sport}</h2>
+                                        <span className="db-event-status">{event.status}</span>
                                     </div>
-                                    {isEventDone && (
+                                    {isChampion && (
                                         <div className="db-winner-box is-final">
                                             <CampusBadge campus={eventCampus} size="sm" />
                                         </div>

@@ -1,4 +1,4 @@
-const DEFAULT_API = 'https://gsd-gvcs-popcat.gcinhak.workers.dev';
+const DEFAULT_API = import.meta.env.DEV ? '' : 'https://gsd-gvcs-popcat.gcinhak.workers.dev';
 const RAW = import.meta.env.VITE_POPCAT_API_URL || DEFAULT_API;
 const API = RAW.replace(/\/$/, '');
 
