@@ -949,7 +949,7 @@ export const LIVE_MATCHES = [
     {
         id: 'thu-bb-1',
         day: '2026-05-28',
-        startTime: '5/28 (목) 13:00',
+        startTime: '13:00',
         sport: '농구',
         round: '예선',
         category: '남자 고등',
@@ -960,7 +960,7 @@ export const LIVE_MATCHES = [
     {
         id: 'thu-bb-2',
         day: '2026-05-28',
-        startTime: '5/28 (목) 14:20',
+        startTime: '14:20',
         sport: '농구',
         round: '결선',
         category: '여자 연합',
@@ -971,7 +971,7 @@ export const LIVE_MATCHES = [
     {
         id: 'thu-bb-3',
         day: '2026-05-28',
-        startTime: '5/28 (목) 15:00',
+        startTime: '15:00',
         sport: '농구',
         round: '결선',
         category: '남자 중등',
@@ -982,7 +982,7 @@ export const LIVE_MATCHES = [
     {
         id: 'thu-bb-4',
         day: '2026-05-28',
-        startTime: '5/28 (목) 15:40',
+        startTime: '15:40',
         sport: '농구',
         round: '결선',
         category: '남자 고등',
@@ -995,7 +995,7 @@ export const LIVE_MATCHES = [
     {
         id: 'fri-vb-1',
         day: '2026-05-29',
-        startTime: '5/29 (금) 11:30',
+        startTime: '11:30',
         sport: '배구',
         round: '예선',
         category: '남중',
@@ -1006,7 +1006,7 @@ export const LIVE_MATCHES = [
     {
         id: 'fri-vb-2',
         day: '2026-05-29',
-        startTime: '5/29 (금) 11:00',
+        startTime: '11:00',
         sport: '배구',
         round: '예선',
         category: '여연합',
@@ -1017,7 +1017,7 @@ export const LIVE_MATCHES = [
     {
         id: 'fri-vb-3',
         day: '2026-05-29',
-        startTime: '5/29 (금) 12:00',
+        startTime: '12:00',
         sport: '배구',
         round: '예선',
         category: '남고',
@@ -1028,7 +1028,7 @@ export const LIVE_MATCHES = [
     {
         id: 'fri-vb-4',
         day: '2026-05-29',
-        startTime: '5/29 (금) 13:30',
+        startTime: '13:30',
         sport: '배구',
         round: '결선',
         category: '남중',
@@ -1039,7 +1039,7 @@ export const LIVE_MATCHES = [
     {
         id: 'fri-vb-5',
         day: '2026-05-29',
-        startTime: '5/29 (금) 13:00',
+        startTime: '13:00',
         sport: '배구',
         round: '결선',
         category: '여연합',
@@ -1050,7 +1050,7 @@ export const LIVE_MATCHES = [
     {
         id: 'fri-vb-6',
         day: '2026-05-29',
-        startTime: '5/29 (금) 14:00',
+        startTime: '14:00',
         sport: '배구',
         round: '결선',
         category: '남고',
@@ -1063,7 +1063,7 @@ export const LIVE_MATCHES = [
     {
         id: 'sat-fb-1',
         day: '2026-05-30',
-        startTime: '5/30 (토) 11:40',
+        startTime: '11:40',
         sport: '축구',
         round: '예선',
         category: '남고부',
@@ -1074,7 +1074,7 @@ export const LIVE_MATCHES = [
     {
         id: 'sat-fb-2',
         day: '2026-05-30',
-        startTime: '5/30 (토) 12:30',
+        startTime: '12:30',
         sport: '축구',
         round: '결선',
         category: '남중부',
@@ -1085,7 +1085,7 @@ export const LIVE_MATCHES = [
     {
         id: 'sat-fb-3',
         day: '2026-05-30',
-        startTime: '5/30 (토) 13:20',
+        startTime: '13:20',
         sport: '축구',
         round: '결선',
         category: '여자연합',
@@ -1096,7 +1096,7 @@ export const LIVE_MATCHES = [
     {
         id: 'sat-fb-4',
         day: '2026-05-30',
-        startTime: '5/30 (토) 14:00',
+        startTime: '14:00',
         sport: '축구',
         round: '결선',
         category: '남고부',
@@ -1107,7 +1107,7 @@ export const LIVE_MATCHES = [
     {
         id: 'sat-tk-1',
         day: '2026-05-30',
-        startTime: '5/30 (토) 11:45',
+        startTime: '11:45',
         sport: '태권도',
         round: '결선',
         category: '겨루기 여자',
@@ -1118,7 +1118,7 @@ export const LIVE_MATCHES = [
     {
         id: 'sat-tk-2',
         day: '2026-05-30',
-        startTime: '5/30 (토) 12:05',
+        startTime: '12:05',
         sport: '태권도',
         round: '결선',
         category: '겨루기 남자',
