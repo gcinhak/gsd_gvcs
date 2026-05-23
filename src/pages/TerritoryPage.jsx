@@ -6,13 +6,15 @@ import GaugeStopGame from '../components/games/GaugeStopGame';
 import QuizGame from '../components/games/QuizGame';
 import ReactionGame from '../components/games/ReactionGame';
 import SequenceGame from '../components/games/SequenceGame';
+import ShootTargetGame from '../components/games/ShootTargetGame';
+import WhackAMoleGame from '../components/games/WhackAMoleGame';
 import { CAMPUS_COLORS } from '../data/data';
 import { fetchTerritory, playTerritory } from '../lib/territoryApi';
 
 const CAMPUSES = ['문경', '음성', '세종'];
 const MY_CAMPUS_KEY = 'gsd-territory-mycampus';
 const POLL_MS = 3000;
-const GAME_TYPES = ['quiz', 'reaction', 'gauge', 'flappy', 'sequence', 'falling'];
+const GAME_TYPES = ['quiz', 'reaction', 'gauge', 'flappy', 'sequence', 'falling', 'shoot', 'whack'];
 
 const GAME_INFO = {
     quiz: {
@@ -44,6 +46,16 @@ const GAME_INFO = {
         icon: '🌧',
         title: '물체 피하기',
         desc: '◀ ▶ 버튼(또는 방향키)으로 좌우 이동. 떨어지는 빨간 블록을 6초 동안 피하세요.',
+    },
+    shoot: {
+        icon: '🔫',
+        title: '움직이는 타겟 저격',
+        desc: '벽을 튕기며 움직이는 빨간 타겟을 8초 안에 3번 클릭하여 맞추세요.',
+    },
+    whack: {
+        icon: '🔨',
+        title: '두더지 잡기',
+        desc: '구멍에서 튀어나오는 두더지를 6초 안에 5마리 잡으세요.',
     },
 };
 
@@ -170,6 +182,12 @@ function GameModal({ gameType, onResolve, onClose }) {
                         )}
                         {gameType === 'falling' && (
                             <FallingGame onWin={() => onResolve(true)} onLose={() => onResolve(false)} />
+                        )}
+                        {gameType === 'shoot' && (
+                            <ShootTargetGame onWin={() => onResolve(true)} onLose={() => onResolve(false)} />
+                        )}
+                        {gameType === 'whack' && (
+                            <WhackAMoleGame onWin={() => onResolve(true)} onLose={() => onResolve(false)} />
                         )}
                     </>
                 )}

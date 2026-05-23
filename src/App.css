@@ -5414,6 +5414,63 @@ img {
     opacity: 1;
 }
 
+/* 저격 게임 */
+.game-shoot { display: flex; flex-direction: column; gap: 0.7rem; align-items: center; }
+.gst-board {
+    position: relative;
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    border-radius: 12px;
+    overflow: hidden;
+    border: 2px solid var(--border);
+    cursor: crosshair;
+    user-select: none;
+    touch-action: none;
+}
+.gst-target {
+    position: absolute;
+    background: radial-gradient(circle, #fff 0%, #dc2626 40%, #991b1b 100%);
+    border: 2px solid #fff;
+    border-radius: 50%;
+    box-shadow: 0 0 10px rgba(239, 68, 68, 0.7);
+    pointer-events: none;
+}
+
+/* 두더지 잡기 */
+.game-whack { display: flex; flex-direction: column; gap: 0.8rem; align-items: center; }
+.gwm-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.55rem;
+    width: 100%;
+    max-width: 300px;
+}
+.gwm-hole {
+    aspect-ratio: 1;
+    background: radial-gradient(ellipse at 50% 70%, #44403c 0%, #1c1917 70%);
+    border: 3px solid #292524;
+    border-radius: 50%;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    padding: 0;
+    touch-action: manipulation;
+}
+.gwm-hole.has-mole { background: radial-gradient(ellipse at 50% 70%, #57534e 0%, #1c1917 70%); }
+.gwm-mole {
+    position: absolute;
+    bottom: 4px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 1.9rem;
+    animation: moleUp 0.18s ease-out;
+    pointer-events: none;
+}
+@keyframes moleUp {
+    from { transform: translate(-50%, 30px); opacity: 0; }
+    to { transform: translate(-50%, 0); opacity: 1; }
+}
+.gwm-hole:active { background: radial-gradient(ellipse at 50% 70%, #78716c 0%, #292524 70%); }
+
 .lp-card.is-empty {
     opacity: 0.6;
 }
