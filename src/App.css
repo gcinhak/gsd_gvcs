@@ -5831,6 +5831,13 @@ img {
     color: var(--text);
     font-weight: 800;
 }
+.da-tie-hint {
+    color: #dc2626;
+    font-size: 0.68rem;
+    font-style: normal;
+    font-weight: 900;
+    text-align: right;
+}
 .da-division-list,
 .da-group-list {
     display: grid;

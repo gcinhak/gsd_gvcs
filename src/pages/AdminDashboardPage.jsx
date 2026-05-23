@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
+import { LIVE_MATCHES } from '../data';
 import {
+    CAMPUS,
     CAMPUS_OPTIONS,
     STATE_OPTIONS,
     getCampus,
@@ -10,8 +12,21 @@ import {
     updateEventWinner,
     writeDashboardEvents,
 } from '../lib/dashboardStore';
+import {
+    getEffectiveDivisionWinnerKey,
+    getRelayDisplayState,
+    getRelayMatchId,
+    getRelayWinnerKey,
+    getScorePair,
+} from '../lib/dashboardRelay';
+import { fetchLiveStates } from '../lib/liveApi';
 
 const ADMIN_PASSWORD = 'gvcs2026';
+const RELAY_STATUS_LABELS = {
+    upcoming: '경기 전',
+    live: '진행중',
+    finished: '경기종료',
+};
 
 function PasswordGate({ onSuccess }) {
     const [password, setPassword] = useState('');
@@ -54,19 +69,23 @@ function PasswordGate({ onSuccess }) {
     );
 }
 
-function DivisionControl({ event, division, onChange }) {
-    const campus = getCampus(division.winnerKey);
+function DivisionControl({ event, division, match, relayState, onChange }) {
+    const displayState = getRelayDisplayState(division, relayState);
+    const winnerKey = getEffectiveDivisionWinnerKey(division, match, relayState);
+    const previewCampus = winnerKey === 'pending' ? CAMPUS.live : getCampus(winnerKey);
+    const { home, away } = getScorePair(relayState);
+    const relayStatus = relayState ? RELAY_STATUS_LABELS[relayState.status] || relayState.status : null;
 
     return (
-        <div className={`da-division-row is-${division.state}`}>
+        <div className={`da-division-row is-${displayState}`}>
             <div className="da-division-main">
                 <strong>{division.label}</strong>
-                <span>{division.note}</span>
+                <span>{relayStatus ? `${relayStatus} · ${home}:${away}` : division.note}</span>
             </div>
             <label>
                 <span>상태</span>
                 <select
-                    value={division.state}
+                    value={displayState}
                     onChange={(e) => onChange(event.id, division.id, { state: e.target.value })}
                 >
                     {STATE_OPTIONS.map((state) => (
@@ -79,12 +98,16 @@ function DivisionControl({ event, division, onChange }) {
             <label>
                 <span>승리 캠퍼스</span>
                 <select
-                    value={division.winnerKey === 'pending' ? '' : division.winnerKey}
+                    value={winnerKey === 'pending' ? '' : winnerKey}
                     onChange={(e) => {
-                        const winnerKey = e.target.value || 'pending';
+                        const winnerKeyValue = e.target.value || 'pending';
                         onChange(event.id, division.id, {
-                            winnerKey,
-                            state: winnerKey === 'pending' ? 'ready' : division.state === 'ready' ? 'done' : division.state,
+                            winnerKey: winnerKeyValue,
+                            state: winnerKeyValue === 'pending'
+                                ? 'ready'
+                                : division.state === 'ready'
+                                    ? 'done'
+                                    : division.state,
                         });
                     }}
                 >
@@ -97,14 +120,66 @@ function DivisionControl({ event, division, onChange }) {
                 </select>
             </label>
             <div className="da-campus-preview">
-                <span className={`db-campus-badge ${campus.className} size-sm`}>{campus.name}</span>
+                <span className={`db-campus-badge ${previewCampus.className} size-sm`}>{previewCampus.name}</span>
             </div>
         </div>
     );
 }
 
-function EventAdminCard({ event, onChange, onWinnerChange }) {
+function syncDivisionWithRelay(division, liveMatchMap, relayStatesMap) {
+    const matchId = getRelayMatchId(division);
+    if (!matchId) return division;
+
+    const relayState = relayStatesMap[matchId];
+    if (!relayState) return division;
+
+    const match = liveMatchMap[matchId];
+    const relayWinnerKey = getRelayWinnerKey(match, relayState);
+    const patch = {};
+
+    if (relayState.status === 'live' && division.state !== 'live') {
+        patch.state = 'live';
+    }
+
+    if (relayState.status === 'finished') {
+        if (division.state !== 'done') patch.state = 'done';
+        if (relayWinnerKey !== 'pending' && division.winnerKey !== relayWinnerKey) {
+            patch.winnerKey = relayWinnerKey;
+        }
+    }
+
+    return Object.keys(patch).length ? { ...division, ...patch } : division;
+}
+
+function syncEventWithRelay(event, liveMatchMap, relayStatesMap) {
+    let changed = false;
+    const syncDivision = (division) => {
+        const next = syncDivisionWithRelay(division, liveMatchMap, relayStatesMap);
+        if (next !== division) changed = true;
+        return next;
+    };
+
+    if (event.groups) {
+        const groups = event.groups.map((group) => ({
+            ...group,
+            divisions: group.divisions.map(syncDivision),
+        }));
+        return changed ? { ...event, groups } : event;
+    }
+
+    const divisions = event.divisions.map(syncDivision);
+    return changed ? { ...event, divisions } : event;
+}
+
+function EventAdminCard({ event, liveMatchMap, relayStatesMap, onChange, onWinnerChange }) {
     const finalWinnerKey = event.manualWinnerKey || event.winnerKey || 'pending';
+    const hasTie = getEventDivisions(event).some((division) => {
+        const matchId = getRelayMatchId(division);
+        const relayState = matchId ? relayStatesMap[matchId] : null;
+        if (relayState?.status !== 'finished') return false;
+        const { home, away } = getScorePair(relayState);
+        return home === away;
+    });
 
     return (
         <article className="da-event-card">
@@ -127,6 +202,7 @@ function EventAdminCard({ event, onChange, onWinnerChange }) {
                             </option>
                         ))}
                     </select>
+                    {hasTie && <em className="da-tie-hint">동점: 우승 캠퍼스를 선택하세요</em>}
                 </label>
             </header>
 
@@ -136,23 +212,38 @@ function EventAdminCard({ event, onChange, onWinnerChange }) {
                         <section className="da-group" key={group.id}>
                             <h3>{group.title}</h3>
                             <div className="da-division-list">
-                                {group.divisions.map((division) => (
-                                    <DivisionControl
-                                        event={event}
-                                        division={division}
-                                        key={division.id}
-                                        onChange={onChange}
-                                    />
-                                ))}
+                                {group.divisions.map((division) => {
+                                    const matchId = getRelayMatchId(division);
+                                    return (
+                                        <DivisionControl
+                                            event={event}
+                                            division={division}
+                                            key={division.id}
+                                            match={liveMatchMap[matchId]}
+                                            relayState={relayStatesMap[matchId]}
+                                            onChange={onChange}
+                                        />
+                                    );
+                                })}
                             </div>
                         </section>
                     ))}
                 </div>
             ) : (
                 <div className="da-division-list">
-                    {event.divisions.map((division) => (
-                        <DivisionControl event={event} division={division} key={division.id} onChange={onChange} />
-                    ))}
+                    {event.divisions.map((division) => {
+                        const matchId = getRelayMatchId(division);
+                        return (
+                            <DivisionControl
+                                event={event}
+                                division={division}
+                                key={division.id}
+                                match={liveMatchMap[matchId]}
+                                relayState={relayStatesMap[matchId]}
+                                onChange={onChange}
+                            />
+                        );
+                    })}
                 </div>
             )}
         </article>
@@ -162,7 +253,15 @@ function EventAdminCard({ event, onChange, onWinnerChange }) {
 export default function AdminDashboardPage() {
     const [authed, setAuthed] = useState(() => window.sessionStorage.getItem('gvcs-dashboard-admin') === 'ok');
     const [events, setEvents] = useState(() => readDashboardEvents());
+    const [relayStatesMap, setRelayStatesMap] = useState({});
     const [savedAt, setSavedAt] = useState('');
+
+    const liveMatchMap = useMemo(() => {
+        return LIVE_MATCHES.reduce((acc, match) => {
+            acc[match.id] = match;
+            return acc;
+        }, {});
+    }, []);
 
     const counts = useMemo(() => {
         const divisions = events.flatMap(getEventDivisions);
@@ -176,6 +275,44 @@ export default function AdminDashboardPage() {
     useEffect(() => {
         if (authed) writeDashboardEvents(events);
     }, [authed, events]);
+
+    useEffect(() => {
+        if (!authed) return undefined;
+        let cancelled = false;
+
+        const pull = async () => {
+            try {
+                const data = await fetchLiveStates();
+                if (cancelled) return;
+                const map = {};
+                for (const row of data.matches || []) {
+                    map[row.matchId] = row;
+                }
+                setRelayStatesMap(map);
+                setEvents((prev) => {
+                    let changed = false;
+                    const next = prev.map((event) => {
+                        const synced = syncEventWithRelay(event, liveMatchMap, map);
+                        if (synced !== event) changed = true;
+                        return synced;
+                    });
+
+                    if (!changed) return prev;
+                    writeDashboardEvents(next);
+                    return next;
+                });
+            } catch {
+                /* relay API can be temporarily unavailable */
+            }
+        };
+
+        pull();
+        const timer = window.setInterval(pull, 3000);
+        return () => {
+            cancelled = true;
+            window.clearInterval(timer);
+        };
+    }, [authed, liveMatchMap]);
 
     const saveEvents = (updater) => {
         setEvents((prev) => {
@@ -216,7 +353,7 @@ export default function AdminDashboardPage() {
                     <div>
                         <span className="da-kicker">DASHBOARD ADMIN</span>
                         <h1>현황판 관리자</h1>
-                        <p>캠퍼스 선택과 동시에 대시보드에 반영됩니다.</p>
+                        <p>중계 점수와 관리자 선택이 대시보드에 실시간 반영됩니다.</p>
                     </div>
                     <div className="da-actions">
                         <button type="button" className="da-ghost-btn" onClick={resetAll}>초기화</button>
@@ -236,6 +373,8 @@ export default function AdminDashboardPage() {
                         <EventAdminCard
                             event={event}
                             key={event.id}
+                            liveMatchMap={liveMatchMap}
+                            relayStatesMap={relayStatesMap}
                             onChange={changeDivision}
                             onWinnerChange={changeEventWinner}
                         />
