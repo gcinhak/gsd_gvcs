@@ -85,6 +85,7 @@ export default function PopcatPage({ embedded = false }) {
     const uiDisabled = IS_DISABLED || isBanned || !hasUuid; // 💡 !hasUuid 추가
     const popIdRef = useRef(0);
     const releaseTimers = useRef({});
+    const activePointers = useRef(new Set()); // ← 추가
     const pendingRef = useRef({ ...ZERO });
     const flushTimerRef = useRef(null);
     const schedulerRef = useRef(() => {});
@@ -490,7 +491,15 @@ export default function PopcatPage({ embedded = false }) {
                                 }}
                                 onPointerDown={(e) => {
                                     e.preventDefault();
+                                    if (activePointers.current.size > 0) return; // 두 번째 손가락부터 무시
+                                    activePointers.current.add(e.pointerId);
                                     press(campus);
+                                }}
+                                onPointerUp={(e) => {
+                                    activePointers.current.delete(e.pointerId);
+                                }}
+                                onPointerCancel={(e) => {
+                                    activePointers.current.delete(e.pointerId); // 스크롤 등으로 터치가 취소될 때 정리
                                 }}
                                 aria-label={`${campus} 캠퍼스 응원하기`}
                             >
