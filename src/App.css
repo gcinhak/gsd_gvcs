@@ -6676,7 +6676,7 @@ img {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 100%;
+    /* width: 100%; */
     min-height: 1.2rem;
     padding: 0;
     border: none;
@@ -7052,4 +7052,52 @@ img {
     .db-winner-box {
         justify-items: start;
     }
+}
+
+.db-score-with-teams {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    width: 100%;
+    gap: 0.5rem;
+    writing-mode: horizontal-tb;
+}
+
+/* 2. 팀 이름 공통: 좌우 영역이 남은 공간을 정확히 50:50으로 균등하게 나누어 가집니다. */
+.db-team-name {
+    flex: 1; /* 👈 중요: 좌우가 똑같은 너비를 차지하게 만듭니다. */
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+    writing-mode: horizontal-tb;
+}
+
+/* 3. 왼쪽 팀 이름: 텍스트를 오른쪽으로 정렬하여 가운데 점수에 밀착시킵니다. */
+.db-team-name:first-child {
+    text-align: right;
+    padding-right: 0.6rem; /* 👈 팀 이름과 점수 사이의 간격 */
+}
+
+/* 4. 오른쪽 팀 이름: 텍스트를 왼쪽으로 정렬하여 가운데 점수에 밀착시킵니다. */
+.db-team-name:last-child {
+    text-align: left;
+    padding-left: 0.6rem; /* 👈 팀 이름과 점수 사이의 간격 */
+}
+
+/* 5. 가운데 점수 박스: 자기 글자 크기(0:0)만큼만 자리를 차지합니다. */
+.db-final-score-box {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: auto; /* 👈 width: 100%를 지우고 auto로 변경 */
+    flex-shrink: 0; /* 👈 점수 박스가 찌그러지지 않도록 방지 */
+    min-height: 1.2rem;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: #111827;
+    font-size: clamp(1rem, 1.36vw, 1.28rem);
+    font-weight: 950;
+    line-height: 1;
+    white-space: nowrap;
 }

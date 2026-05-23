@@ -77,6 +77,12 @@ function ResultCell({ event, division, match, relayState, onOpen }) {
     const showScore = shouldShowDashboardScore(event, division);
     const matchup = getPendingMatchup(event, division, match);
     const hasWinner = winnerKey !== 'pending';
+    const isActive = displayState === 'live' || displayState === 'done';
+
+    // match 데이터 우선, 없으면 matchup 문자열에서 파싱
+    const parts = matchup.split(' VS ');
+    const homeName = match?.teams?.home ?? parts[0] ?? '문경';
+    const awayName = match?.teams?.away ?? parts[1] ?? '음성';
 
     return (
         <button
@@ -87,8 +93,24 @@ function ResultCell({ event, division, match, relayState, onOpen }) {
         >
             <span className="db-division-label">{division.label}</span>
             {displayState === 'live' && <span className="db-live-label">LIVE</span>}
-            {showScore && <span className="db-final-score-box">{finalScore}</span>}
-            {hasWinner ? <CampusBadge campus={campus} size="sm" /> : <span className="db-matchup-line">{matchup}</span>}
+
+            {showScore && isActive ? (
+                <div className="db-score-with-teams">
+                    <span className="db-team-name db-team-home">{homeName}</span>
+                    <span className="db-final-score-box">{finalScore}</span>
+                    <span className="db-team-name db-team-away">{awayName}</span>
+                </div>
+            ) : showScore ? (
+                <span className="db-final-score-box">{finalScore}</span>
+            ) : null}
+
+            {isActive ? (
+                hasWinner && <CampusBadge campus={campus} size="sm" />
+            ) : hasWinner ? (
+                <CampusBadge campus={campus} size="sm" />
+            ) : (
+                <span className="db-matchup-line">{matchup}</span>
+            )}
         </button>
     );
 }
