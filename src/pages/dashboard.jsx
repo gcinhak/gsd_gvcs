@@ -8,7 +8,7 @@ import {
     readDashboardEvents,
 } from '../lib/dashboardStore';
 import { fetchComments, fetchLiveStates } from '../lib/liveApi';
-import { LIVE_MATCHES } from '..data/data';
+import { LIVE_MATCHES } from '../data/data';
 import {
     getEffectiveDivisionWinnerKey,
     getRelayDisplayState,
