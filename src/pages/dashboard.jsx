@@ -8,23 +8,6 @@ import {
     readDashboardEvents,
 } from '../lib/dashboardStore';
 import { fetchComments, fetchLiveStates } from '../lib/liveApi';
-<<<<<<< HEAD
-import { LIVE_MATCHES } from '../data/data';
-
-const DIVISION_RELAY_MATCHES = {
-    'soccer-high-men': 'sat-fb-4',
-    'soccer-mid-men': 'sat-fb-2',
-    'soccer-mix-women': 'sat-fb-3',
-    'basketball-high-men': 'thu-bb-4',
-    'basketball-mid-men': 'thu-bb-3',
-    'basketball-mix-women': 'thu-bb-2',
-    'volleyball-high-men': 'fri-vb-6',
-    'volleyball-mid-men': 'fri-vb-4',
-    'volleyball-mix-women': 'fri-vb-5',
-    'tk-sparring-mid': 'sat-tk-1',
-    'tk-sparring-high': 'sat-tk-2',
-};
-=======
 import { LIVE_MATCHES } from '../data';
 import {
     getEffectiveDivisionWinnerKey,
@@ -32,7 +15,6 @@ import {
     getRelayMatchId,
     getScorePair,
 } from '../lib/dashboardRelay';
->>>>>>> 7c27c8a4347a4e1da7432d532b77f5c21d89ccca
 
 const STATUS_LABELS = {
     upcoming: '경기 전',
@@ -105,17 +87,8 @@ function ResultCell({ event, division, match, relayState, onOpen }) {
         >
             <span className="db-division-label">{division.label}</span>
             {displayState === 'live' && <span className="db-live-label">LIVE</span>}
-<<<<<<< HEAD
-            <span className="db-final-score-box">{finalScore}</span>
-            {hasWinner ? <CampusBadge campus={campus} size="sm" /> : <span className="db-matchup-line">{matchup}</span>}
-=======
             {showScore && <span className="db-final-score-box">{finalScore}</span>}
-            {hasWinner ? (
-                <CampusBadge campus={campus} size="sm" />
-            ) : (
-                <span className="db-matchup-line">{matchup}</span>
-            )}
->>>>>>> 7c27c8a4347a4e1da7432d532b77f5c21d89ccca
+            {hasWinner ? <CampusBadge campus={campus} size="sm" /> : <span className="db-matchup-line">{matchup}</span>}
         </button>
     );
 }
@@ -371,24 +344,9 @@ export default function DashboardPage() {
             <section className="db-board" aria-label="종목별 결과 현황">
                 <div className="db-event-list">
                     {events.map((event) => {
-<<<<<<< HEAD
-                        const divisions = getEventDivisions(event);
-                        const hasLive = divisions.some((division) => {
-                            const matchId = getRelayMatchId(division);
-                            return division.state === 'live' || relayStatesMap[matchId]?.status === 'live';
-                        });
-                        const isEventDone =
-                            divisions.length > 0 &&
-                            divisions.every((division) => {
-                                const matchId = getRelayMatchId(division);
-                                return isDivisionFinished(division, relayStatesMap[matchId]);
-                            });
-                        const eventCampus = isEventDone ? getCampus(event.winnerKey) : getCampus('pending');
-=======
                         const context = getEventRelayContext(event, liveMatchMap, relayStatesMap);
                         const isChampion = context.isDone && context.winnerKey !== 'pending';
                         const eventCampus = isChampion ? getCampus(context.winnerKey) : getCampus('pending');
->>>>>>> 7c27c8a4347a4e1da7432d532b77f5c21d89ccca
 
                         return (
                             <article
