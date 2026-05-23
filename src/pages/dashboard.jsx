@@ -100,31 +100,35 @@ export default function DashboardPage() {
 
             <section className="db-board" aria-label="종목별 결과 현황">
                 <div className="db-event-list">
-                    {events.map((event) => (
-                        <article className={`db-event-card event-${event.id}`} key={event.id}>
-                            <div className="db-event-top">
-                                <div>
-                                    <span className="db-event-status">{event.status}</span>
-                                    <h2>{event.sport}</h2>
-                                    <p>{event.rule}</p>
-                                </div>
-                                <div className="db-winner-box">
-                                    <span>종목 선두</span>
-                                    <CampusBadge campus={getCampus(event.winnerKey)} size="sm" />
-                                </div>
-                            </div>
+                    {events.map((event) => {
+                        const hasLive = getEventDivisions(event).some((division) => division.state === 'live');
 
-                            {event.groups ? (
-                                <TaekwondoGroups groups={event.groups} />
-                            ) : (
-                                <div className="db-result-grid">
-                                    {event.divisions.map((division) => (
-                                        <ResultCell division={division} key={division.id} />
-                                    ))}
+                        return (
+                            <article className={`db-event-card event-${event.id} ${hasLive ? 'has-live' : ''}`} key={event.id}>
+                                <div className="db-event-top">
+                                    <div>
+                                        <span className="db-event-status">{event.status}</span>
+                                        <h2>{event.sport}</h2>
+                                        <p>{event.rule}</p>
+                                    </div>
+                                    <div className="db-winner-box">
+                                        <span>종목 선두</span>
+                                        <CampusBadge campus={getCampus(event.winnerKey)} size="sm" />
+                                    </div>
                                 </div>
-                            )}
-                        </article>
-                    ))}
+
+                                {event.groups ? (
+                                    <TaekwondoGroups groups={event.groups} />
+                                ) : (
+                                    <div className="db-result-grid">
+                                        {event.divisions.map((division) => (
+                                            <ResultCell division={division} key={division.id} />
+                                        ))}
+                                    </div>
+                                )}
+                            </article>
+                        );
+                    })}
                 </div>
             </section>
         </div>

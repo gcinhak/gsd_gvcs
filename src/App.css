@@ -5230,6 +5230,9 @@ img {
     padding: 0.45rem;
     border-right: 1px solid var(--border);
     border-bottom: 1px solid var(--border);
+    background: #ffffff;
+}
+.db-event-card.has-live {
     background: linear-gradient(135deg, #ffffff 0%, #f8fbff 48%, var(--primary-soft) 100%);
 }
 .db-event-card:nth-child(3),
