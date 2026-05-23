@@ -33,6 +33,12 @@ function formatDashboardScore(event, division, state) {
     return `${home}:${away}`;
 }
 
+function shouldShowDashboardScore(event, division) {
+    if (event.id === 'middle-distance' || event.id === 'relay') return false;
+    if (event.id === 'taekwondo' && !division.id.includes('sparring')) return false;
+    return true;
+}
+
 function formatMatchup(match) {
     if (!match?.teams?.home || !match?.teams?.away) return '';
     return `${match.teams.home} VS ${match.teams.away}`;
@@ -68,6 +74,7 @@ function ResultCell({ event, division, match, relayState, onOpen }) {
     const winnerKey = getEffectiveDivisionWinnerKey(division, match, relayState);
     const campus = getCellBadgeCampus(winnerKey, displayState);
     const finalScore = formatDashboardScore(event, division, relayState);
+    const showScore = shouldShowDashboardScore(event, division);
     const matchup = getPendingMatchup(event, division, match);
     const hasWinner = winnerKey !== 'pending';
 
@@ -80,7 +87,7 @@ function ResultCell({ event, division, match, relayState, onOpen }) {
         >
             <span className="db-division-label">{division.label}</span>
             {displayState === 'live' && <span className="db-live-label">LIVE</span>}
-            <span className="db-final-score-box">{finalScore}</span>
+            {showScore && <span className="db-final-score-box">{finalScore}</span>}
             {hasWinner ? (
                 <CampusBadge campus={campus} size="sm" />
             ) : (
@@ -348,9 +355,9 @@ export default function DashboardPage() {
                                 key={event.id}
                             >
                                 <div className="db-event-top">
-                                    <div>
-                                        <span className="db-event-status">{event.status}</span>
+                                    <div className="db-event-title-row">
                                         <h2>{event.sport}</h2>
+                                        <span className="db-event-status">{event.status}</span>
                                     </div>
                                     {isChampion && (
                                         <div className="db-winner-box is-final">

@@ -6006,13 +6006,17 @@ img {
 .db-board {
     flex: 1;
     min-height: 0;
-    overflow: hidden;
+    overflow: visible;
     border-radius: 10px;
+    background: transparent;
+    border: 0;
+    box-shadow: none;
 }
 .db-event-list {
     height: 100%;
     grid-template-columns: repeat(24, minmax(0, 1fr));
     grid-template-rows: repeat(3, minmax(0, 1fr));
+    gap: 0.5rem;
 }
 .db-event-card,
 .db-event-card:nth-child(2n) {
@@ -6022,9 +6026,10 @@ img {
     height: 100%;
     overflow: hidden;
     padding: 0.45rem;
-    border-right: 1px solid var(--border);
-    border-bottom: 1px solid var(--border);
+    border: 1px solid #dbe3ef;
+    border-radius: 8px;
     background: #ffffff;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
 }
 .db-event-card.has-live {
     background: linear-gradient(135deg, #ffffff 0%, #f8fbff 48%, var(--primary-soft) 100%);
@@ -6057,12 +6062,12 @@ img {
 .db-event-card.event-relay,
 .db-event-card.event-tug-of-war,
 .db-event-card.event-chess {
-    border-right: none;
+    border-right: 1px solid #dbe3ef;
 }
 .db-event-card.event-taekwondo,
 .db-event-card.event-middle-distance,
 .db-event-card.event-chess {
-    border-bottom: none;
+    border-bottom: 1px solid #dbe3ef;
 }
 
 .db-event-card.event-relay {
@@ -6074,9 +6079,15 @@ img {
 .db-event-card.event-soccer {
     grid-column: span 10;
 }
+.db-event-card.event-soccer {
+    grid-column: span 9;
+}
 .db-event-card.event-table-tennis,
 .db-event-card.event-tug-of-war {
     grid-column: span 7;
+}
+.db-event-card.event-tug-of-war {
+    grid-column: span 8;
 }
 .db-event-card.event-taekwondo,
 .db-event-card.event-chess {
@@ -6097,14 +6108,23 @@ img {
     grid-template-columns: minmax(0, 1fr) auto;
     gap: 0.35rem;
     margin-bottom: 0.36rem;
+    align-items: start;
+}
+.db-event-title-row {
+    min-width: 0;
+    display: flex;
+    align-items: flex-end;
+    gap: 0.42rem;
 }
 .db-event-status {
     min-height: 1.1rem;
     padding: 0.12rem 0.42rem;
     font-size: 0.58rem;
+    flex: 0 0 auto;
+    margin-bottom: 0.08rem;
 }
 .db-event-top h2 {
-    margin-top: 0.22rem;
+    margin-top: 0;
     color: var(--text);
     font-size: clamp(1rem, 1.45vw, 1.35rem);
     line-height: 1;
@@ -6117,7 +6137,7 @@ img {
     font-weight: 800;
 }
 .db-winner-box {
-    min-width: 66px;
+    min-width: 82px;
     gap: 0.16rem;
     align-content: center;
     justify-items: end;
@@ -6141,6 +6161,13 @@ img {
     padding: 0.18rem 0.36rem;
     font-size: 0.66rem;
 }
+.db-winner-box .db-campus-badge.size-sm {
+    min-width: 3.8rem;
+    min-height: 1.52rem;
+    padding: 0.25rem 0.58rem;
+    border-radius: 6px;
+    font-size: 0.8rem;
+}
 .db-campus-badge.campus-mungyeong,
 .db-campus-badge.campus-eumseong,
 .db-campus-badge.campus-sejong {
@@ -6149,7 +6176,7 @@ img {
 .db-result-grid {
     grid-template-columns: repeat(auto-fit, minmax(72px, 1fr));
     grid-auto-rows: minmax(0, 1fr);
-    gap: 0.42rem;
+    gap: 0.44rem;
     height: 100%;
     min-height: 0;
 }
@@ -6176,8 +6203,11 @@ img {
     align-content: center;
     justify-items: center;
     gap: 0.16rem;
-    padding: 0.38rem 0.35rem;
+    padding: 0.42rem 0.38rem;
+    border: 1px solid #dce5f0;
     border-radius: 10px;
+    background: rgba(255, 255, 255, 0.94);
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
     width: 100%;
     cursor: pointer;
     font: inherit;
@@ -6262,7 +6292,7 @@ img {
     display: grid;
     grid-template-columns: repeat(6, minmax(0, 1fr));
     grid-auto-rows: minmax(0, 1fr);
-    gap: 0.42rem;
+    gap: 0.44rem;
     height: 100%;
     min-height: 0;
 }
