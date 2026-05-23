@@ -93,7 +93,7 @@ function TimelineList({ items, venueName }) {
                 // 3개 캠퍼스가 모두 참여하는 대상 장소 정의
                 const targetVenues = ['보조경기장', '보조실내체육관 1층', '조치원복합커뮤니티센터 · 중회의실'];
                 // 3개 캠퍼스 매치 표시에서 제외할 항목들 정의
-                const excludeLabels = ['개회식', '폐회식', '태권도 시범', '응원전', '줄다리기·이어달리기 선수 확인'];
+                const excludeLabels = ['개회식', '폐회식', '태권도 시범', '응원전', '줄다리기·이어달리기 선수 확인', '초등 경기'];
                 
                 let matchText = it.sub;
                 // 기존 vs 내용이 없고, 대상 장소에 포함되며, 제외 대상 단어가 아닐 때 "문경 VS 음성 VS 세종"을 자동으로 부여
