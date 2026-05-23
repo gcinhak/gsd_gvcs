@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
-    CAMPUS,
+    CAMPUS_OPTIONS,
     DASHBOARD_CHANGE_EVENT,
     getCampus,
     getEventDivisions,
@@ -20,26 +20,34 @@ function ResultCell({ division }) {
             <span className="db-division-label">{division.label}</span>
             {state === 'live' && <span className="db-live-label">LIVE</span>}
             <CampusBadge campus={campus} size="sm" />
-            <span className="db-cell-note">{division.note}</span>
         </div>
     );
 }
 
 function TaekwondoGroups({ groups }) {
+    const divisions = groups.flatMap((group) => group.divisions);
+
     return (
         <div className="db-taekwondo-groups">
-            {groups.map((group) => (
-                <div className="db-taekwondo-group" key={group.id}>
-                    <div className="db-group-title">{group.title}</div>
-                    <div className="db-result-grid">
-                        {group.divisions.map((division) => (
-                            <ResultCell division={division} key={division.id} />
-                        ))}
-                    </div>
-                </div>
+            {divisions.map((division) => (
+                <ResultCell division={division} key={division.id} />
             ))}
         </div>
     );
+}
+
+function getCampusWinCounts(events) {
+    const counts = CAMPUS_OPTIONS.reduce((acc, campus) => ({ ...acc, [campus.key]: 0 }), {});
+
+    for (const event of events) {
+        for (const division of getEventDivisions(event)) {
+            if (division.state !== 'done') continue;
+            if (counts[division.winnerKey] === undefined) continue;
+            counts[division.winnerKey] += 1;
+        }
+    }
+
+    return counts;
 }
 
 export default function DashboardPage() {
@@ -55,74 +63,54 @@ export default function DashboardPage() {
         };
     }, []);
 
-    const totalDivisions = events.reduce((sum, event) => sum + getEventDivisions(event).length, 0);
-    const liveCount = events.reduce(
-        (sum, event) => sum + getEventDivisions(event).filter((division) => division.state === 'live').length,
-        0,
-    );
-    const doneCount = events.reduce(
-        (sum, event) => sum + getEventDivisions(event).filter((division) => division.state === 'done').length,
-        0,
-    );
+    const stats = useMemo(() => {
+        const divisions = events.flatMap(getEventDivisions);
+        return {
+            total: divisions.length,
+            done: divisions.filter((division) => division.state === 'done').length,
+            live: divisions.filter((division) => division.state === 'live').length,
+            campusWins: getCampusWinCounts(events),
+        };
+    }, [events]);
 
     return (
         <div className="page dashboard-page">
             <section className="db-topline">
-                <div>
+                <div className="db-title-block">
                     <span className="db-kicker">MATCH BOARD</span>
                     <h1>경기 현황판</h1>
                 </div>
+
+                <div className="db-campus-scoreboard" aria-label="캠퍼스별 우승 개수">
+                    {CAMPUS_OPTIONS.map((campus) => (
+                        <div className={`db-campus-score ${campus.className}`} key={campus.key}>
+                            <span>{campus.name}</span>
+                            <strong>{stats.campusWins[campus.key]}</strong>
+                            <em>우승</em>
+                        </div>
+                    ))}
+                </div>
+
                 <div className="db-live-panel" aria-label="현재 진행 상태">
                     <span className="db-live-dot" />
                     <strong>LIVE</strong>
-                    <span>관리자 입력 즉시 반영</span>
-                </div>
-            </section>
-
-            <section className="db-summary-grid" aria-label="요약">
-                <div className="db-summary-card">
-                    <span>운영 종목</span>
-                    <strong>{events.length}</strong>
-                </div>
-                <div className="db-summary-card">
-                    <span>세부 부문</span>
-                    <strong>{totalDivisions}</strong>
-                </div>
-                <div className="db-summary-card">
-                    <span>진행 중</span>
-                    <strong>{liveCount}</strong>
-                </div>
-                <div className="db-summary-card is-accent">
-                    <span>완료 부문</span>
-                    <strong>{doneCount}</strong>
+                    <span>{stats.done}/{stats.total} 완료 · {stats.live} 진행</span>
                 </div>
             </section>
 
             <section className="db-board" aria-label="종목별 결과 현황">
-                <div className="db-board-head">
-                    <div>
-                        <span className="db-board-label">MATCH BOARD</span>
-                        <h2>종목별 경기 결과</h2>
-                    </div>
-                    <div className="db-legend" aria-label="캠퍼스 색상">
-                        <CampusBadge campus={CAMPUS.mungyeong} size="sm" />
-                        <CampusBadge campus={CAMPUS.eumseong} size="sm" />
-                        <CampusBadge campus={CAMPUS.sejong} size="sm" />
-                    </div>
-                </div>
-
                 <div className="db-event-list">
                     {events.map((event) => (
-                        <article className={`db-event-card ${event.id === 'taekwondo' ? 'is-wide' : ''}`} key={event.id}>
+                        <article className={`db-event-card event-${event.id}`} key={event.id}>
                             <div className="db-event-top">
                                 <div>
                                     <span className="db-event-status">{event.status}</span>
-                                    <h3>{event.sport}</h3>
+                                    <h2>{event.sport}</h2>
                                     <p>{event.rule}</p>
                                 </div>
                                 <div className="db-winner-box">
-                                    <span>우승캠퍼스</span>
-                                    <CampusBadge campus={getCampus(event.winnerKey)} />
+                                    <span>종목 선두</span>
+                                    <CampusBadge campus={getCampus(event.winnerKey)} size="sm" />
                                 </div>
                             </div>
 
