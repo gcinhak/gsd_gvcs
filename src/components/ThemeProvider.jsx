@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { THEMES } from '../data';
+import { THEMES } from '../data/data';
 import { ThemeContext } from '../hooks/useTheme';
 
 const STORAGE_KEY = 'gsd-theme';

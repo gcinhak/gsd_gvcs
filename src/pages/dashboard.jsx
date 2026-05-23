@@ -8,7 +8,7 @@ import {
     readDashboardEvents,
 } from '../lib/dashboardStore';
 import { fetchComments, fetchLiveStates } from '../lib/liveApi';
-import { LIVE_MATCHES } from '../data';
+import { LIVE_MATCHES } from '../data/data';
 
 const DIVISION_RELAY_MATCHES = {
     'soccer-high-men': 'sat-fb-4',
@@ -103,11 +103,7 @@ function ResultCell({ event, division, match, relayState, onOpen }) {
             <span className="db-division-label">{division.label}</span>
             {displayState === 'live' && <span className="db-live-label">LIVE</span>}
             <span className="db-final-score-box">{finalScore}</span>
-            {hasWinner ? (
-                <CampusBadge campus={campus} size="sm" />
-            ) : (
-                <span className="db-matchup-line">{matchup}</span>
-            )}
+            {hasWinner ? <CampusBadge campus={campus} size="sm" /> : <span className="db-matchup-line">{matchup}</span>}
         </button>
     );
 }
@@ -168,9 +164,7 @@ function ScoreDetailModal({ detail, relayState, comments, loading, onClose }) {
             >
                 <header className="db-detail-head">
                     <div>
-                        <span className={`db-detail-status status-${status}`}>
-                            {STATUS_LABELS[status] || status}
-                        </span>
+                        <span className={`db-detail-status status-${status}`}>{STATUS_LABELS[status] || status}</span>
                         <h2 id="db-detail-title">{division.label}</h2>
                         {match && (
                             <p>
@@ -200,16 +194,19 @@ function ScoreDetailModal({ detail, relayState, comments, loading, onClose }) {
                     {loading ? (
                         <div className="db-detail-empty">중계 기록을 불러오는 중입니다.</div>
                     ) : comments.length > 0 ? (
-                        comments.slice().reverse().map((comment) => (
-                            <article className={`db-detail-comment type-${comment.type}`} key={comment.id}>
-                                <div className="db-detail-comment-meta">
-                                    {comment.quarter && <span>{comment.quarter}</span>}
-                                    <span>{comment.type === 'score' ? '득점' : '기록'}</span>
-                                    {formatCommentTime(comment.ts) && <time>{formatCommentTime(comment.ts)}</time>}
-                                </div>
-                                <p>{comment.content}</p>
-                            </article>
-                        ))
+                        comments
+                            .slice()
+                            .reverse()
+                            .map((comment) => (
+                                <article className={`db-detail-comment type-${comment.type}`} key={comment.id}>
+                                    <div className="db-detail-comment-meta">
+                                        {comment.quarter && <span>{comment.quarter}</span>}
+                                        <span>{comment.type === 'score' ? '득점' : '기록'}</span>
+                                        {formatCommentTime(comment.ts) && <time>{formatCommentTime(comment.ts)}</time>}
+                                    </div>
+                                    <p>{comment.content}</p>
+                                </article>
+                            ))
                     ) : (
                         <div className="db-detail-empty">아직 등록된 상세 기록이 없습니다.</div>
                     )}
@@ -318,7 +315,9 @@ export default function DashboardPage() {
                 <div className="db-live-panel" aria-label="현재 진행 상태">
                     <span className="db-live-dot" />
                     <strong>LIVE</strong>
-                    <span>{stats.done}/{stats.total} 완료 · {stats.live} 진행</span>
+                    <span>
+                        {stats.done}/{stats.total} 완료 · {stats.live} 진행
+                    </span>
                 </div>
             </section>
 
@@ -330,10 +329,12 @@ export default function DashboardPage() {
                             const matchId = getRelayMatchId(division);
                             return division.state === 'live' || relayStatesMap[matchId]?.status === 'live';
                         });
-                        const isEventDone = divisions.length > 0 && divisions.every((division) => {
-                            const matchId = getRelayMatchId(division);
-                            return isDivisionFinished(division, relayStatesMap[matchId]);
-                        });
+                        const isEventDone =
+                            divisions.length > 0 &&
+                            divisions.every((division) => {
+                                const matchId = getRelayMatchId(division);
+                                return isDivisionFinished(division, relayStatesMap[matchId]);
+                            });
                         const eventCampus = isEventDone ? getCampus(event.winnerKey) : getCampus('pending');
 
                         return (
@@ -374,7 +375,9 @@ export default function DashboardPage() {
                                                     key={division.id}
                                                     match={match}
                                                     relayState={matchId ? relayStatesMap[matchId] : null}
-                                                    onOpen={() => setSelectedDetail({ event, division, matchId, match })}
+                                                    onOpen={() =>
+                                                        setSelectedDetail({ event, division, matchId, match })
+                                                    }
                                                 />
                                             );
                                         })}
@@ -390,8 +393,8 @@ export default function DashboardPage() {
                 relayState={selectedDetail?.matchId ? relayStatesMap[selectedDetail.matchId] : null}
                 comments={selectedDetail?.matchId ? relayCommentsMap[selectedDetail.matchId] || [] : []}
                 loading={Boolean(
-                    selectedDetail?.matchId
-                    && !Object.prototype.hasOwnProperty.call(relayCommentsMap, selectedDetail.matchId)
+                    selectedDetail?.matchId &&
+                    !Object.prototype.hasOwnProperty.call(relayCommentsMap, selectedDetail.matchId)
                 )}
                 onClose={() => setSelectedDetail(null)}
             />

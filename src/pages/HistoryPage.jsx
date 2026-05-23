@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import PageHeader from '../components/PageHeader';
 import CampusBadge from '../components/CampusBadge';
-import { HISTORY, CAMPUS_COLORS, EVENT_ORDER } from '../data';
+import { HISTORY, CAMPUS_COLORS, EVENT_ORDER } from '../data/data';
 
 // 윤지 공주가 수정함.
 // git add .

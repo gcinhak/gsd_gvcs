@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { LIVE_MATCHES, CAMPUS_COLORS, getQuarters } from '../data';
+import { LIVE_MATCHES, CAMPUS_COLORS, getQuarters } from '../data/data';
 import CampusBadge from '../components/CampusBadge';
 import {
     adminPing,
@@ -104,7 +104,9 @@ function MatchListView({ matches, statesMap, onSelect }) {
                         </div>
                         <div className="adm-row-event">
                             <span className="adm-sport">{m.sport}</span>
-                            <span className="adm-cat">{m.round} · {m.category}</span>
+                            <span className="adm-cat">
+                                {m.round} · {m.category}
+                            </span>
                         </div>
                         <div className="adm-row-teams">
                             <CampusBadge campus={m.teams.home} size="sm" />
@@ -247,10 +249,15 @@ function MatchAdminCard({ match, state, comments, onUpdate, onAddComment, onDele
                     <span>상태</span>
                     <select
                         value={status}
-                        onChange={(e) => { setStatus(e.target.value); setDirty(true); }}
+                        onChange={(e) => {
+                            setStatus(e.target.value);
+                            setDirty(true);
+                        }}
                     >
                         {STATUS_OPTIONS.map((s) => (
-                            <option key={s} value={s}>{s}</option>
+                            <option key={s} value={s}>
+                                {s}
+                            </option>
                         ))}
                     </select>
                 </label>
@@ -260,7 +267,10 @@ function MatchAdminCard({ match, state, comments, onUpdate, onAddComment, onDele
                         type="text"
                         placeholder="비우면 문자 중계만"
                         value={youtubeId}
-                        onChange={(e) => { setYoutubeId(e.target.value); setDirty(true); }}
+                        onChange={(e) => {
+                            setYoutubeId(e.target.value);
+                            setDirty(true);
+                        }}
                     />
                 </label>
                 <button type="button" className="ac-save" onClick={save} disabled={!dirty || saving}>
@@ -388,7 +398,9 @@ function MatchAdminCard({ match, state, comments, onUpdate, onAddComment, onDele
                                 aria-label="메시지 타입"
                             >
                                 {COMMENT_TYPES.map((t) => (
-                                    <option key={t.key} value={t.key}>{t.label}</option>
+                                    <option key={t.key} value={t.key}>
+                                        {t.label}
+                                    </option>
                                 ))}
                             </select>
                         </div>
@@ -414,33 +426,37 @@ function MatchAdminCard({ match, state, comments, onUpdate, onAddComment, onDele
                         {comments.length === 0 ? (
                             <div className="ac-feed-empty">아직 메시지 없음</div>
                         ) : (
-                            comments.slice().reverse().map((c) => (
-                                <div key={c.id} className={`ac-msg type-${c.type}`}>
-                                    {c.quarter && <span className="ac-msg-quarter">{c.quarter}</span>}
-                                    <span className="ac-msg-type">
-                                        {COMMENT_TYPES.find((t) => t.key === c.type)?.label || c.type}
-                                    </span>
-                                    <span className="ac-msg-content">{c.content}</span>
-                                    {c.scoreAmount > 0 && c.scoreSide && (
-                                        <span className="ac-msg-score-tag">−{c.scoreAmount}점 롤백</span>
-                                    )}
-                                    <button
-                                        type="button"
-                                        className="ac-msg-del"
-                                        onClick={() => {
-                                            const msg = c.scoreAmount > 0 && c.scoreSide
-                                                ? `이 메시지를 삭제하면 ${c.scoreTeam} 점수에서 ${c.scoreAmount}점이 차감됩니다. 계속할까요?`
-                                                : '이 메시지를 삭제할까요?';
-                                            if (window.confirm(msg)) {
-                                                onDeleteComment(match.id, c.id);
-                                            }
-                                        }}
-                                        aria-label="삭제"
-                                    >
-                                        ✕
-                                    </button>
-                                </div>
-                            ))
+                            comments
+                                .slice()
+                                .reverse()
+                                .map((c) => (
+                                    <div key={c.id} className={`ac-msg type-${c.type}`}>
+                                        {c.quarter && <span className="ac-msg-quarter">{c.quarter}</span>}
+                                        <span className="ac-msg-type">
+                                            {COMMENT_TYPES.find((t) => t.key === c.type)?.label || c.type}
+                                        </span>
+                                        <span className="ac-msg-content">{c.content}</span>
+                                        {c.scoreAmount > 0 && c.scoreSide && (
+                                            <span className="ac-msg-score-tag">−{c.scoreAmount}점 롤백</span>
+                                        )}
+                                        <button
+                                            type="button"
+                                            className="ac-msg-del"
+                                            onClick={() => {
+                                                const msg =
+                                                    c.scoreAmount > 0 && c.scoreSide
+                                                        ? `이 메시지를 삭제하면 ${c.scoreTeam} 점수에서 ${c.scoreAmount}점이 차감됩니다. 계속할까요?`
+                                                        : '이 메시지를 삭제할까요?';
+                                                if (window.confirm(msg)) {
+                                                    onDeleteComment(match.id, c.id);
+                                                }
+                                            }}
+                                            aria-label="삭제"
+                                        >
+                                            ✕
+                                        </button>
+                                    </div>
+                                ))
                         )}
                     </div>
                 </>
@@ -561,22 +577,16 @@ export default function AdminRelayPage() {
                                 : '아래 목록에서 중계할 매치를 선택하세요.'}
                         </p>
                     </div>
-                    <button className="ar-logout" onClick={logout}>로그아웃</button>
+                    <button className="ar-logout" onClick={logout}>
+                        로그아웃
+                    </button>
                 </header>
 
                 {!selectedMatch ? (
-                    <MatchListView
-                        matches={LIVE_MATCHES}
-                        statesMap={statesMap}
-                        onSelect={setSelectedMatchId}
-                    />
+                    <MatchListView matches={LIVE_MATCHES} statesMap={statesMap} onSelect={setSelectedMatchId} />
                 ) : (
                     <>
-                        <button
-                            type="button"
-                            className="back-btn ar-back"
-                            onClick={() => setSelectedMatchId(null)}
-                        >
+                        <button type="button" className="back-btn ar-back" onClick={() => setSelectedMatchId(null)}>
                             ← 매치 목록
                         </button>
                         <MatchAdminCard

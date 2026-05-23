@@ -1,13 +1,8 @@
 import { useMemo, useState } from 'react';
 import PageHeader from '../components/PageHeader';
 import CampusBadge from '../components/CampusBadge';
-import {
-    getCampusList,
-    getPlayers,
-    getAllSports,
-    getAllCategoriesForSport,
-} from '../data/lineup';
-import { CAMPUS_COLORS } from '../data';
+import { getCampusList, getPlayers, getAllSports, getAllCategoriesForSport } from '../data/lineup';
+import { CAMPUS_COLORS } from '../data/data';
 
 const CAMPUS_FILTER_ALL = '__all';
 
@@ -78,9 +73,7 @@ export default function LineupPage() {
     // 종목 바뀌면 카테고리도 첫번째로
     const activeCategory = categories.includes(category) ? category : categories[0] || '';
 
-    const visibleCampuses = campusFilter === CAMPUS_FILTER_ALL
-        ? campuses
-        : [campusFilter];
+    const visibleCampuses = campusFilter === CAMPUS_FILTER_ALL ? campuses : [campusFilter];
 
     return (
         <div className="page lineup-page">

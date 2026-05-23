@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import PageHeader from '../components/PageHeader';
-import { EVENTS, GAME_VIDEOS, YEARS } from '../data';
+import { EVENTS, GAME_VIDEOS, YEARS } from '../data/data';
 
 const ROUNDS = [
     { key: 'all', label: '전체' },

@@ -1,5 +1,5 @@
 import PageHeader from '../components/PageHeader';
-import { UPCOMING_FEATURES } from '../data';
+import { UPCOMING_FEATURES } from '../data/data';
 
 const STATUS_COLORS = {
     준비중: 'var(--bright)',

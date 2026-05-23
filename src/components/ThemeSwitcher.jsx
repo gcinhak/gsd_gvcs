@@ -1,4 +1,4 @@
-import { THEMES } from '../data';
+import { THEMES } from '../data/data';
 import { useTheme } from '../hooks/useTheme';
 
 export default function ThemeSwitcher() {

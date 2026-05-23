@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 // 1. data.js에서 정의해둔 CAMPUS_COLORS를 추가로 불러옵니다.
-import { YEARS, CAMPUS_COLORS } from '../data'; 
+import { YEARS, CAMPUS_COLORS } from '../data/data';
 
 export default function CheersVideoPage() {
     const { yearId } = useParams();
@@ -39,7 +39,9 @@ export default function CheersVideoPage() {
                         ← 연도 선택
                     </button>
                     <h2 className="vl-title">
-                        <span className="vl-year" style={{ color: yearData.color }}>{yearData.year}</span>
+                        <span className="vl-year" style={{ color: yearData.color }}>
+                            {yearData.year}
+                        </span>
                         글로벌 체육 축제 응원전
                     </h2>
                 </div>

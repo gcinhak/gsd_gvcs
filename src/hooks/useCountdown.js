@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { TARGET_DATE } from '../data';
+import { TARGET_DATE } from '../data/data';
 
 export default function useCountdown(target = TARGET_DATE) {
     const calc = () => {

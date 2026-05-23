@@ -6,7 +6,7 @@ import GaugeStopGame from '../components/games/GaugeStopGame';
 import QuizGame from '../components/games/QuizGame';
 import ReactionGame from '../components/games/ReactionGame';
 import SequenceGame from '../components/games/SequenceGame';
-import { CAMPUS_COLORS } from '../data';
+import { CAMPUS_COLORS } from '../data/data';
 import { fetchTerritory, playTerritory } from '../lib/territoryApi';
 
 const CAMPUSES = ['문경', '음성', '세종'];
@@ -204,7 +204,10 @@ export default function TerritoryPage() {
         };
         pull();
         const timer = setInterval(pull, POLL_MS);
-        return () => { cancelled = true; clearInterval(timer); };
+        return () => {
+            cancelled = true;
+            clearInterval(timer);
+        };
     }, []);
 
     const selectCampus = (c) => {
@@ -265,9 +268,7 @@ export default function TerritoryPage() {
             <header className="terr-head">
                 <div className="terr-head-left">
                     <h2 className="terr-title">🏰 점령전</h2>
-                    <p className="terr-sub">
-                        퀴즈와 미니게임을 클리어해서 캠퍼스 영토를 차지하세요!
-                    </p>
+                    <p className="terr-sub">퀴즈와 미니게임을 클리어해서 캠퍼스 영토를 차지하세요!</p>
                 </div>
                 <div className="terr-campus-pick">
                     {CAMPUSES.map((c) => {
@@ -311,21 +312,15 @@ export default function TerritoryPage() {
                         {!myCampus
                             ? '👆 캠퍼스 선택 후 클릭'
                             : mode === 'claim'
-                                ? '🟦 클릭하여 빈 땅 차지 (+0.01%)'
-                                : '⚔️ 클릭하여 상대 땅 강탈 (+0.005%)'}
+                              ? '🟦 클릭하여 빈 땅 차지 (+0.01%)'
+                              : '⚔️ 클릭하여 상대 땅 강탈 (+0.005%)'}
                     </span>
                 </span>
             </button>
 
             {resultMsg && <div className="terr-result-msg">{resultMsg}</div>}
 
-            {modalOpen && gameType && (
-                <GameModal
-                    gameType={gameType}
-                    onResolve={onGameResolved}
-                    onClose={cancelGame}
-                />
-            )}
+            {modalOpen && gameType && <GameModal gameType={gameType} onResolve={onGameResolved} onClose={cancelGame} />}
         </div>
     );
 }
