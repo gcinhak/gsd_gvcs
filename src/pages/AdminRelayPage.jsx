@@ -309,31 +309,65 @@ function MatchAdminCard({ match, state, comments, onUpdate, onAddComment, onDele
             {isLive && (
                 <>
                     <form onSubmit={post} className={`ac-msg-form ${isScoringMode ? 'is-scoring' : ''}`}>
-                        <div className="ac-msg-row ac-msg-row-1">
-                            <select
-                                className="ac-field-quarter"
-                                value={msgQuarter}
-                                onChange={(e) => setMsgQuarter(e.target.value)}
-                                aria-label="쿼터"
-                            >
-                                <option value="">쿼터 없음</option>
+                        {/* 쿼터 — 뱃지 버튼 */}
+                        <div className="ac-msg-pillrow">
+                            <span className="ac-pillrow-label">쿼터</span>
+                            <div className="ac-quarter-btns">
+                                <button
+                                    type="button"
+                                    className={!msgQuarter ? 'active' : ''}
+                                    onClick={() => setMsgQuarter('')}
+                                >
+                                    없음
+                                </button>
                                 {quarters.map((q) => (
-                                    <option key={q} value={q}>{q}</option>
+                                    <button
+                                        key={q}
+                                        type="button"
+                                        className={msgQuarter === q ? 'active' : ''}
+                                        onClick={() => setMsgQuarter(q)}
+                                    >
+                                        {q}
+                                    </button>
                                 ))}
-                            </select>
+                            </div>
+                        </div>
 
-                            <select
-                                className="ac-field-team"
-                                value={scoreTeam}
-                                onChange={(e) => setScoreTeam(e.target.value)}
-                                aria-label="득점 팀"
-                            >
-                                <option value="">팀 (득점)</option>
-                                {ALL_CAMPUSES.map((c) => (
-                                    <option key={c} value={c}>{c}</option>
-                                ))}
-                            </select>
+                        {/* 팀 — 캠퍼스 색 뱃지 */}
+                        <div className="ac-msg-pillrow">
+                            <span className="ac-pillrow-label">팀</span>
+                            <div className="ac-team-pills">
+                                <button
+                                    type="button"
+                                    className={`ac-team-pill is-none ${!scoreTeam ? 'active' : ''}`}
+                                    onClick={() => setScoreTeam('')}
+                                >
+                                    없음
+                                </button>
+                                {ALL_CAMPUSES.map((c) => {
+                                    const cc = CAMPUS_COLORS[c] || {};
+                                    const active = scoreTeam === c;
+                                    const style = active
+                                        ? { background: cc.bg, color: '#fff', borderColor: cc.bg }
+                                        : { background: cc.soft, color: cc.bg, borderColor: cc.bg };
+                                    return (
+                                        <button
+                                            key={c}
+                                            type="button"
+                                            className={`ac-team-pill ${active ? 'active' : ''}`}
+                                            style={style}
+                                            onClick={() => setScoreTeam(c)}
+                                        >
+                                            {c}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
 
+                        {/* 점수 + 타입 */}
+                        <div className="ac-msg-pillrow">
+                            <span className="ac-pillrow-label">점수</span>
                             <div className="ac-score-pick">
                                 {SCORE_OPTIONS.map((n) => (
                                     <button
@@ -346,9 +380,8 @@ function MatchAdminCard({ match, state, comments, onUpdate, onAddComment, onDele
                                     </button>
                                 ))}
                             </div>
-
                             <select
-                                className="ac-field-type"
+                                className="ac-field-type ac-field-type-right"
                                 value={isScoringMode ? 'score' : type}
                                 onChange={(e) => setType(e.target.value)}
                                 disabled={isScoringMode}
@@ -360,6 +393,7 @@ function MatchAdminCard({ match, state, comments, onUpdate, onAddComment, onDele
                             </select>
                         </div>
 
+                        {/* 메시지 + 전송 */}
                         <div className="ac-msg-row ac-msg-row-2">
                             <input
                                 type="text"
