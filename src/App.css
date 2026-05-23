@@ -3855,6 +3855,59 @@ img {
 }
 .ac-field-type { flex: 0 0 80px; }
 
+/* 메시지 폼 — 라벨 + 뱃지 그룹 한 줄 */
+.ac-msg-pillrow {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+    padding: 0.5rem 0.8rem;
+    background: rgba(255, 255, 255, 0.7);
+    border-radius: 8px;
+}
+.ac-msg-form.is-scoring .ac-msg-pillrow { background: rgba(255, 255, 255, 0.55); }
+.ac-pillrow-label {
+    font-size: 0.74rem;
+    color: var(--muted);
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    min-width: 32px;
+}
+
+/* 팀 뱃지 핀 */
+.ac-team-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+.ac-team-pill {
+    padding: 0.35rem 0.85rem;
+    background: var(--surface);
+    border: 2px solid var(--border);
+    border-radius: 30px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--text-3);
+    letter-spacing: 0.02em;
+    transition: transform 0.1s, box-shadow 0.15s;
+    min-width: 56px;
+}
+.ac-team-pill:hover { transform: translateY(-1px); box-shadow: var(--shadow-sm); }
+.ac-team-pill.is-none {
+    background: var(--bg-soft);
+    color: var(--text-3);
+    border-color: var(--border);
+}
+.ac-team-pill.is-none.active {
+    background: var(--text-3);
+    color: #fff;
+    border-color: var(--text-3);
+}
+.ac-team-pill.active { box-shadow: var(--shadow-md); }
+
+.ac-field-type-right { margin-left: auto; }
+
 /* 점수 버튼 (1점/2점/3점) */
 .ac-score-pick {
     display: inline-flex;
@@ -4188,11 +4241,17 @@ img {
     border-radius: 3px 3px 0 0;
 }
 
-/* 카테고리 칩 */
+/* 카테고리 칩 — 기본 chip 보다 약간 큼 */
 .lp-cat-chips {
     display: flex;
-    gap: 0.4rem;
+    gap: 0.5rem;
     flex-wrap: wrap;
+}
+.lp-cat-chips .chip {
+    padding: 0.5rem 1.15rem;
+    font-size: 0.92rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
 }
 
 /* 캠퍼스 필터 */
@@ -4217,32 +4276,64 @@ img {
     flex-wrap: wrap;
 }
 .lp-campus-pill {
-    padding: 0.35rem 0.8rem;
-    background: var(--surface);
-    border: 1px solid var(--border);
+    padding: 0.4rem 0.95rem;
+    background: var(--bg-soft);
+    border: 2px solid var(--border);
     border-radius: 30px;
     cursor: pointer;
-    font-size: 0.85rem;
+    font-size: 0.88rem;
     color: var(--text-3);
-    font-weight: 600;
-    transition: all 0.12s;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    transition: transform 0.1s, box-shadow 0.15s, border-color 0.12s;
     display: inline-flex;
     align-items: center;
     gap: 0.3rem;
+    min-width: 60px;
+    justify-content: center;
 }
 .lp-campus-pill:hover {
-    border-color: var(--primary);
-    color: var(--primary);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
 }
-.lp-campus-pill.active {
+/* 전체(테마 컬러) 핀 */
+.lp-campus-pill.is-all {
+    background: var(--surface);
+    color: var(--primary);
+    border-color: var(--primary-line);
+}
+.lp-campus-pill.is-all.active {
     background: var(--primary);
-    border-color: var(--primary);
     color: #fff;
+    border-color: var(--primary);
+}
+/* 캠퍼스 색 핀은 인라인 style 로 색이 들어가므로 hover 만 살짝 강조 */
+.lp-campus-pill.is-campus.active {
+    box-shadow: var(--shadow-md);
 }
 
-.lp-grid.is-single {
-    max-width: 720px;
+/* 단일 캠퍼스 선택 시 — 그리드가 아닌 단일 wrapper, 카드 100% 폭, 선수 다열 */
+.lp-single {
+    width: 100%;
+    max-width: 880px;
     margin: 0 auto;
+}
+.lp-single .lp-card {
+    width: 100%;
+}
+.lp-list.is-multi-col {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)) !important;
+    gap: 0.35rem 0.6rem !important;
+}
+.lp-list.is-multi-col .lp-divider {
+    grid-column: 1 / -1;
+}
+
+@media (max-width: 560px) {
+    .lp-list.is-multi-col {
+        grid-template-columns: 1fr !important;
+    }
 }
 .lp-card.is-empty {
     opacity: 0.6;

@@ -32,13 +32,14 @@ function sortByGrade(players) {
     });
 }
 
-function CampusCategoryCard({ campus, sport, category }) {
+function CampusCategoryCard({ campus, sport, category, multiCol }) {
     const players = getPlayers(campus, sport, category);
     const color = CAMPUS_COLORS[campus];
     const cardStyle = color ? { '--card-tint': color.soft, '--card-accent': color.bg } : {};
     const starters = sortByGrade(players.filter((p) => !p.bench));
     const bench = sortByGrade(players.filter((p) => p.bench));
     const isEmpty = players.length === 0;
+    const listClass = `lp-list${multiCol ? ' is-multi-col' : ''}`;
 
     return (
         <article className={`lp-card ${isEmpty ? 'is-empty' : ''}`} style={cardStyle}>
@@ -51,7 +52,7 @@ function CampusCategoryCard({ campus, sport, category }) {
             {isEmpty ? (
                 <div className="lp-empty">선수 데이터 입력 대기중</div>
             ) : (
-                <ul className="lp-list">
+                <ul className={listClass}>
                     {starters.map((p, i) => (
                         <PlayerRow key={`s-${i}`} player={p} />
                     ))}
@@ -126,36 +127,56 @@ export default function LineupPage() {
                     <div className="lp-campus-pills">
                         <button
                             type="button"
-                            className={`lp-campus-pill ${campusFilter === CAMPUS_FILTER_ALL ? 'active' : ''}`}
+                            className={`lp-campus-pill is-all ${campusFilter === CAMPUS_FILTER_ALL ? 'active' : ''}`}
                             onClick={() => setCampusFilter(CAMPUS_FILTER_ALL)}
                         >
                             전체
                         </button>
-                        {campuses.map((c) => (
-                            <button
-                                key={c}
-                                type="button"
-                                className={`lp-campus-pill ${campusFilter === c ? 'active' : ''}`}
-                                onClick={() => setCampusFilter(c)}
-                            >
-                                <CampusBadge campus={c} size="sm" />
-                            </button>
-                        ))}
+                        {campuses.map((c) => {
+                            const cc = CAMPUS_COLORS[c] || {};
+                            const active = campusFilter === c;
+                            const style = active
+                                ? { background: cc.bg, color: '#fff', borderColor: cc.bg }
+                                : { background: cc.soft, color: cc.bg, borderColor: cc.bg };
+                            return (
+                                <button
+                                    key={c}
+                                    type="button"
+                                    className={`lp-campus-pill is-campus ${active ? 'active' : ''}`}
+                                    style={style}
+                                    onClick={() => setCampusFilter(c)}
+                                >
+                                    {c}
+                                </button>
+                            );
+                        })}
                     </div>
                 </div>
 
-                {/* 캠퍼스 카드 그리드 */}
+                {/* 캠퍼스 카드: 단일 vs 그리드 — 완전 다른 래퍼로 분기 */}
                 {activeCategory ? (
-                    <div className={`lp-grid ${campusFilter !== CAMPUS_FILTER_ALL ? 'is-single' : ''}`}>
-                        {visibleCampuses.map((campus) => (
+                    campusFilter !== CAMPUS_FILTER_ALL ? (
+                        <div className="lp-single">
                             <CampusCategoryCard
-                                key={campus}
-                                campus={campus}
+                                key={campusFilter}
+                                campus={campusFilter}
                                 sport={sport}
                                 category={activeCategory}
+                                multiCol
                             />
-                        ))}
-                    </div>
+                        </div>
+                    ) : (
+                        <div className="lp-grid">
+                            {visibleCampuses.map((campus) => (
+                                <CampusCategoryCard
+                                    key={campus}
+                                    campus={campus}
+                                    sport={sport}
+                                    category={activeCategory}
+                                />
+                            ))}
+                        </div>
+                    )
                 ) : (
                     <div className="empty-state">
                         <div className="empty-tag">카테고리 없음</div>
