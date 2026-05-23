@@ -9,26 +9,26 @@ const DAY_ORDER = ['thursday', 'friday', 'saturday'];
 const PILL_STYLES = {
     final: {
         backgroundColor: '#e0e7ff', // 부드러운 연파랑 (인디고 틴트)
-        color: '#4338ca',           // 가독성을 위한 네이비-블루 글자색
+        color: '#4338ca', // 가독성을 위한 네이비-블루 글자색
         border: '1px solid #c7d2fe',
         padding: '2px 8px',
         borderRadius: '4px',
         fontSize: '12px',
         fontWeight: '600',
         display: 'inline-block',
-        verticalAlign: 'middle'
+        verticalAlign: 'middle',
     },
     prelim: {
         backgroundColor: '#f1f5f9', // 차분하고 부드러운 그레이-블루 틴트
-        color: '#475569',           // 정돈된 글자색
+        color: '#475569', // 정돈된 글자색
         border: '1px solid #cbd5e1',
         padding: '2px 8px',
         borderRadius: '4px',
         fontSize: '12px',
         fontWeight: '600',
         display: 'inline-block',
-        verticalAlign: 'middle'
-    }
+        verticalAlign: 'middle',
+    },
 };
 
 /* "문경 VS 음성" 또는 "문경 VS 음성 VS 세종" → 배지들로 유연하게 렌더 */
@@ -60,7 +60,7 @@ function MatchTable({ matches }) {
             <table className="match-table">
                 <thead>
                     <tr>
-                        <th>경기</th>
+                        <th>시간</th> {/* 경기 → 시간 */}
                         <th>구분</th>
                         <th>대상</th>
                         <th>매치</th>
@@ -69,9 +69,13 @@ function MatchTable({ matches }) {
                 <tbody>
                     {matches.map((m, i) => (
                         <tr key={i} className={m.round === '결선' ? 'is-final' : ''}>
-                            <td className="mt-num">{m.num}</td>
+                            <td className="ct-time">
+                                {' '}
+                                {/* mt-num → ct-time */}
+                                <div>{m.start}</div>
+                                <div className="ct-time-end">~ {m.end}</div>
+                            </td>
                             <td>
-                                {/* MatchTable 예선/결선 파스텔 배지 적용 */}
                                 <span style={m.round === '결선' ? PILL_STYLES.final : PILL_STYLES.prelim}>
                                     {m.round}
                                 </span>
@@ -93,8 +97,15 @@ function TimelineList({ items, venueName }) {
                 // 3개 캠퍼스가 모두 참여하는 대상 장소 정의
                 const targetVenues = ['보조경기장', '보조실내체육관 1층', '조치원복합커뮤니티센터 · 중회의실'];
                 // 3개 캠퍼스 매치 표시에서 제외할 항목들 정의
-                const excludeLabels = ['개회식', '폐회식', '태권도 시범', '응원전', '줄다리기·이어달리기 선수 확인', '초등 경기'];
-                
+                const excludeLabels = [
+                    '개회식',
+                    '폐회식',
+                    '태권도 시범',
+                    '응원전',
+                    '줄다리기·이어달리기 선수 확인',
+                    '초등 경기',
+                ];
+
                 let matchText = it.sub;
                 // 기존 vs 내용이 없고, 대상 장소에 포함되며, 제외 대상 단어가 아닐 때 "문경 VS 음성 VS 세종"을 자동으로 부여
                 if (!matchText && targetVenues.includes(venueName) && !excludeLabels.includes(it.label)) {
@@ -111,7 +122,12 @@ function TimelineList({ items, venueName }) {
                             <span className="tl-label">
                                 {/* TimelineList 예선/결선 파스텔 배지 텍스트 앞 적용 */}
                                 {it.round && (
-                                    <span style={{ ...(it.round === '결선' ? PILL_STYLES.final : PILL_STYLES.prelim), marginRight: '6px' }}>
+                                    <span
+                                        style={{
+                                            ...(it.round === '결선' ? PILL_STYLES.final : PILL_STYLES.prelim),
+                                            marginRight: '6px',
+                                        }}
+                                    >
                                         {it.round}
                                     </span>
                                 )}
@@ -155,7 +171,14 @@ function CourtsTable({ courtNames, rows }) {
                                             <div className="ct-category">
                                                 {/* CourtsTable 예선/결선 파스텔 배지 텍스트 앞 적용 */}
                                                 {c.round && (
-                                                    <span style={{ ...(c.round === '결선' ? PILL_STYLES.final : PILL_STYLES.prelim), marginRight: '4px' }}>
+                                                    <span
+                                                        style={{
+                                                            ...(c.round === '결선'
+                                                                ? PILL_STYLES.final
+                                                                : PILL_STYLES.prelim),
+                                                            marginRight: '4px',
+                                                        }}
+                                                    >
                                                         {c.round}
                                                     </span>
                                                 )}
