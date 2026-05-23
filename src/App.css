@@ -5339,6 +5339,37 @@ img {
     gap: 0.16rem;
     padding: 0.32rem 0.26rem;
     border-radius: 6px;
+    width: 100%;
+    cursor: pointer;
+    font: inherit;
+    color: inherit;
+    text-align: center;
+    appearance: none;
+    transition:
+        transform 140ms ease,
+        box-shadow 140ms ease,
+        border-color 140ms ease;
+}
+.db-result-cell:hover {
+    transform: translateY(-1px);
+    border-color: rgba(37, 99, 235, 0.45);
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+}
+.db-result-cell:focus-visible {
+    outline: 3px solid rgba(37, 99, 235, 0.28);
+    outline-offset: 2px;
+}
+.db-result-score {
+    color: #0f172a;
+    font-size: clamp(0.72rem, 0.9vw, 0.9rem);
+    font-weight: 950;
+    line-height: 1;
+}
+.db-result-quarter {
+    color: var(--text-3);
+    font-size: 0.58rem;
+    font-weight: 850;
+    line-height: 1;
 }
 .db-division-label {
     font-size: clamp(0.62rem, 0.8vw, 0.76rem);
@@ -5376,6 +5407,149 @@ img {
 }
 .db-event-card.event-middle-distance .db-result-cell {
     min-height: 58px;
+}
+
+.db-detail-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 120;
+    display: grid;
+    place-items: center;
+    padding: 1rem;
+    background: rgba(15, 23, 42, 0.44);
+    backdrop-filter: blur(8px);
+}
+.db-detail-modal {
+    width: min(560px, 100%);
+    max-height: min(82vh, 720px);
+    overflow: auto;
+    border: 1px solid rgba(226, 232, 240, 0.95);
+    border-radius: 12px;
+    background: #ffffff;
+    box-shadow: 0 28px 80px rgba(15, 23, 42, 0.32);
+}
+.db-detail-head {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 1rem;
+    align-items: start;
+    padding: 1.1rem 1.15rem 0.8rem;
+    border-bottom: 1px solid var(--border);
+}
+.db-detail-head h2 {
+    margin: 0.35rem 0 0;
+    color: var(--text);
+    font-size: 1.45rem;
+    line-height: 1.05;
+    font-weight: 950;
+}
+.db-detail-head p {
+    margin: 0.3rem 0 0;
+    color: var(--text-3);
+    font-size: 0.82rem;
+    font-weight: 800;
+}
+.db-detail-status {
+    display: inline-flex;
+    align-items: center;
+    min-height: 1.4rem;
+    padding: 0.16rem 0.5rem;
+    border-radius: 999px;
+    background: #f1f5f9;
+    color: #475569;
+    font-size: 0.72rem;
+    font-weight: 900;
+}
+.db-detail-status.status-live {
+    background: #fee2e2;
+    color: #dc2626;
+}
+.db-detail-status.status-finished {
+    background: #dcfce7;
+    color: #047857;
+}
+.db-detail-close {
+    width: 2rem;
+    height: 2rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: #ffffff;
+    color: var(--text-2);
+    font-size: 1.25rem;
+    font-weight: 900;
+    cursor: pointer;
+}
+.db-detail-score {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 0.8rem;
+    align-items: center;
+    padding: 1rem 1.15rem;
+    color: var(--text);
+}
+.db-detail-score span {
+    min-width: 0;
+    font-size: 0.92rem;
+    font-weight: 900;
+    text-align: center;
+}
+.db-detail-score strong {
+    color: #111827;
+    font-size: 2.2rem;
+    line-height: 1;
+    font-weight: 950;
+}
+.db-detail-quarter {
+    margin: 0 1.15rem 0.85rem;
+    padding: 0.5rem 0.7rem;
+    border-radius: 8px;
+    background: #eff6ff;
+    color: #1d4ed8;
+    font-size: 0.82rem;
+    font-weight: 900;
+}
+.db-detail-feed {
+    padding: 0 1.15rem 1.15rem;
+}
+.db-detail-feed-title {
+    margin-bottom: 0.55rem;
+    color: var(--text);
+    font-size: 0.86rem;
+    font-weight: 950;
+}
+.db-detail-comment {
+    padding: 0.7rem 0;
+    border-top: 1px solid var(--border);
+}
+.db-detail-comment-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    align-items: center;
+    color: var(--text-3);
+    font-size: 0.68rem;
+    font-weight: 850;
+}
+.db-detail-comment.type-score .db-detail-comment-meta span:nth-child(2) {
+    color: #dc2626;
+}
+.db-detail-comment p {
+    margin: 0.32rem 0 0;
+    color: var(--text);
+    font-size: 0.9rem;
+    font-weight: 800;
+    line-height: 1.45;
+}
+.db-detail-empty {
+    margin: 0.9rem 1.15rem 1.15rem;
+    padding: 0.9rem;
+    border: 1px dashed #cbd5e1;
+    border-radius: 9px;
+    background: #f8fafc;
+    color: var(--text-3);
+    font-size: 0.86rem;
+    font-weight: 850;
+    text-align: center;
 }
 
 @media (min-aspect-ratio: 16/9) and (min-width: 1500px) {
