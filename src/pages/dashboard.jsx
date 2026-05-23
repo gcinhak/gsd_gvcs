@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
+﻿import { useEffect, useMemo, useState } from 'react';
 import {
     CAMPUS_OPTIONS,
     DASHBOARD_CHANGE_EVENT,
+    CAMPUS,
     getCampus,
     getEventDivisions,
     readDashboardEvents,
@@ -26,7 +27,7 @@ const DIVISION_RELAY_MATCHES = {
 const STATUS_LABELS = {
     upcoming: '경기 전',
     live: '진행 중',
-    finished: '경기 후',
+    finished: '경기 종료',
 };
 
 function getRelayMatchId(division) {
@@ -36,6 +37,23 @@ function getRelayMatchId(division) {
 function formatRelayScore(state) {
     if (!state || state.status === 'upcoming') return '';
     return `${Number(state.homeScore) || 0} : ${Number(state.awayScore) || 0}`;
+}
+
+function formatDashboardScore(event, division, state) {
+    const home = Number(state?.homeScore) || 0;
+    const away = Number(state?.awayScore) || 0;
+
+    return `${home}:${away}`;
+}
+
+function getDivisionDisplayState(division, relayState) {
+    if (relayState?.status === 'live') return 'live';
+    if (relayState?.status === 'finished') return 'done';
+    return division.state || 'ready';
+}
+
+function isDivisionFinished(division, relayState) {
+    return relayState?.status === 'finished' || division.state === 'done';
 }
 
 function formatCommentTime(ts) {
@@ -49,15 +67,16 @@ function CampusBadge({ campus, size = 'md' }) {
     return <span className={`db-campus-badge ${campus.className} size-${size}`}>{campus.name}</span>;
 }
 
-function ResultCell({ division, match, relayState, onOpen }) {
-    const state = division.state || 'ready';
-    const displayState = relayState?.status === 'live'
-        ? 'live'
-        : relayState?.status === 'finished'
-            ? 'done'
-            : state;
-    const campus = getCampus(division.winnerKey);
-    const score = formatRelayScore(relayState);
+function getCellBadgeCampus(division, displayState) {
+    if (division.winnerKey !== 'pending') return getCampus(division.winnerKey);
+    if (displayState === 'live') return CAMPUS.live;
+    return getCampus('pending');
+}
+
+function ResultCell({ event, division, relayState, onOpen }) {
+    const displayState = getDivisionDisplayState(division, relayState);
+    const campus = getCellBadgeCampus(division, displayState);
+    const finalScore = formatDashboardScore(event, division, relayState);
 
     return (
         <button
@@ -68,16 +87,13 @@ function ResultCell({ division, match, relayState, onOpen }) {
         >
             <span className="db-division-label">{division.label}</span>
             {displayState === 'live' && <span className="db-live-label">LIVE</span>}
-            {score && <span className="db-result-score">{score}</span>}
-            {match && relayState?.currentQuarter && (
-                <span className="db-result-quarter">{relayState.currentQuarter}</span>
-            )}
+            <span className="db-final-score-box">{finalScore}</span>
             <CampusBadge campus={campus} size="sm" />
         </button>
     );
 }
 
-function TaekwondoGroups({ groups, liveMatchMap, relayStatesMap, onOpenDetail }) {
+function TaekwondoGroups({ event, groups, liveMatchMap, relayStatesMap, onOpenDetail }) {
     const divisions = groups.flatMap((group) => group.divisions);
 
     return (
@@ -88,6 +104,7 @@ function TaekwondoGroups({ groups, liveMatchMap, relayStatesMap, onOpenDetail })
 
                 return (
                     <ResultCell
+                        event={event}
                         division={division}
                         key={division.id}
                         match={match}
@@ -104,11 +121,11 @@ function getCampusWinCounts(events) {
     const counts = CAMPUS_OPTIONS.reduce((acc, campus) => ({ ...acc, [campus.key]: 0 }), {});
 
     for (const event of events) {
-        for (const division of getEventDivisions(event)) {
-            if (division.state !== 'done') continue;
-            if (counts[division.winnerKey] === undefined) continue;
-            counts[division.winnerKey] += 1;
-        }
+        const divisions = getEventDivisions(event);
+        const isDone = divisions.length > 0 && divisions.every((division) => division.state === 'done');
+        if (!isDone) continue;
+        if (counts[event.winnerKey] === undefined) continue;
+        counts[event.winnerKey] += 1;
     }
 
     return counts;
@@ -271,7 +288,7 @@ export default function DashboardPage() {
                     <h1>경기 현황판</h1>
                 </div>
 
-                <div className="db-campus-scoreboard" aria-label="캠퍼스별 우승 개수">
+                <div className="db-campus-scoreboard" aria-label="캠퍼스별 종목 우승 개수">
                     {CAMPUS_OPTIONS.map((campus) => (
                         <div className={`db-campus-score ${campus.className}`} key={campus.key}>
                             <span>{campus.name}</span>
@@ -291,27 +308,35 @@ export default function DashboardPage() {
             <section className="db-board" aria-label="종목별 결과 현황">
                 <div className="db-event-list">
                     {events.map((event) => {
-                        const hasLive = getEventDivisions(event).some((division) => {
+                        const divisions = getEventDivisions(event);
+                        const hasLive = divisions.some((division) => {
                             const matchId = getRelayMatchId(division);
                             return division.state === 'live' || relayStatesMap[matchId]?.status === 'live';
                         });
+                        const isEventDone = divisions.length > 0 && divisions.every((division) => {
+                            const matchId = getRelayMatchId(division);
+                            return isDivisionFinished(division, relayStatesMap[matchId]);
+                        });
+                        const eventCampus = isEventDone ? getCampus(event.winnerKey) : getCampus('pending');
 
                         return (
-                            <article className={`db-event-card event-${event.id} ${hasLive ? 'has-live' : ''}`} key={event.id}>
+                            <article
+                                className={`db-event-card event-${event.id} ${hasLive ? 'has-live' : ''} ${isEventDone ? `is-champion ${eventCampus.className}` : ''}`}
+                                key={event.id}
+                            >
                                 <div className="db-event-top">
                                     <div>
                                         <span className="db-event-status">{event.status}</span>
                                         <h2>{event.sport}</h2>
-                                        <p>{event.rule}</p>
                                     </div>
-                                    <div className="db-winner-box">
-                                        <span>종목 선두</span>
-                                        <CampusBadge campus={getCampus(event.winnerKey)} size="sm" />
+                                    <div className={`db-winner-box ${isEventDone ? 'is-final' : 'is-pending'}`}>
+                                        <CampusBadge campus={eventCampus} size="sm" />
                                     </div>
                                 </div>
 
                                 {event.groups ? (
                                     <TaekwondoGroups
+                                        event={event}
                                         groups={event.groups}
                                         liveMatchMap={liveMatchMap}
                                         relayStatesMap={relayStatesMap}
@@ -325,6 +350,7 @@ export default function DashboardPage() {
 
                                             return (
                                                 <ResultCell
+                                                    event={event}
                                                     division={division}
                                                     key={division.id}
                                                     match={match}

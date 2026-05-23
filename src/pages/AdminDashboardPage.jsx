@@ -7,6 +7,7 @@ import {
     readDashboardEvents,
     resetDashboardEvents,
     updateDivision,
+    updateEventWinner,
     writeDashboardEvents,
 } from '../lib/dashboardStore';
 
@@ -32,7 +33,7 @@ function PasswordGate({ onSuccess }) {
                 <div className="da-gate-card">
                     <span className="da-kicker">DASHBOARD ADMIN</span>
                     <h1>현황판 관리자</h1>
-                    <p>비밀번호를 입력하면 종목별 결과를 바로 수정할 수 있습니다.</p>
+                    <p>비밀번호를 입력하면 종목별 경기 결과를 바로 수정할 수 있습니다.</p>
                     <form className="da-login-form" onSubmit={submit}>
                         <input
                             type="password"
@@ -76,7 +77,7 @@ function DivisionControl({ event, division, onChange }) {
                 </select>
             </label>
             <label>
-                <span>이긴 캠퍼스</span>
+                <span>승리 캠퍼스</span>
                 <select
                     value={division.winnerKey === 'pending' ? '' : division.winnerKey}
                     onChange={(e) => {
@@ -87,7 +88,7 @@ function DivisionControl({ event, division, onChange }) {
                         });
                     }}
                 >
-                    <option value="">선택 전</option>
+                    <option value="">선택 안 함</option>
                     {CAMPUS_OPTIONS.map((campusOption) => (
                         <option key={campusOption.key} value={campusOption.key}>
                             {campusOption.name}
@@ -102,7 +103,9 @@ function DivisionControl({ event, division, onChange }) {
     );
 }
 
-function EventAdminCard({ event, onChange }) {
+function EventAdminCard({ event, onChange, onWinnerChange }) {
+    const finalWinnerKey = event.manualWinnerKey || event.winnerKey || 'pending';
+
     return (
         <article className="da-event-card">
             <header className="da-event-head">
@@ -111,10 +114,20 @@ function EventAdminCard({ event, onChange }) {
                     <h2>{event.sport}</h2>
                     <p>{event.rule}</p>
                 </div>
-                <div className="da-event-winner">
-                    <span>현재 선두</span>
-                    <strong>{getCampus(event.winnerKey).name}</strong>
-                </div>
+                <label className="da-event-winner">
+                    <span>종목 승리 캠퍼스</span>
+                    <select
+                        value={finalWinnerKey === 'pending' ? '' : finalWinnerKey}
+                        onChange={(e) => onWinnerChange(event.id, e.target.value || 'pending')}
+                    >
+                        <option value="">자동/미정</option>
+                        {CAMPUS_OPTIONS.map((campus) => (
+                            <option key={campus.key} value={campus.key}>
+                                {campus.name}
+                            </option>
+                        ))}
+                    </select>
+                </label>
             </header>
 
             {event.groups ? (
@@ -164,17 +177,25 @@ export default function AdminDashboardPage() {
         if (authed) writeDashboardEvents(events);
     }, [authed, events]);
 
-    const changeDivision = (eventId, divisionId, patch) => {
+    const saveEvents = (updater) => {
         setEvents((prev) => {
-            const next = updateDivision(prev, eventId, divisionId, patch);
+            const next = updater(prev);
             writeDashboardEvents(next);
             setSavedAt(new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
             return next;
         });
     };
 
+    const changeDivision = (eventId, divisionId, patch) => {
+        saveEvents((prev) => updateDivision(prev, eventId, divisionId, patch));
+    };
+
+    const changeEventWinner = (eventId, winnerKey) => {
+        saveEvents((prev) => updateEventWinner(prev, eventId, winnerKey));
+    };
+
     const resetAll = () => {
-        if (!window.confirm('모든 종목 결과를 경기 전/선택 전 상태로 완전히 초기화할까요?')) return;
+        if (!window.confirm('모든 종목 결과를 경기 전 상태로 완전히 초기화할까요?')) return;
         const next = resetDashboardEvents();
         setEvents(next);
         writeDashboardEvents(next);
@@ -205,14 +226,19 @@ export default function AdminDashboardPage() {
 
                 <section className="da-status-strip">
                     <div><span>경기 전</span><strong>{counts.ready}</strong></div>
-                    <div><span>진행 중</span><strong>{counts.live}</strong></div>
-                    <div><span>경기 후</span><strong>{counts.done}</strong></div>
+                    <div><span>진행중</span><strong>{counts.live}</strong></div>
+                    <div><span>경기종료</span><strong>{counts.done}</strong></div>
                     <div><span>저장</span><strong>{savedAt || '대기'}</strong></div>
                 </section>
 
                 <section className="da-event-list">
                     {events.map((event) => (
-                        <EventAdminCard event={event} key={event.id} onChange={changeDivision} />
+                        <EventAdminCard
+                            event={event}
+                            key={event.id}
+                            onChange={changeDivision}
+                            onWinnerChange={changeEventWinner}
+                        />
                     ))}
                 </section>
             </div>

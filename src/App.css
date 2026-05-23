@@ -5513,31 +5513,51 @@ img {
     z-index: 1;
 }
 .db-result-cell.is-done {
-    border-color: transparent;
-    color: #fff;
+    color: var(--text);
 }
 .db-result-cell.is-done.campus-mungyeong {
-    background: #1d4ed8;
+    border-left: 4px solid #1d4ed8;
+    border-color: #bfdbfe;
+    background: #dbeafe;
 }
 .db-result-cell.is-done.campus-eumseong {
-    background: #dc2626;
+    border-left: 4px solid #dc2626;
+    border-color: #fecaca;
+    background: #fee2e2;
 }
 .db-result-cell.is-done.campus-sejong {
-    background: #059669;
+    border-left: 4px solid #059669;
+    border-color: #a7f3d0;
+    background: #d1fae5;
+}
+.db-result-cell.is-done.campus-pending {
+    background: #f8fafc;
+    border-color: var(--border);
+    color: var(--text);
 }
 .db-result-cell.is-done .db-division-label,
 .db-result-cell.is-done .db-cell-note {
-    color: #fff;
+    color: var(--text);
+}
+.db-result-cell.is-done.campus-pending .db-division-label {
+    color: var(--text);
 }
 .db-result-cell.is-done .db-campus-badge {
-    background: rgba(255, 255, 255, 0.2);
-    border: 1px solid rgba(255, 255, 255, 0.44);
-    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.55);
+}
+.db-result-cell.is-done.campus-pending .db-campus-badge {
+    background: #f3f4f6;
+    color: var(--muted);
+    border: 1px dashed var(--border-strong);
 }
 .db-result-cell.is-live {
     border-color: rgba(220, 38, 38, 0.45);
     background: linear-gradient(135deg, #fff5f5 0%, #ffffff 45%, var(--primary-soft) 100%);
     box-shadow: inset 0 0 0 1px rgba(220, 38, 38, 0.08);
+}
+.db-event-card.is-champion .db-result-cell {
+    background: rgba(255, 255, 255, 0.94);
+    border-color: rgba(255, 255, 255, 0.58);
 }
 .db-result-cell.is-live::before {
     content: '';
@@ -5796,14 +5816,20 @@ img {
     font-weight: 700;
 }
 .da-event-winner {
-    min-width: 86px;
+    min-width: 132px;
     display: grid;
+    gap: 0.28rem;
     justify-items: end;
 }
-.da-event-winner strong {
-    margin-top: 0.25rem;
+.da-event-winner select,
+.da-division-row select {
+    min-height: 2rem;
+    padding: 0.28rem 0.55rem;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    background: #ffffff;
     color: var(--text);
-    font-size: 1.05rem;
+    font-weight: 800;
 }
 .da-division-list,
 .da-group-list {
@@ -5978,11 +6004,13 @@ img {
 }
 .db-event-list {
     height: 100%;
-    grid-template-columns: repeat(12, minmax(0, 1fr));
-    grid-template-rows: 1fr 1fr 1.15fr;
+    grid-template-columns: repeat(24, minmax(0, 1fr));
+    grid-template-rows: repeat(3, minmax(0, 1fr));
 }
 .db-event-card,
 .db-event-card:nth-child(2n) {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
     min-height: 0;
     height: 100%;
     overflow: hidden;
@@ -5994,43 +6022,70 @@ img {
 .db-event-card.has-live {
     background: linear-gradient(135deg, #ffffff 0%, #f8fbff 48%, var(--primary-soft) 100%);
 }
-.db-event-card:nth-child(3),
+.db-event-card.is-champion.campus-mungyeong {
+    background: #1d4ed8;
+    border-color: #1d4ed8;
+}
+.db-event-card.is-champion.campus-eumseong {
+    background: #dc2626;
+    border-color: #dc2626;
+}
+.db-event-card.is-champion.campus-sejong {
+    background: #059669;
+    border-color: #059669;
+}
+.db-event-card.is-champion .db-event-status {
+    background: rgba(255, 255, 255, 0.18);
+    border-color: rgba(255, 255, 255, 0.32);
+    color: #ffffff;
+}
+.db-event-card.is-champion .db-event-top h2 {
+    color: #ffffff;
+}
+.db-event-card.is-champion .db-winner-box .db-campus-badge {
+    background: rgba(255, 255, 255, 0.22);
+    border: 1px solid rgba(255, 255, 255, 0.46);
+    color: #ffffff;
+}
+.db-event-card.event-relay,
 .db-event-card.event-tug-of-war,
-.db-event-card.event-middle-distance {
+.db-event-card.event-chess {
     border-right: none;
 }
 .db-event-card.event-taekwondo,
-.db-event-card.event-middle-distance {
+.db-event-card.event-middle-distance,
+.db-event-card.event-chess {
     border-bottom: none;
 }
-.db-event-card.event-soccer,
-.db-event-card.event-basketball,
-.db-event-card.event-volleyball,
-.db-event-card.event-table-tennis {
+
+.db-event-card.event-relay {
+    order: 3;
     grid-column: span 4;
 }
-.db-event-card.event-soccer { order: 1; }
-.db-event-card.event-basketball { order: 2; }
-.db-event-card.event-volleyball { order: 3; }
-.db-event-card.event-table-tennis { order: 4; }
-.db-event-card.event-chess {
-    order: 5;
-    grid-column: span 3;
+.db-event-card.event-basketball,
+.db-event-card.event-volleyball,
+.db-event-card.event-soccer {
+    grid-column: span 10;
 }
-.db-event-card.event-relay {
-    order: 6;
-    grid-column: span 2;
-}
+.db-event-card.event-table-tennis,
 .db-event-card.event-tug-of-war {
-    order: 7;
-    grid-column: span 3;
+    grid-column: span 7;
 }
 .db-event-card.event-taekwondo,
+.db-event-card.event-chess {
+    grid-column: span 9;
+}
 .db-event-card.event-middle-distance {
     grid-column: span 6;
 }
-.db-event-card.event-taekwondo { order: 8; }
-.db-event-card.event-middle-distance { order: 9; }
+.db-event-card.event-basketball { order: 1; }
+.db-event-card.event-volleyball { order: 2; }
+.db-event-card.event-soccer { order: 4; }
+.db-event-card.event-table-tennis { order: 5; }
+.db-event-card.event-tug-of-war { order: 6; }
+.db-event-card.event-taekwondo { order: 7; }
+.db-event-card.event-middle-distance { order: 8; }
+.db-event-card.event-chess { order: 9; }
 .db-event-top {
     grid-template-columns: minmax(0, 1fr) auto;
     gap: 0.35rem;
@@ -6057,9 +6112,14 @@ img {
 .db-winner-box {
     min-width: 66px;
     gap: 0.16rem;
+    align-content: center;
+    justify-items: end;
 }
 .db-winner-box span:first-child {
     font-size: 0.58rem;
+}
+.db-winner-box.is-pending .db-campus-badge {
+    opacity: 0.72;
 }
 .db-campus-badge {
     min-width: 3.5rem;
@@ -6074,9 +6134,17 @@ img {
     padding: 0.18rem 0.36rem;
     font-size: 0.66rem;
 }
+.db-campus-badge.campus-mungyeong,
+.db-campus-badge.campus-eumseong,
+.db-campus-badge.campus-sejong {
+    color: #ffffff;
+}
 .db-result-grid {
     grid-template-columns: repeat(auto-fit, minmax(72px, 1fr));
+    grid-auto-rows: minmax(0, 1fr);
     gap: 0.25rem;
+    height: 100%;
+    min-height: 0;
 }
 .db-event-card.event-soccer .db-result-grid,
 .db-event-card.event-basketball .db-result-grid,
@@ -6094,8 +6162,13 @@ img {
     grid-template-columns: 1fr;
 }
 .db-result-cell {
-    min-height: 42px;
-    gap: 0.16rem;
+    min-height: 0;
+    height: 100%;
+    display: grid;
+    grid-template-rows: auto auto auto;
+    align-content: center;
+    justify-items: center;
+    gap: 0.18rem;
     padding: 0.32rem 0.26rem;
     border-radius: 6px;
     width: 100%;
@@ -6118,17 +6191,39 @@ img {
     outline: 3px solid rgba(37, 99, 235, 0.28);
     outline-offset: 2px;
 }
-.db-result-score {
-    color: #0f172a;
-    font-size: clamp(0.72rem, 0.9vw, 0.9rem);
-    font-weight: 950;
-    line-height: 1;
-}
 .db-result-quarter {
     color: var(--text-3);
     font-size: 0.58rem;
     font-weight: 850;
     line-height: 1;
+}
+.db-final-score-box {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 1.2rem;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: #111827;
+    font-size: clamp(0.86rem, 1.25vw, 1.2rem);
+    font-weight: 950;
+    line-height: 1;
+    white-space: nowrap;
+}
+.db-result-cell.is-live .db-final-score-box {
+    color: #b91c1c;
+}
+.db-result-cell.is-done .db-final-score-box {
+    color: #111827;
+}
+.db-result-cell.is-done.campus-pending .db-final-score-box {
+    color: #334155;
+}
+.db-event-card.is-champion .db-final-score-box,
+.db-event-card.is-champion .db-division-label {
+    color: #111827;
 }
 .db-division-label {
     font-size: clamp(0.62rem, 0.8vw, 0.76rem);
@@ -6146,16 +6241,17 @@ img {
 .db-taekwondo-groups {
     display: grid;
     grid-template-columns: repeat(6, minmax(0, 1fr));
+    grid-auto-rows: minmax(0, 1fr);
     gap: 0.45rem;
+    height: 100%;
+    min-height: 0;
 }
 .db-taekwondo-groups .db-result-cell {
     grid-column: span 2;
-    min-height: 58px;
 }
 .db-taekwondo-groups .db-result-cell:nth-child(4),
 .db-taekwondo-groups .db-result-cell:nth-child(5) {
     grid-column: span 3;
-    min-height: 58px;
 }
 .db-taekwondo-groups .db-division-label {
     font-size: clamp(0.68rem, 0.9vw, 0.82rem);
@@ -6165,7 +6261,7 @@ img {
     gap: 0.45rem;
 }
 .db-event-card.event-middle-distance .db-result-cell {
-    min-height: 58px;
+    min-height: 0;
 }
 
 .db-detail-backdrop {
