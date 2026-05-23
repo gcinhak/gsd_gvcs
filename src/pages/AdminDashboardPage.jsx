@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { LIVE_MATCHES } from '../data';
+import { LIVE_MATCHES } from '../data/data';
 import {
     CAMPUS,
     CAMPUS_OPTIONS,
@@ -103,11 +103,12 @@ function DivisionControl({ event, division, match, relayState, onChange }) {
                         const winnerKeyValue = e.target.value || 'pending';
                         onChange(event.id, division.id, {
                             winnerKey: winnerKeyValue,
-                            state: winnerKeyValue === 'pending'
-                                ? 'ready'
-                                : division.state === 'ready'
-                                    ? 'done'
-                                    : division.state,
+                            state:
+                                winnerKeyValue === 'pending'
+                                    ? 'ready'
+                                    : division.state === 'ready'
+                                      ? 'done'
+                                      : division.state,
                         });
                     }}
                 >
@@ -318,7 +319,9 @@ export default function AdminDashboardPage() {
         setEvents((prev) => {
             const next = updater(prev);
             writeDashboardEvents(next);
-            setSavedAt(new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
+            setSavedAt(
+                new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+            );
             return next;
         });
     };
@@ -356,16 +359,32 @@ export default function AdminDashboardPage() {
                         <p>중계 점수와 관리자 선택이 대시보드에 실시간 반영됩니다.</p>
                     </div>
                     <div className="da-actions">
-                        <button type="button" className="da-ghost-btn" onClick={resetAll}>초기화</button>
-                        <button type="button" className="da-ghost-btn" onClick={logout}>로그아웃</button>
+                        <button type="button" className="da-ghost-btn" onClick={resetAll}>
+                            초기화
+                        </button>
+                        <button type="button" className="da-ghost-btn" onClick={logout}>
+                            로그아웃
+                        </button>
                     </div>
                 </header>
 
                 <section className="da-status-strip">
-                    <div><span>경기 전</span><strong>{counts.ready}</strong></div>
-                    <div><span>진행중</span><strong>{counts.live}</strong></div>
-                    <div><span>경기종료</span><strong>{counts.done}</strong></div>
-                    <div><span>저장</span><strong>{savedAt || '대기'}</strong></div>
+                    <div>
+                        <span>경기 전</span>
+                        <strong>{counts.ready}</strong>
+                    </div>
+                    <div>
+                        <span>진행중</span>
+                        <strong>{counts.live}</strong>
+                    </div>
+                    <div>
+                        <span>경기종료</span>
+                        <strong>{counts.done}</strong>
+                    </div>
+                    <div>
+                        <span>저장</span>
+                        <strong>{savedAt || '대기'}</strong>
+                    </div>
                 </section>
 
                 <section className="da-event-list">
