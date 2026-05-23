@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import PageHeader from '../components/PageHeader';
 import CampusBadge from '../components/CampusBadge';
 import AnimatedNumber from '../components/AnimatedNumber';
-import { CAMPUS_COLORS } from '../data';
+import { CAMPUS_COLORS } from '../data/data';
 import { fetchCounts, isPopcatApiConfigured } from '../lib/popcatApi';
 
 const LOCAL_STORAGE_KEY = 'gsd-popcat-counts-v2';

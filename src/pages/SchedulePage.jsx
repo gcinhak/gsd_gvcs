@@ -1,7 +1,7 @@
 import { useState, Fragment } from 'react';
 import PageHeader from '../components/PageHeader';
 import CampusBadge from '../components/CampusBadge';
-import { SCHEDULE } from '../data';
+import { SCHEDULE } from '../data/data';
 
 const DAY_ORDER = ['thursday', 'friday', 'saturday'];
 
