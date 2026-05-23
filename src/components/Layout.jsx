@@ -16,6 +16,7 @@ const NAV_ITEMS = [
     //{ to: '/games', label: '경기 영상' },
     { to: '/history', label: '역대 전적' },
     { to: '/popcat', label: '팝캣' },
+    ...(SHOW_DEV_TABS ? [{ to: '/cheer', label: '응원' }] : []),
     { to: '/upcoming', label: '예정 기능' },
 ];
 

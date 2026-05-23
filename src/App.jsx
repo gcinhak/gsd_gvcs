@@ -6,12 +6,13 @@ import CheersYearPage from './pages/CheersYearPage';
 import CheersVideoPage from './pages/CheersVideoPage';
 import GamesPage from './pages/GamesPage';
 import HistoryPage from './pages/HistoryPage';
-import PopcatPage from './pages/PopcatPage';
 import UpcomingPage from './pages/UpcomingPage';
 import LivePage from './pages/LivePage';
 import LiveMatchPage from './pages/LiveMatchPage';
 import AdminRelayPage from './pages/AdminRelayPage';
 import LineupPage from './pages/LineupPage';
+import CheerHubPage from './pages/CheerHubPage';
+import PopcatPage from './pages/PopcatPage';
 import DashboardPage from './pages/dashboard.jsx';
 import AdminDashboardPage from './pages/AdminDashboardPage';
 import './App.css';
@@ -36,6 +37,7 @@ export default function App() {
                         <Route path="/cheers/:yearId" element={<CheersVideoPage />} />
                         <Route path="/games" element={<GamesPage />} />
                         <Route path="/history" element={<HistoryPage />} />
+                        <Route path="/cheer" element={<CheerHubPage />} />
                         <Route path="/popcat" element={<PopcatPage />} />
                         <Route path="/upcoming" element={<UpcomingPage />} />
                         {/* 기존 경로 호환 */}

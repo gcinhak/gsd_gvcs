@@ -45,3 +45,22 @@ CREATE TABLE IF NOT EXISTS live_comments (
 
 CREATE INDEX IF NOT EXISTS idx_live_comments_match_ts
     ON live_comments(match_id, ts);
+
+-- ============================================================
+-- 점령전 (Territory)
+-- ============================================================
+-- 3캠퍼스가 미니게임 클리어로 영토를 차지/뺏기.
+-- claims = 누적 클레임 수. 한 클레임 = 1/TERRITORY_TOTAL 비율.
+-- TERRITORY_TOTAL 은 worker.js 의 상수로 정의 (기본 100,000 → 1 클레임 = 0.001%).
+-- 합산 < TERRITORY_TOTAL 이면 empty 땅이 남아있는 상태.
+CREATE TABLE IF NOT EXISTS territory_state (
+    campus TEXT PRIMARY KEY,
+    claims INTEGER NOT NULL DEFAULT 0,
+    updated_at INTEGER NOT NULL DEFAULT (unixepoch())
+);
+
+INSERT INTO territory_state (campus, claims) VALUES
+    ('문경', 0),
+    ('음성', 0),
+    ('세종', 0)
+ON CONFLICT(campus) DO NOTHING;

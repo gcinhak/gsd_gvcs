@@ -59,7 +59,7 @@ function readMyClicks() {
     }
 }
 
-export default function PopcatPage() {
+export default function PopcatPage({ embedded = false }) {
     const [counts, setCounts] = useState(() => (isPopcatApiConfigured ? { ...ZERO } : readLocal()));
     const [myCounts, setMyCounts] = useState(() => readMyClicks()); // ← 추가
     const [openCampus, setOpenCampus] = useState(null);
@@ -408,13 +408,15 @@ export default function PopcatPage() {
     const isTied = total > 0 && ranked.every((c) => counts[c] === leaderCount);
 
     return (
-        <div className="page popcat-page">
+        <div className={`${embedded ? '' : 'page '}popcat-page`}>
             <div className="popcat-inner">
-                <PageHeader
-                    eyebrow="POPCAT · BETA"
-                    title="캠퍼스 대결 응원 카운터"
-                    description="문경 · 음성 · 세종 — 가장 많이 응원한 캠퍼스가 이깁니다."
-                />
+                {!embedded && (
+                    <PageHeader
+                        eyebrow="POPCAT · BETA"
+                        title="캠퍼스 대결 응원 카운터"
+                        description="문경 · 음성 · 세종 — 가장 많이 응원한 캠퍼스가 이깁니다."
+                    />
+                )}
 
                 <section className="pop-board">
                     <div className="pb-head">
