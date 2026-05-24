@@ -165,15 +165,6 @@ export const LINEUP = {
                 { name: '홍성택', alt: '9 홍하일 부' },
                 { name: '이성화', alt: '9 이은혁 부' },
             ],
-<<<<<<< HEAD
-            교직원여: [{ no: 1, name: '이경민' }, { name: '남정하' }],
-            교직원남: [{ no: 1, name: '김경식' }, { name: '신찬영' }],
-        },
-        체스: {
-            '7-8학년 대표': [{ no: 1, grade: 8, name: '박주원' }, { name: '임온찬' }],
-            '9-10학년 대표': [{ no: 1, grade: 9, name: '변지원' }, { name: '윤종한' }],
-            '11-12학년 대표': [{ no: 1, grade: 11, name: '윤주호' }, { name: '정소망' }],
-=======
             교직원: [
                 { no: 1, name: '이경민' },
                 { name: '남정하' },
@@ -194,7 +185,6 @@ export const LINEUP = {
                 { no: 1, grade: 11, name: '윤주호' },
                 { name: '정소망' },
             ],
->>>>>>> 408d595ad90699320113099fe9698a1a7997b948
         },
         태권도: {
             '태권체조': [
@@ -227,65 +217,6 @@ export const LINEUP = {
             ],
         },
         중거리: {
-<<<<<<< HEAD
-            여중: [
-                { no: 1, grade: 7, name: '이승주' },
-                { no: 2, grade: 9, name: 'Kim Joyce Seoyon' },
-            ],
-            여고: [{ no: 1, grade: 12, name: '심예진' }],
-            남중: [
-                { no: 1, grade: 7, name: '우도현' },
-                { no: 2, grade: 8, name: '김찬영' },
-                { no: 3, grade: 9, name: '이재이' },
-            ],
-            남고: [
-                { no: 1, grade: 12, name: '박예준', bench: true },
-                { no: 2, grade: 12, name: '하지훈' },
-                { no: 3, grade: 10, name: '전준호' },
-                { no: 4, grade: 12, name: '권태연', bench: true },
-                { no: 5, grade: 12, name: '강민성' },
-            ],
-        },
-        이어달리기: {
-            '7-8학년 남자': [
-                { no: 1, grade: 8, name: '이선율' },
-                { no: 2, grade: 8, name: '김지훈' },
-            ],
-            '7-8학년 여자': [
-                { no: 1, grade: 7, name: '주혜원' },
-                { no: 2, grade: 8, name: '최민교' },
-            ],
-            '9학년 남자': [{ no: 1, grade: 9, name: '우도현' }],
-            '9학년 여자': [
-                { no: 1, grade: 9, name: '장서율' },
-                { no: 2, grade: 9, name: '이래윤' },
-            ],
-            '10학년 남자': [
-                { no: 1, name: '배혜성' },
-                { no: 2, name: '김성율' },
-            ],
-            '10학년 여자': [
-                { no: 1, name: '임환희' },
-                { no: 2, name: '김나예' },
-            ],
-            '11학년 남자': [
-                { no: 1, name: '김영휘', alt: '축구' },
-                { no: 2, name: '김하겸' },
-            ],
-            '11학년 여자': [{ no: 1, name: '박승민' }],
-            '12학년 남자': [
-                { no: 1, name: '강민성', alt: '축구' },
-                { no: 2, name: '최지웅' },
-            ],
-            '12학년 여자': [
-                { no: 1, name: '김세빈' },
-                { no: 2, name: '김가현' },
-            ],
-            인기모남: [{ name: '박형렬', alt: '12 박하은 부' }],
-            인기모여: [
-                { name: '윤은정', alt: '8 강윤성 모' },
-                { name: '장보선', alt: '후보 · 7 김주아 모' },
-=======
             통합: [
                 { grade: 7, name: '이승주' },
                 { grade: 9, name: 'Kim Joyce Seoyon' },
@@ -323,7 +254,6 @@ export const LINEUP = {
                 { name: '박형렬', alt: '인기모 · 12 박하은 부' },
                 { name: '윤은정', alt: '인기모 · 8 강윤성 모' },
                 { name: '장보선', alt: '인기모 · 후보 · 7 김주아 모' },
->>>>>>> 408d595ad90699320113099fe9698a1a7997b948
             ],
         },
         줄다리기: {

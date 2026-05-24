@@ -145,7 +145,6 @@ function MatchAdminCard({ match, state, comments, onUpdate, onAddComment, onDele
 
     const [type, setType] = useState('normal');
     const [content, setContent] = useState('');
-    const [msgQuarter, setMsgQuarter] = useState(state?.currentQuarter || '');
     const [scoreTeam, setScoreTeam] = useState('');
     const [scoreAmount, setScoreAmount] = useState(0);
     const [posting, setPosting] = useState(false);
@@ -168,7 +167,6 @@ function MatchAdminCard({ match, state, comments, onUpdate, onAddComment, onDele
     const quickQuarter = async (q) => {
         try {
             await onUpdate(match.id, { currentQuarter: q || null });
-            setMsgQuarter(q || '');
         } catch (err) {
             alert('쿼터 변경 실패: ' + err.message);
         }
@@ -198,12 +196,12 @@ function MatchAdminCard({ match, state, comments, onUpdate, onAddComment, onDele
                 await onAddComment(match.id, {
                     type: 'score',
                     content: fullMsg,
-                    quarter: msgQuarter || null,
+                    quarter: state?.currentQuarter || null,
                     scoreTeam,
                     scoreAmount: amount,
                     scoreSide: side,
                 });
-                // 팀/점수만 리셋, 쿼터·메시지 입력은 유지
+                // 팀/점수·메시지만 리셋 (쿼터는 매치 상단에서 관리)
                 setScoreTeam('');
                 setScoreAmount(0);
                 setContent('');
@@ -211,7 +209,7 @@ function MatchAdminCard({ match, state, comments, onUpdate, onAddComment, onDele
                 await onAddComment(match.id, {
                     type,
                     content: extra,
-                    quarter: msgQuarter || null,
+                    quarter: state?.currentQuarter || null,
                 });
                 setContent('');
             }
@@ -319,30 +317,6 @@ function MatchAdminCard({ match, state, comments, onUpdate, onAddComment, onDele
             {isLive && (
                 <>
                     <form onSubmit={post} className={`ac-msg-form ${isScoringMode ? 'is-scoring' : ''}`}>
-                        {/* 쿼터 — 뱃지 버튼 */}
-                        <div className="ac-msg-pillrow">
-                            <span className="ac-pillrow-label">쿼터</span>
-                            <div className="ac-quarter-btns">
-                                <button
-                                    type="button"
-                                    className={!msgQuarter ? 'active' : ''}
-                                    onClick={() => setMsgQuarter('')}
-                                >
-                                    없음
-                                </button>
-                                {quarters.map((q) => (
-                                    <button
-                                        key={q}
-                                        type="button"
-                                        className={msgQuarter === q ? 'active' : ''}
-                                        onClick={() => setMsgQuarter(q)}
-                                    >
-                                        {q}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-
                         {/* 팀 — 캠퍼스 색 뱃지 */}
                         <div className="ac-msg-pillrow">
                             <span className="ac-pillrow-label">팀</span>
