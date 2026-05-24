@@ -12,7 +12,7 @@ import LiveMatchPage from './pages/LiveMatchPage';
 import AdminRelayPage from './pages/AdminRelayPage';
 import LineupPage from './pages/LineupPage';
 import CheerHubPage from './pages/CheerHubPage';
-import PopcatPage from './pages/PopcatPage';
+// import PopcatPage from './pages/PopcatPage';
 import DashboardPage from './pages/dashboard.jsx';
 import AdminDashboardPage from './pages/AdminDashboardPage';
 import './App.css';

@@ -170,6 +170,16 @@ img {
     border-radius: 3px 3px 0 0;
     background: var(--primary);
 }
+.nav-link.is-disabled {
+    color: var(--muted-2, #9ca3af);
+    cursor: not-allowed;
+    opacity: 0.55;
+    text-decoration: line-through;
+}
+.nav-link.is-disabled:hover {
+    background: transparent;
+    color: var(--muted-2, #9ca3af);
+}
 
 .header-tools {
     display: flex;
@@ -4764,7 +4774,7 @@ img {
     display: grid;
     gap: 1px;
     width: 100%;
-    aspect-ratio: 50 / 20;
+    aspect-ratio: 75 / 30;
     background: #d1d5db;
     border-radius: 12px;
     overflow: hidden;
@@ -4986,6 +4996,93 @@ img {
     font-weight: 700;
     text-align: center;
 }
+
+/* ──────────────────────────────────────────────────────────
+   메인화면 공지 팝업
+────────────────────────────────────────────────────────── */
+.notice-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.65);
+    backdrop-filter: blur(4px);
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    animation: noticeFade 0.2s ease-out;
+}
+@keyframes noticeFade {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+.notice-modal {
+    position: relative;
+    background: var(--surface);
+    border-radius: 16px;
+    padding: 1.8rem 1.4rem 1.4rem;
+    width: 100%;
+    max-width: 420px;
+    text-align: center;
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.4);
+    animation: noticePop 0.25s ease-out;
+}
+@keyframes noticePop {
+    from { opacity: 0; transform: scale(0.92); }
+    to { opacity: 1; transform: scale(1); }
+}
+.notice-close {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--bg-soft);
+    border: none;
+    cursor: pointer;
+    color: var(--muted);
+    font-size: 0.95rem;
+}
+.notice-close:hover { background: var(--border); color: var(--text); }
+.notice-icon {
+    font-size: 3rem;
+    line-height: 1;
+    margin-bottom: 0.6rem;
+}
+.notice-title {
+    font-family: 'Black Han Sans', sans-serif;
+    font-size: 1.5rem;
+    letter-spacing: 0.03em;
+    color: var(--text);
+    margin: 0 0 1rem;
+}
+.notice-body {
+    color: var(--text-3);
+    font-size: 0.97rem;
+    line-height: 1.55;
+    margin: 0 0 0.85rem;
+}
+.notice-body strong {
+    color: var(--primary-dark);
+    font-weight: 700;
+}
+.notice-ok {
+    margin-top: 0.8rem;
+    padding: 0.85rem 2.6rem;
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    font-family: 'Black Han Sans', sans-serif;
+    font-size: 1.15rem;
+    letter-spacing: 0.03em;
+    cursor: pointer;
+    box-shadow: 0 6px 16px rgba(29, 78, 216, 0.25);
+    transition: transform 0.1s, box-shadow 0.15s;
+}
+.notice-ok:hover { transform: translateY(-2px); box-shadow: 0 10px 22px rgba(29, 78, 216, 0.3); }
+.notice-ok:active { transform: translateY(0); }
 
 /* ──────────────────────────────────────────────────────────
    미니게임 모달 + 컴포넌트

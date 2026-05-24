@@ -59,9 +59,9 @@ const GAME_INFO = {
     },
 };
 
-const GRID_COLS = 50;
-const GRID_ROWS = 20;
-const GRID_CELLS = GRID_COLS * GRID_ROWS; // 1000
+const GRID_COLS = 75;
+const GRID_ROWS = 30;
+const GRID_CELLS = GRID_COLS * GRID_ROWS; // 2250
 
 function pickRandomGame() {
     return GAME_TYPES[Math.floor(Math.random() * GAME_TYPES.length)];
