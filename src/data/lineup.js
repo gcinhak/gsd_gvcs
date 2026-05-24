@@ -284,7 +284,7 @@ export const LINEUP = {
                 { grade: 10, name: '김수빈', bench: true },
             ],
             성인팀: [
-                { name: '김정훈', role: '학부모', alt: '12 김주하 부' },
+                { name: '김정훈', role: '학부모', alt: '7 김주아 부' },
                 { name: 'Edward Jang', role: '교직원' },
                 { name: '강태균', role: '동문' },
                 { name: '김라엘', role: '동문' },
