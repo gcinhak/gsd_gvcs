@@ -16,24 +16,6 @@
 export const LINEUP = {
     문경: {
         축구: {
-            남고: [
-                { no: 1, grade: 12, name: '정온유' },
-                { no: 2, grade: 12, name: '김예찬' },
-                { no: 3, grade: 12, name: '최지웅' },
-                { no: 4, grade: 12, name: '최한결' },
-                { no: 5, grade: 12, name: '홍유준' },
-                { no: 6, grade: 12, name: '이기상' },
-                { no: 7, grade: 12, name: '임우징' },
-                { no: 8, grade: 12, name: '변정후' },
-                { no: 9, grade: 11, name: '백지월' },
-                { no: 10, grade: 11, name: '송윤서' },
-                { no: 11, grade: 11, name: '최예성' },
-                { no: 12, grade: 11, name: '박주영' },
-                { no: 13, grade: 11, name: '이민섭' },
-                { no: 14, grade: 11, name: '김하겸' },
-                { no: 15, grade: 10, name: '정예준' },
-                { no: 16, grade: 10, name: '이시우' },
-            ],
             남중: [
                 { no: 1, grade: 7, name: '김서준' },
                 { no: 2, grade: 7, name: '윤지안' },
@@ -51,6 +33,24 @@ export const LINEUP = {
                 { no: 14, grade: 9, name: '류제이' },
                 { no: 15, grade: 9, name: '박서준' },
                 { no: 16, grade: 9, name: '이하율' },
+            ],
+            남고: [
+                { no: 1, grade: 12, name: '정온유' },
+                { no: 2, grade: 12, name: '김예찬' },
+                { no: 3, grade: 12, name: '최지웅' },
+                { no: 4, grade: 12, name: '최한결' },
+                { no: 5, grade: 12, name: '홍유준' },
+                { no: 6, grade: 12, name: '이기상' },
+                { no: 7, grade: 12, name: '임우징' },
+                { no: 8, grade: 12, name: '변정후' },
+                { no: 9, grade: 11, name: '백지월' },
+                { no: 10, grade: 11, name: '송윤서' },
+                { no: 11, grade: 11, name: '최예성' },
+                { no: 12, grade: 11, name: '박주영' },
+                { no: 13, grade: 11, name: '이민섭' },
+                { no: 14, grade: 11, name: '김하겸' },
+                { no: 15, grade: 10, name: '정예준' },
+                { no: 16, grade: 10, name: '이시우' },
             ],
             여연합: [
                 { no: 1, grade: 12, name: '이윤지' },
@@ -169,28 +169,13 @@ export const LINEUP = {
                 { name: '홍성택', alt: '9 홍하일 부' },
                 { name: '이성화', alt: '9 이은혁 부' },
             ],
-            교직원여: [
-                { no: 1, name: '이경민' },
-                { name: '남정하' },
-            ],
-            교직원남: [
-                { no: 1, name: '김경식' },
-                { name: '신찬영' },
-            ],
+            교직원여: [{ no: 1, name: '이경민' }, { name: '남정하' }],
+            교직원남: [{ no: 1, name: '김경식' }, { name: '신찬영' }],
         },
         체스: {
-            '7-8학년 대표': [
-                { no: 1, grade: 8, name: '박주원' },
-                { name: '임온찬'},
-            ],
-            '9-10학년 대표': [
-                { no: 1, grade: 9, name: '변지원' },
-                { name: '윤종한' },
-            ],
-            '11-12학년 대표': [
-                { no: 1, grade: 11, name: '윤주호' },
-                { name: '정소망' },
-            ],
+            '7-8학년 대표': [{ no: 1, grade: 8, name: '박주원' }, { name: '임온찬' }],
+            '9-10학년 대표': [{ no: 1, grade: 9, name: '변지원' }, { name: '윤종한' }],
+            '11-12학년 대표': [{ no: 1, grade: 11, name: '윤주호' }, { name: '정소망' }],
         },
         태권도: {
             '태권체조 고등': [
@@ -238,13 +223,13 @@ export const LINEUP = {
                 { no: 2, grade: 12, name: '하지훈' },
                 { no: 3, grade: 10, name: '전준호' },
                 { no: 4, grade: 12, name: '권태연', bench: true },
-                { no: 5, grade: 12, name: '강민성'},
+                { no: 5, grade: 12, name: '강민성' },
             ],
         },
         이어달리기: {
             '7-8학년 남자': [
-                { no: 1, grade: 8, name: '이선율'},
-                { no: 2, grade: 8, name: '김지훈'},
+                { no: 1, grade: 8, name: '이선율' },
+                { no: 2, grade: 8, name: '김지훈' },
             ],
             '7-8학년 여자': [
                 { no: 1, grade: 7, name: '주혜원' },
