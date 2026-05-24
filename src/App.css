@@ -170,6 +170,16 @@ img {
     border-radius: 3px 3px 0 0;
     background: var(--primary);
 }
+.nav-link.is-disabled {
+    color: var(--muted-2, #9ca3af);
+    cursor: not-allowed;
+    opacity: 0.55;
+    text-decoration: line-through;
+}
+.nav-link.is-disabled:hover {
+    background: transparent;
+    color: var(--muted-2, #9ca3af);
+}
 
 .header-tools {
     display: flex;
