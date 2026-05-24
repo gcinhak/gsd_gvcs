@@ -8,11 +8,10 @@ const CAMPUS_FILTER_ALL = '__all';
 
 function PlayerRow({ player }) {
     return (
-        <li className={`lp-row ${player.bench ? 'is-bench' : ''}`}>
+        <li className="lp-row">
             {player.grade != null && <span className="lp-grade">{player.grade}</span>}
             <span className="lp-name">{player.name}</span>
             {player.role && <span className="lp-role">{player.role}</span>}
-            {player.bench && <span className="lp-bench-tag">후보</span>}
             {player.alt && <span className="lp-alt">{player.alt}</span>}
         </li>
     );
@@ -31,8 +30,7 @@ function CampusCategoryCard({ campus, sport, category, multiCol }) {
     const players = getPlayers(campus, sport, category);
     const color = CAMPUS_COLORS[campus];
     const cardStyle = color ? { '--card-tint': color.soft, '--card-accent': color.bg } : {};
-    const starters = sortByGrade(players.filter((p) => !p.bench));
-    const bench = sortByGrade(players.filter((p) => p.bench));
+    const allPlayers = sortByGrade(players);
     const isEmpty = players.length === 0;
     const listClass = `lp-list${multiCol ? ' is-multi-col' : ''}`;
 
@@ -41,19 +39,15 @@ function CampusCategoryCard({ campus, sport, category, multiCol }) {
             <header className="lp-card-head">
                 <CampusBadge campus={campus} size="md" />
                 <span className="lp-card-count">
-                    {isEmpty ? '미입력' : `${starters.length}명${bench.length > 0 ? ` · 후보 ${bench.length}` : ''}`}
+                    {isEmpty ? '미입력' : `${allPlayers.length}명`}
                 </span>
             </header>
             {isEmpty ? (
                 <div className="lp-empty">선수 데이터 입력 대기중</div>
             ) : (
                 <ul className={listClass}>
-                    {starters.map((p, i) => (
-                        <PlayerRow key={`s-${i}`} player={p} />
-                    ))}
-                    {bench.length > 0 && <li className="lp-divider">후보</li>}
-                    {bench.map((p, i) => (
-                        <PlayerRow key={`b-${i}`} player={p} />
+                    {allPlayers.map((p, i) => (
+                        <PlayerRow key={i} player={p} />
                     ))}
                 </ul>
             )}

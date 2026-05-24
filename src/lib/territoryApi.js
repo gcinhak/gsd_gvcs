@@ -1,5 +1,5 @@
-const DEFAULT_API = 'https://gsd-gvcs-popcat.gcinhak.workers.dev';
-const RAW = import.meta.env.VITE_POPCAT_API_URL || DEFAULT_API;
+const DEFAULT_API = 'https://gsd-gvcs-territory.gcinhak.workers.dev';
+const RAW = import.meta.env.VITE_TERRITORY_API_URL || DEFAULT_API;
 const API = RAW.replace(/\/$/, '');
 
 export const isTerritoryApiConfigured = Boolean(API);

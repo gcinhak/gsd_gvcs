@@ -5067,8 +5067,24 @@ img {
     color: var(--primary-dark);
     font-weight: 700;
 }
-.notice-ok {
+.notice-dont-show {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
     margin-top: 0.8rem;
+    color: var(--muted);
+    font-size: 0.88rem;
+    cursor: pointer;
+    user-select: none;
+}
+.notice-dont-show input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--primary);
+    cursor: pointer;
+}
+.notice-ok {
+    margin-top: 1.6rem;
     padding: 0.85rem 2.6rem;
     background: linear-gradient(135deg, var(--primary), var(--primary-dark));
     color: #fff;

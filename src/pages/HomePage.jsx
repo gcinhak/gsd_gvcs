@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import useCountdown from '../hooks/useCountdown';
 import syncHeroImg from '../assets/sync_hero.png';
 
-const NOTICE_KEY = 'gsd-notice-popcat-pause-v1';
+const NOTICE_KEY = 'gsd-notice-popcat-pause-v2';
 
 function Digit({ value, label }) {
     const str = String(value).padStart(2, '0');
@@ -15,13 +15,16 @@ function Digit({ value, label }) {
 }
 
 function PopcatNotice({ onClose }) {
+    const [dontShow, setDontShow] = useState(false);
+    const close = () => onClose(dontShow);
+
     return (
-        <div className="notice-backdrop" onClick={onClose}>
+        <div className="notice-backdrop" onClick={close}>
             <div className="notice-modal" onClick={(e) => e.stopPropagation()}>
                 <button
                     type="button"
                     className="notice-close"
-                    onClick={onClose}
+                    onClick={close}
                     aria-label="닫기"
                 >
                     ✕
@@ -35,7 +38,15 @@ function PopcatNotice({ onClose }) {
                 <p className="notice-body">
                     <strong>5월 26일</strong>, 새로운 모습으로 다시 만나요! 🎉
                 </p>
-                <button type="button" className="notice-ok" onClick={onClose}>
+                <label className="notice-dont-show">
+                    <input
+                        type="checkbox"
+                        checked={dontShow}
+                        onChange={(e) => setDontShow(e.target.checked)}
+                    />
+                    <span>다시 보지 않기</span>
+                </label>
+                <button type="button" className="notice-ok" onClick={close}>
                     확인
                 </button>
             </div>
@@ -55,14 +66,15 @@ export default function HomePage() {
 
     useEffect(() => {
         if (typeof window === 'undefined') return;
-        if (!window.localStorage.getItem(NOTICE_KEY)) {
+        // 홈 진입/새로고침마다 다시 표시. "다시 보지 않기" 체크한 경우만 숨김.
+        if (window.localStorage.getItem(NOTICE_KEY) !== '1') {
             setShowNotice(true);
         }
     }, []);
 
-    const dismiss = () => {
+    const dismiss = (dontShowAgain) => {
         setShowNotice(false);
-        if (typeof window !== 'undefined') {
+        if (dontShowAgain && typeof window !== 'undefined') {
             window.localStorage.setItem(NOTICE_KEY, '1');
         }
     };

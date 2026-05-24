@@ -1,0 +1,9 @@
+name = "gsd-gvcs-territory"
+main = "src/worker.js"
+compatibility_date = "2026-05-19"
+
+# popcat 워커와 D1 데이터베이스 공유 (territory_state 테이블만 사용)
+[[d1_databases]]
+binding = "DB"
+database_name = "gsd_popcat"
+database_id = "88f9f5a8-4810-4dd2-b3c8-5d6f9ce0272c"
