@@ -9,6 +9,7 @@ const SHOW_DEV_TABS = import.meta.env.DEV;
 
 const NAV_ITEMS = [
     { to: '/', label: '홈', end: true },
+    ...(SHOW_DEV_TABS ? [{ to: '/dashboard', label: '현황판' }] : []),
     ...(SHOW_DEV_TABS ? [{ to: '/live', label: 'LIVE', live: true }] : []),
     { to: '/schedule', label: '경기 일정' },
     ...(SHOW_DEV_TABS ? [{ to: '/lineup', label: '라인업' }] : []),
