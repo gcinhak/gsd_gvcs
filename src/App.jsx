@@ -38,7 +38,7 @@ export default function App() {
                         <Route path="/games" element={<GamesPage />} />
                         <Route path="/history" element={<HistoryPage />} />
                         <Route path="/cheer" element={<CheerHubPage />} />
-                        <Route path="/popcat" element={<PopcatPage />} />
+                        {/* <Route path="/popcat" element={<PopcatPage />} /> */}
                         <Route path="/upcoming" element={<UpcomingPage />} />
                         {/* 기존 경로 호환 */}
                         <Route path="/years" element={<Navigate to="/cheers" replace />} />
