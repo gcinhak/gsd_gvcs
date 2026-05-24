@@ -52,6 +52,41 @@ function getPendingMatchup(event, division, match) {
     return '문경 VS 음성';
 }
 
+function getMatchupCampusClass(name) {
+    if (name.includes('문경')) return 'campus-mungyeong';
+    if (name.includes('음성')) return 'campus-eumseong';
+    if (name.includes('세종')) return 'campus-sejong';
+    return 'campus-pending';
+}
+
+function MatchupPills({ matchup }) {
+    const teams = matchup.split(' VS ').filter(Boolean);
+    if (teams.length < 2) return <span className="db-matchup-line">{matchup}</span>;
+    const sizeClass = teams.length >= 3 ? 'is-triple' : 'is-double';
+
+    return (
+        <span className={`db-matchup-line db-matchup-pills ${sizeClass}`}>
+            {teams.map((team, index) => (
+                <span className="db-matchup-item" key={`${team}-${index}`}>
+                    {index > 0 && <span className="db-matchup-vs">VS</span>}
+                    <span className={`db-matchup-campus ${getMatchupCampusClass(team)}`}>{team}</span>
+                </span>
+            ))}
+        </span>
+    );
+}
+
+function formatDashboardDate(date) {
+    const pad = (value) => String(value).padStart(2, '0');
+    const weekday = ['일', '월', '화', '수', '목', '금', '토'][date.getDay()];
+    return `${date.getFullYear()}.${pad(date.getMonth() + 1)}.${pad(date.getDate())} (${weekday})`;
+}
+
+function formatDashboardTime(date) {
+    const pad = (value) => String(value).padStart(2, '0');
+    return `${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+}
+
 function formatCommentTime(ts) {
     if (!ts) return '';
     const date = new Date(ts);
@@ -109,7 +144,7 @@ function ResultCell({ event, division, match, relayState, onOpen }) {
             ) : hasWinner ? (
                 <CampusBadge campus={campus} size="sm" />
             ) : (
-                <span className="db-matchup-line">{matchup}</span>
+                <MatchupPills matchup={matchup} />
             )}
         </button>
     );
@@ -262,6 +297,7 @@ export default function DashboardPage() {
     const [relayStatesMap, setRelayStatesMap] = useState({});
     const [relayCommentsMap, setRelayCommentsMap] = useState({});
     const [selectedDetail, setSelectedDetail] = useState(null);
+    const [now, setNow] = useState(() => new Date());
 
     const liveMatchMap = useMemo(() => {
         return LIVE_MATCHES.reduce((acc, match) => {
@@ -303,6 +339,11 @@ export default function DashboardPage() {
             cancelled = true;
             window.clearInterval(timer);
         };
+    }, []);
+
+    useEffect(() => {
+        const timer = window.setInterval(() => setNow(new Date()), 1000);
+        return () => window.clearInterval(timer);
     }, []);
 
     useEffect(() => {
@@ -357,7 +398,11 @@ export default function DashboardPage() {
                 <div className="db-live-panel" aria-label="현재 진행 상태">
                     <span className="db-live-dot" />
                     <strong>LIVE</strong>
-                    <span>
+                    <time className="db-live-clock" dateTime={now.toISOString()}>
+                        <span className="db-live-time">{formatDashboardTime(now)}</span>
+                        <span className="db-live-date">{formatDashboardDate(now)}</span>
+                    </time>
+                    <span className="db-live-summary">
                         {stats.done}/{stats.total} 완료 · {stats.live} 진행
                     </span>
                 </div>
