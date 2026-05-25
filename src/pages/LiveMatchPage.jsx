@@ -105,6 +105,7 @@ function CommentaryFeed({ match, comments }) {
             if (c.scoreSide === 'home') runningHomeScore += points;
             else if (c.scoreSide === 'away') runningAwayScore += points;
         }
+
         return {
             ...c,
             currentHomeScore: runningHomeScore,
