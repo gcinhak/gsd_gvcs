@@ -29,7 +29,14 @@ function formatDashboardScore(event, division, state) {
 }
 
 function shouldShowDashboardScore(event, division) {
-    if (event.id === 'middle-distance' || event.id === 'relay') return false;
+    if (
+        event.id === 'middle-distance' ||
+        event.id === 'relay' ||
+        event.id === 'table-tennis' ||
+        event.id === 'chess' ||
+        event.id === 'tug-of-war'
+    )
+        return false;
     if (event.id === 'taekwondo' && !division.id.includes('sparring')) return false;
     return true;
 }
