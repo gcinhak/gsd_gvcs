@@ -1,20 +1,16 @@
 ﻿import { useEffect, useMemo, useState } from 'react';
 import {
     CAMPUS_OPTIONS,
-    DASHBOARD_CHANGE_EVENT,
     CAMPUS,
+    INITIAL_DASHBOARD_EVENTS,
     getCampus,
     getEventDivisions,
-    readDashboardEvents,
+    fetchDashboard,
+    applyDivisionsToEvents,
 } from '../lib/dashboardStore';
 import { fetchComments, fetchLiveStates } from '../lib/liveApi';
 import { LIVE_MATCHES } from '../data/data';
-import {
-    getEffectiveDivisionWinnerKey,
-    getRelayDisplayState,
-    getRelayMatchId,
-    getScorePair,
-} from '../lib/dashboardRelay';
+import { getRelayMatchId, getScorePair } from '../lib/dashboardRelay';
 
 const STATUS_LABELS = {
     upcoming: '경기 전',
@@ -29,7 +25,6 @@ function formatRelayScore(state) {
 
 function formatDashboardScore(event, division, state) {
     const { home, away } = getScorePair(state);
-
     return `${home}:${away}`;
 }
 
@@ -105,8 +100,9 @@ function getCellBadgeCampus(winnerKey, displayState) {
 }
 
 function ResultCell({ event, division, match, relayState, onOpen }) {
-    const displayState = getRelayDisplayState(division, relayState);
-    const winnerKey = getEffectiveDivisionWinnerKey(division, match, relayState);
+    // displayState와 winnerKey는 서버에서 이미 병합된 값 사용
+    const displayState = division.state || 'ready';
+    const winnerKey = division.winnerKey || 'pending';
     const campus = getCellBadgeCampus(winnerKey, displayState);
     const finalScore = formatDashboardScore(event, division, relayState);
     const showScore = shouldShowDashboardScore(event, division);
@@ -114,7 +110,6 @@ function ResultCell({ event, division, match, relayState, onOpen }) {
     const hasWinner = winnerKey !== 'pending';
     const isActive = displayState === 'live' || displayState === 'done';
 
-    // match 데이터 우선, 없으면 matchup 문자열에서 파싱
     const parts = matchup.split(' VS ');
     const homeName = match?.teams?.home ?? parts[0] ?? '문경';
     const awayName = match?.teams?.away ?? parts[1] ?? '음성';
@@ -174,51 +169,35 @@ function TaekwondoGroups({ event, groups, liveMatchMap, relayStatesMap, onOpenDe
     );
 }
 
-function getEventRelayContext(event, liveMatchMap, relayStatesMap) {
+function getEventContext(event) {
     const divisions = getEventDivisions(event);
-    const enriched = divisions.map((division) => {
-        const matchId = getRelayMatchId(division);
-        const match = matchId ? liveMatchMap[matchId] : null;
-        const relayState = matchId ? relayStatesMap[matchId] : null;
-        return {
-            division,
-            match,
-            relayState,
-            displayState: getRelayDisplayState(division, relayState),
-            winnerKey: getEffectiveDivisionWinnerKey(division, match, relayState),
-        };
-    });
-    const isDone = enriched.length > 0 && enriched.every((item) => item.displayState === 'done');
-    const isLive = enriched.some((item) => item.displayState === 'live');
-    const winnerKey = event.manualWinnerKey || getLeadingCampusFromDivisions(enriched);
-
-    return { divisions, enriched, isDone, isLive, winnerKey };
+    const isDone = divisions.length > 0 && divisions.every((d) => d.state === 'done');
+    const isLive = divisions.some((d) => d.state === 'live');
+    const winnerKey = event.manualWinnerKey || getLeadingCampusFromDivisions(divisions);
+    return { divisions, isDone, isLive, winnerKey };
 }
 
-function getLeadingCampusFromDivisions(items) {
+function getLeadingCampusFromDivisions(divisions) {
     const scores = CAMPUS_OPTIONS.reduce((acc, campus) => ({ ...acc, [campus.key]: 0 }), {});
-    for (const item of items) {
-        if (item.displayState !== 'done') continue;
-        if (scores[item.winnerKey] === undefined) continue;
-        scores[item.winnerKey] += 1;
+    for (const div of divisions) {
+        if (div.state !== 'done') continue;
+        if (scores[div.winnerKey] === undefined) continue;
+        scores[div.winnerKey] += 1;
     }
-
     const sorted = Object.entries(scores).sort((a, b) => b[1] - a[1]);
     if (sorted[0][1] === 0) return 'pending';
     if (sorted[0][1] === sorted[1][1]) return 'pending';
     return sorted[0][0];
 }
 
-function getCampusWinCounts(events, liveMatchMap, relayStatesMap) {
+function getCampusWinCounts(events) {
     const counts = CAMPUS_OPTIONS.reduce((acc, campus) => ({ ...acc, [campus.key]: 0 }), {});
-
     for (const event of events) {
-        const context = getEventRelayContext(event, liveMatchMap, relayStatesMap);
+        const context = getEventContext(event);
         if (!context.isDone) continue;
         if (counts[context.winnerKey] === undefined) continue;
         counts[context.winnerKey] += 1;
     }
-
     return counts;
 }
 
@@ -293,7 +272,7 @@ function ScoreDetailModal({ detail, relayState, comments, loading, onClose }) {
 }
 
 export default function DashboardPage() {
-    const [events, setEvents] = useState(() => readDashboardEvents());
+    const [events, setEvents] = useState(INITIAL_DASHBOARD_EVENTS);
     const [relayStatesMap, setRelayStatesMap] = useState({});
     const [relayCommentsMap, setRelayCommentsMap] = useState({});
     const [selectedDetail, setSelectedDetail] = useState(null);
@@ -306,33 +285,41 @@ export default function DashboardPage() {
         }, {});
     }, []);
 
+    // 서버에서 대시보드 결과 로드 (10초마다 폴링)
     useEffect(() => {
-        const sync = () => setEvents(readDashboardEvents());
-        window.addEventListener('storage', sync);
-        window.addEventListener(DASHBOARD_CHANGE_EVENT, sync);
+        let cancelled = false;
+        const load = async () => {
+            try {
+                const { divisions } = await fetchDashboard();
+                if (!cancelled) {
+                    setEvents(applyDivisionsToEvents(INITIAL_DASHBOARD_EVENTS, divisions));
+                }
+            } catch {
+                /* 서버 연결 실패 시 기존 상태 유지 */
+            }
+        };
+        load();
+        const timer = window.setInterval(load, 10000);
         return () => {
-            window.removeEventListener('storage', sync);
-            window.removeEventListener(DASHBOARD_CHANGE_EVENT, sync);
+            cancelled = true;
+            window.clearInterval(timer);
         };
     }, []);
 
+    // 실시간 경기 점수 폴링 (4초마다)
     useEffect(() => {
         let cancelled = false;
-
         const pull = async () => {
             try {
                 const data = await fetchLiveStates();
                 if (cancelled) return;
                 const map = {};
-                for (const row of data.matches || []) {
-                    map[row.matchId] = row;
-                }
+                for (const row of data.matches || []) map[row.matchId] = row;
                 setRelayStatesMap(map);
             } catch {
-                /* Keep the board usable when relay API is temporarily unavailable. */
+                /* relay API 일시 불가 */
             }
         };
-
         pull();
         const timer = window.setInterval(pull, 4000);
         return () => {
@@ -350,7 +337,6 @@ export default function DashboardPage() {
         if (!selectedDetail?.matchId) return;
         let cancelled = false;
         const matchId = selectedDetail.matchId;
-
         fetchComments(matchId)
             .then((data) => {
                 if (cancelled) return;
@@ -360,22 +346,20 @@ export default function DashboardPage() {
                 if (cancelled) return;
                 setRelayCommentsMap((prev) => ({ ...prev, [matchId]: [] }));
             });
-
         return () => {
             cancelled = true;
         };
     }, [selectedDetail]);
 
     const stats = useMemo(() => {
-        const contexts = events.map((event) => getEventRelayContext(event, liveMatchMap, relayStatesMap));
-        const divisions = contexts.flatMap((context) => context.enriched);
+        const allDivisions = events.flatMap(getEventDivisions);
         return {
-            total: divisions.length,
-            done: divisions.filter((item) => item.displayState === 'done').length,
-            live: divisions.filter((item) => item.displayState === 'live').length,
-            campusWins: getCampusWinCounts(events, liveMatchMap, relayStatesMap),
+            total: allDivisions.length,
+            done: allDivisions.filter((d) => d.state === 'done').length,
+            live: allDivisions.filter((d) => d.state === 'live').length,
+            campusWins: getCampusWinCounts(events),
         };
-    }, [events, liveMatchMap, relayStatesMap]);
+    }, [events]);
 
     return (
         <div className="page dashboard-page">
@@ -411,7 +395,7 @@ export default function DashboardPage() {
             <section className="db-board" aria-label="종목별 결과 현황">
                 <div className="db-event-list">
                     {events.map((event) => {
-                        const context = getEventRelayContext(event, liveMatchMap, relayStatesMap);
+                        const context = getEventContext(event);
                         const isChampion = context.isDone && context.winnerKey !== 'pending';
                         const eventCampus = isChampion ? getCampus(context.winnerKey) : getCampus('pending');
 
@@ -445,7 +429,6 @@ export default function DashboardPage() {
                                         {event.divisions.map((division) => {
                                             const matchId = getRelayMatchId(division);
                                             const match = matchId ? liveMatchMap[matchId] : null;
-
                                             return (
                                                 <ResultCell
                                                     event={event}

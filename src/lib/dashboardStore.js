@@ -102,18 +102,12 @@ export const INITIAL_DASHBOARD_EVENTS = [
             {
                 id: 'taekwondo-poomsae',
                 title: '품새',
-                divisions: [
-                    division('tk-poomsae-mid', '품새(중)'),
-                    division('tk-poomsae-high', '품새(고)'),
-                ],
+                divisions: [division('tk-poomsae-mid', '품새(중)'), division('tk-poomsae-high', '품새(고)')],
             },
             {
                 id: 'taekwondo-sparring',
                 title: '겨루기',
-                divisions: [
-                    division('tk-sparring-mid', '겨루기(중)'),
-                    division('tk-sparring-high', '겨루기(고)'),
-                ],
+                divisions: [division('tk-sparring-mid', '겨루기(중)'), division('tk-sparring-high', '겨루기(고)')],
             },
         ],
     },
@@ -144,10 +138,7 @@ export const INITIAL_DASHBOARD_EVENTS = [
         rule: '3판 2선승',
         status: '경기 전',
         winnerKey: 'pending',
-        divisions: [
-            division('tug-students', '학생팀'),
-            division('tug-adults', '성인팀'),
-        ],
+        divisions: [division('tug-students', '학생팀'), division('tug-adults', '성인팀')],
     },
 ];
 
@@ -228,9 +219,7 @@ export function updateDivision(events, eventId, divisionId, patch) {
         if (event.id !== eventId) return event;
 
         const nextEvent = cloneDashboardEvents([event])[0];
-        const applyDivision = (item) => (
-            item.id === divisionId ? { ...item, ...patch } : item
-        );
+        const applyDivision = (item) => (item.id === divisionId ? { ...item, ...patch } : item);
 
         if (nextEvent.groups) {
             nextEvent.groups = nextEvent.groups.map((group) => ({
@@ -285,5 +274,60 @@ export function resetDashboardEvents() {
         }
 
         return nextEvent;
+    });
+}
+
+// ── API 함수 (D1 기반) ────────────────────────────────────────────────────────
+
+const DASHBOARD_API = import.meta.env.DEV ? '' : 'https://gsd-gvcs-popcat.gcinhak.workers.dev';
+
+export async function fetchDashboard() {
+    const res = await fetch(`${DASHBOARD_API}/api/dashboard`, { cache: 'no-store' });
+    if (!res.ok) throw new Error(`fetchDashboard failed: ${res.status}`);
+    return res.json(); // { divisions: { [divisionId]: { winner_key, state, note, is_manual } } }
+}
+
+export async function saveDivision(divisionId, patch, pin) {
+    const res = await fetch(`${DASHBOARD_API}/api/dashboard/division/${encodeURIComponent(divisionId)}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'X-Admin-Pin': pin },
+        body: JSON.stringify(patch),
+    });
+    if (!res.ok) throw new Error(`saveDivision failed: ${res.status}`);
+    return res.json();
+}
+
+export async function resetDashboardRemote(pin) {
+    const res = await fetch(`${DASHBOARD_API}/api/dashboard/reset`, {
+        method: 'POST',
+        headers: { 'X-Admin-Pin': pin },
+    });
+    if (!res.ok) throw new Error(`resetDashboard failed: ${res.status}`);
+    return res.json();
+}
+
+export function applyDivisionsToEvents(events, divisionsFromServer) {
+    return events.map((event) => {
+        const applyDiv = (div) => {
+            const server = divisionsFromServer[div.id];
+            if (!server) return div;
+            return {
+                ...div,
+                winnerKey: server.winner_key,
+                state: server.state,
+                note: server.note,
+            };
+        };
+
+        if (event.groups) {
+            return {
+                ...event,
+                groups: event.groups.map((g) => ({
+                    ...g,
+                    divisions: g.divisions.map(applyDiv),
+                })),
+            };
+        }
+        return { ...event, divisions: event.divisions.map(applyDiv) };
     });
 }

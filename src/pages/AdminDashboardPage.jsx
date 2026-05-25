@@ -1,45 +1,35 @@
 import { useEffect, useMemo, useState } from 'react';
-import { LIVE_MATCHES } from '../data/data';
 import {
     CAMPUS,
     CAMPUS_OPTIONS,
     STATE_OPTIONS,
+    INITIAL_DASHBOARD_EVENTS,
     getCampus,
     getEventDivisions,
-    readDashboardEvents,
-    resetDashboardEvents,
-    updateDivision,
-    updateEventWinner,
-    writeDashboardEvents,
+    fetchDashboard,
+    saveDivision,
+    resetDashboardRemote,
+    applyDivisionsToEvents,
 } from '../lib/dashboardStore';
-import {
-    getEffectiveDivisionWinnerKey,
-    getRelayDisplayState,
-    getRelayMatchId,
-    getRelayWinnerKey,
-    getScorePair,
-} from '../lib/dashboardRelay';
-import { fetchLiveStates } from '../lib/liveApi';
+import { getRelayMatchId, getScorePair } from '../lib/dashboardRelay';
+import { fetchLiveStates, getStoredPin, setStoredPin } from '../lib/liveApi';
 
-const ADMIN_PASSWORD = 'gvcs2026';
 const RELAY_STATUS_LABELS = {
     upcoming: '경기 전',
     live: '진행중',
     finished: '경기종료',
 };
 
-function PasswordGate({ onSuccess }) {
-    const [password, setPassword] = useState('');
+function PinGate({ onSuccess }) {
+    const [pin, setPin] = useState('');
     const [error, setError] = useState('');
 
     const submit = (e) => {
         e.preventDefault();
-        if (password === ADMIN_PASSWORD) {
-            window.sessionStorage.setItem('gvcs-dashboard-admin', 'ok');
-            onSuccess();
-            return;
-        }
-        setError('비밀번호가 올바르지 않습니다.');
+        if (!pin.trim()) return;
+        // PIN 유효성은 첫 저장 시 서버가 검증. 여기서는 저장만.
+        setStoredPin(pin.trim());
+        onSuccess();
     };
 
     return (
@@ -48,16 +38,16 @@ function PasswordGate({ onSuccess }) {
                 <div className="da-gate-card">
                     <span className="da-kicker">DASHBOARD ADMIN</span>
                     <h1>현황판 관리자</h1>
-                    <p>비밀번호를 입력하면 종목별 경기 결과를 바로 수정할 수 있습니다.</p>
+                    <p>관리자 PIN을 입력하면 종목별 경기 결과를 수정할 수 있습니다.</p>
                     <form className="da-login-form" onSubmit={submit}>
                         <input
                             type="password"
-                            value={password}
+                            value={pin}
                             onChange={(e) => {
-                                setPassword(e.target.value);
+                                setPin(e.target.value);
                                 setError('');
                             }}
-                            placeholder="관리자 비밀번호"
+                            placeholder="관리자 PIN"
                             autoFocus
                         />
                         <button type="submit">입장</button>
@@ -69,9 +59,10 @@ function PasswordGate({ onSuccess }) {
     );
 }
 
-function DivisionControl({ event, division, match, relayState, onChange }) {
-    const displayState = getRelayDisplayState(division, relayState);
-    const winnerKey = getEffectiveDivisionWinnerKey(division, match, relayState);
+function DivisionControl({ division, relayState, onChange }) {
+    // 서버에서 병합된 상태/승자 사용
+    const displayState = division.state || 'ready';
+    const winnerKey = division.winnerKey || 'pending';
     const previewCampus = winnerKey === 'pending' ? CAMPUS.live : getCampus(winnerKey);
     const { home, away } = getScorePair(relayState);
     const relayStatus = relayState ? RELAY_STATUS_LABELS[relayState.status] || relayState.status : null;
@@ -84,10 +75,7 @@ function DivisionControl({ event, division, match, relayState, onChange }) {
             </div>
             <label>
                 <span>상태</span>
-                <select
-                    value={displayState}
-                    onChange={(e) => onChange(event.id, division.id, { state: e.target.value })}
-                >
+                <select value={displayState} onChange={(e) => onChange(division, { state: e.target.value })}>
                     {STATE_OPTIONS.map((state) => (
                         <option key={state.key} value={state.key}>
                             {state.label}
@@ -101,14 +89,14 @@ function DivisionControl({ event, division, match, relayState, onChange }) {
                     value={winnerKey === 'pending' ? '' : winnerKey}
                     onChange={(e) => {
                         const winnerKeyValue = e.target.value || 'pending';
-                        onChange(event.id, division.id, {
+                        onChange(division, {
                             winnerKey: winnerKeyValue,
                             state:
                                 winnerKeyValue === 'pending'
                                     ? 'ready'
-                                    : division.state === 'ready'
+                                    : displayState === 'ready'
                                       ? 'done'
-                                      : division.state,
+                                      : displayState,
                         });
                     }}
                 >
@@ -127,61 +115,7 @@ function DivisionControl({ event, division, match, relayState, onChange }) {
     );
 }
 
-function syncDivisionWithRelay(division, liveMatchMap, relayStatesMap) {
-    const matchId = getRelayMatchId(division);
-    if (!matchId) return division;
-
-    const relayState = relayStatesMap[matchId];
-    if (!relayState) return division;
-
-    const match = liveMatchMap[matchId];
-    const relayWinnerKey = getRelayWinnerKey(match, relayState);
-    const patch = {};
-
-    if (relayState.status === 'live' && division.state !== 'live') {
-        patch.state = 'live';
-    }
-
-    if (relayState.status === 'finished') {
-        if (division.state !== 'done') patch.state = 'done';
-        if (relayWinnerKey !== 'pending' && division.winnerKey !== relayWinnerKey) {
-            patch.winnerKey = relayWinnerKey;
-        }
-    }
-
-    return Object.keys(patch).length ? { ...division, ...patch } : division;
-}
-
-function syncEventWithRelay(event, liveMatchMap, relayStatesMap) {
-    let changed = false;
-    const syncDivision = (division) => {
-        const next = syncDivisionWithRelay(division, liveMatchMap, relayStatesMap);
-        if (next !== division) changed = true;
-        return next;
-    };
-
-    if (event.groups) {
-        const groups = event.groups.map((group) => ({
-            ...group,
-            divisions: group.divisions.map(syncDivision),
-        }));
-        return changed ? { ...event, groups } : event;
-    }
-
-    const divisions = event.divisions.map(syncDivision);
-    return changed ? { ...event, divisions } : event;
-}
-
-function EventAdminCard({ event, liveMatchMap, relayStatesMap, onChange, onWinnerChange }) {
-    const finalWinnerKey = event.manualWinnerKey || event.winnerKey || 'pending';
-    const hasTie = getEventDivisions(event).some((division) => {
-        const matchId = getRelayMatchId(division);
-        const relayState = matchId ? relayStatesMap[matchId] : null;
-        if (relayState?.status !== 'finished') return false;
-        const { home, away } = getScorePair(relayState);
-        return home === away;
-    });
-
+function EventAdminCard({ event, relayStatesMap, onChange }) {
     return (
         <article className="da-event-card">
             <header className="da-event-head">
@@ -190,21 +124,6 @@ function EventAdminCard({ event, liveMatchMap, relayStatesMap, onChange, onWinne
                     <h2>{event.sport}</h2>
                     <p>{event.rule}</p>
                 </div>
-                <label className="da-event-winner">
-                    <span>종목 승리 캠퍼스</span>
-                    <select
-                        value={finalWinnerKey === 'pending' ? '' : finalWinnerKey}
-                        onChange={(e) => onWinnerChange(event.id, e.target.value || 'pending')}
-                    >
-                        <option value="">자동/미정</option>
-                        {CAMPUS_OPTIONS.map((campus) => (
-                            <option key={campus.key} value={campus.key}>
-                                {campus.name}
-                            </option>
-                        ))}
-                    </select>
-                    {hasTie && <em className="da-tie-hint">동점: 우승 캠퍼스를 선택하세요</em>}
-                </label>
             </header>
 
             {event.groups ? (
@@ -217,11 +136,9 @@ function EventAdminCard({ event, liveMatchMap, relayStatesMap, onChange, onWinne
                                     const matchId = getRelayMatchId(division);
                                     return (
                                         <DivisionControl
-                                            event={event}
                                             division={division}
                                             key={division.id}
-                                            match={liveMatchMap[matchId]}
-                                            relayState={relayStatesMap[matchId]}
+                                            relayState={matchId ? relayStatesMap[matchId] : null}
                                             onChange={onChange}
                                         />
                                     );
@@ -236,11 +153,9 @@ function EventAdminCard({ event, liveMatchMap, relayStatesMap, onChange, onWinne
                         const matchId = getRelayMatchId(division);
                         return (
                             <DivisionControl
-                                event={event}
                                 division={division}
                                 key={division.id}
-                                match={liveMatchMap[matchId]}
-                                relayState={relayStatesMap[matchId]}
+                                relayState={matchId ? relayStatesMap[matchId] : null}
                                 onChange={onChange}
                             />
                         );
@@ -252,102 +167,111 @@ function EventAdminCard({ event, liveMatchMap, relayStatesMap, onChange, onWinne
 }
 
 export default function AdminDashboardPage() {
-    const [authed, setAuthed] = useState(() => window.sessionStorage.getItem('gvcs-dashboard-admin') === 'ok');
-    const [events, setEvents] = useState(() => readDashboardEvents());
+    const [authed, setAuthed] = useState(() => !!getStoredPin());
+    const [events, setEvents] = useState(INITIAL_DASHBOARD_EVENTS);
     const [relayStatesMap, setRelayStatesMap] = useState({});
     const [savedAt, setSavedAt] = useState('');
-
-    const liveMatchMap = useMemo(() => {
-        return LIVE_MATCHES.reduce((acc, match) => {
-            acc[match.id] = match;
-            return acc;
-        }, {});
-    }, []);
 
     const counts = useMemo(() => {
         const divisions = events.flatMap(getEventDivisions);
         return {
-            ready: divisions.filter((division) => division.state === 'ready').length,
-            live: divisions.filter((division) => division.state === 'live').length,
-            done: divisions.filter((division) => division.state === 'done').length,
+            ready: divisions.filter((d) => d.state === 'ready').length,
+            live: divisions.filter((d) => d.state === 'live').length,
+            done: divisions.filter((d) => d.state === 'done').length,
         };
     }, [events]);
 
-    useEffect(() => {
-        if (authed) writeDashboardEvents(events);
-    }, [authed, events]);
+    // 대시보드 결과 로드 (10초마다 폴링)
+    const reloadDashboard = async () => {
+        try {
+            const { divisions } = await fetchDashboard();
+            setEvents(applyDivisionsToEvents(INITIAL_DASHBOARD_EVENTS, divisions));
+        } catch {
+            /* 무시 */
+        }
+    };
 
     useEffect(() => {
         if (!authed) return undefined;
         let cancelled = false;
+        const load = async () => {
+            if (!cancelled) await reloadDashboard();
+        };
+        load();
+        const timer = window.setInterval(load, 10000);
+        return () => {
+            cancelled = true;
+            window.clearInterval(timer);
+        };
+    }, [authed]);
 
+    // 실시간 경기 점수 폴링 (3초마다)
+    useEffect(() => {
+        if (!authed) return undefined;
+        let cancelled = false;
         const pull = async () => {
             try {
                 const data = await fetchLiveStates();
                 if (cancelled) return;
                 const map = {};
-                for (const row of data.matches || []) {
-                    map[row.matchId] = row;
-                }
+                for (const row of data.matches || []) map[row.matchId] = row;
                 setRelayStatesMap(map);
-                setEvents((prev) => {
-                    let changed = false;
-                    const next = prev.map((event) => {
-                        const synced = syncEventWithRelay(event, liveMatchMap, map);
-                        if (synced !== event) changed = true;
-                        return synced;
-                    });
-
-                    if (!changed) return prev;
-                    writeDashboardEvents(next);
-                    return next;
-                });
             } catch {
-                /* relay API can be temporarily unavailable */
+                /* relay API 일시 불가 */
             }
         };
-
         pull();
         const timer = window.setInterval(pull, 3000);
         return () => {
             cancelled = true;
             window.clearInterval(timer);
         };
-    }, [authed, liveMatchMap]);
+    }, [authed]);
 
-    const saveEvents = (updater) => {
-        setEvents((prev) => {
-            const next = updater(prev);
-            writeDashboardEvents(next);
+    // division 변경 → 서버 저장 (is_manual=1) → 재로드
+    const changeDivision = async (division, patch) => {
+        const pin = getStoredPin();
+        const body = {
+            winner_key: patch.winnerKey ?? division.winnerKey ?? 'pending',
+            state: patch.state ?? division.state ?? 'ready',
+            note: division.note ?? '',
+            is_manual: 1,
+        };
+        try {
+            await saveDivision(division.id, body, pin);
             setSavedAt(
                 new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
             );
-            return next;
-        });
+            await reloadDashboard();
+        } catch (e) {
+            if (String(e.message).includes('401')) {
+                alert('PIN이 올바르지 않습니다. 다시 로그인해주세요.');
+                setStoredPin('');
+                setAuthed(false);
+            } else {
+                alert('저장 실패: ' + e.message);
+            }
+        }
     };
 
-    const changeDivision = (eventId, divisionId, patch) => {
-        saveEvents((prev) => updateDivision(prev, eventId, divisionId, patch));
-    };
-
-    const changeEventWinner = (eventId, winnerKey) => {
-        saveEvents((prev) => updateEventWinner(prev, eventId, winnerKey));
-    };
-
-    const resetAll = () => {
+    const resetAll = async () => {
         if (!window.confirm('모든 종목 결과를 경기 전 상태로 완전히 초기화할까요?')) return;
-        const next = resetDashboardEvents();
-        setEvents(next);
-        writeDashboardEvents(next);
-        setSavedAt('완전 초기화');
+        const pin = getStoredPin();
+        try {
+            await resetDashboardRemote(pin);
+            setSavedAt('완전 초기화');
+            await reloadDashboard();
+        } catch (e) {
+            alert('초기화 실패: ' + e.message);
+        }
     };
 
     const logout = () => {
-        window.sessionStorage.removeItem('gvcs-dashboard-admin');
+        setStoredPin('');
         setAuthed(false);
     };
 
-    if (!authed) return <PasswordGate onSuccess={() => setAuthed(true)} />;
+    if (!authed) return <PinGate onSuccess={() => setAuthed(true)} />;
 
     return (
         <div className="dashboard-admin-page">
@@ -392,10 +316,8 @@ export default function AdminDashboardPage() {
                         <EventAdminCard
                             event={event}
                             key={event.id}
-                            liveMatchMap={liveMatchMap}
                             relayStatesMap={relayStatesMap}
                             onChange={changeDivision}
-                            onWinnerChange={changeEventWinner}
                         />
                     ))}
                 </section>

@@ -1,3 +1,6 @@
+// 종목 부문(division) → Live Relay 경기 ID 매핑.
+// 대시보드에서 라이브 점수를 표시할 때, 어떤 경기의 점수를 보여줄지 찾는 데 사용.
+// (승패 판정/상태 병합은 Worker의 /api/dashboard 가 담당)
 export const DIVISION_RELAY_MATCHES = {
     'soccer-high-men': 'sat-fb-4',
     'soccer-mid-men': 'sat-fb-2',
@@ -14,35 +17,6 @@ export const DIVISION_RELAY_MATCHES = {
 
 export function getRelayMatchId(division) {
     return division.relayMatchId || DIVISION_RELAY_MATCHES[division.id] || null;
-}
-
-export function getRelayDisplayState(division, relayState) {
-    if (relayState?.status === 'live') return 'live';
-    if (relayState?.status === 'finished') return 'done';
-    return division.state || 'ready';
-}
-
-export function campusKeyFromTeamName(name = '') {
-    if (name.includes('문경')) return 'mungyeong';
-    if (name.includes('음성')) return 'eumseong';
-    if (name.includes('세종')) return 'sejong';
-    return 'pending';
-}
-
-export function getRelayWinnerKey(match, relayState) {
-    if (!match || relayState?.status !== 'finished') return 'pending';
-
-    const home = Number(relayState.homeScore) || 0;
-    const away = Number(relayState.awayScore) || 0;
-    if (home === away) return 'pending';
-
-    const winnerName = home > away ? match.teams.home : match.teams.away;
-    return campusKeyFromTeamName(winnerName);
-}
-
-export function getEffectiveDivisionWinnerKey(division, match, relayState) {
-    if (division.winnerKey && division.winnerKey !== 'pending') return division.winnerKey;
-    return getRelayWinnerKey(match, relayState);
 }
 
 export function getScorePair(relayState) {
