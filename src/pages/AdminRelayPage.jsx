@@ -11,7 +11,13 @@ import {
     getStoredPin,
     setStoredPin,
 } from '../lib/liveApi';
-import { VOLLEYBALL_SET_END_TEXT, getVolleyballSetSummary, isVolleyballMatch } from '../lib/volleyballSets';
+import {
+    VOLLEYBALL_SET_END_TEXT,
+    getSetSummary,
+    getSetTargetWins,
+    isSetMatch,
+    isWinnerOnlySetMatch,
+} from '../lib/volleyballSets';
 
 const STATUS_OPTIONS = ['upcoming', 'live', 'finished'];
 const COMMENT_TYPES = [
@@ -138,14 +144,14 @@ function MatchListView({ matches, statesMap, onSelect }) {
     );
 }
 
-function VolleyballSetPanel({ match, state, comments }) {
+function SetPanel({ match, state, comments }) {
     const sets = getQuarters(match.sport);
-    const summary = getVolleyballSetSummary(comments, match, sets, state);
+    const summary = getSetSummary(comments, match, sets, state);
 
     return (
         <div className="ac-volley-sets">
             <div className="ac-volley-sets-head">
-                <span>세트별 점수</span>
+                <span>{isWinnerOnlySetMatch(match) ? '세트별 승리' : '세트별 점수'}</span>
                 <strong>
                     {match.teams.home} {summary.home} : {summary.away} {match.teams.away}
                 </strong>
@@ -208,21 +214,39 @@ function MatchAdminCard({ match, state, comments, onUpdate, onAddComment, onDele
     };
 
     const closeCurrentSet = async () => {
-        if (!volleyballSummary || !state?.currentQuarter) return;
-        const currentSet = volleyballSummary.rows.find((row) => row.label === state.currentQuarter);
+        if (!setSummary || !state?.currentQuarter) return;
+        const winnerOnlySetMatch = isWinnerOnlySetMatch(match);
+        const currentSet = setSummary.rows.find((row) => row.label === state.currentQuarter);
         if (!currentSet || currentSet.isEnded) return;
-        if (currentSet.home === currentSet.away) {
+        if (winnerOnlySetMatch && !scoreTeam) {
+            alert('세트 승리 캠퍼스를 먼저 선택해주세요.');
+            return;
+        }
+        if (!winnerOnlySetMatch && currentSet.home === currentSet.away) {
             alert('동점 세트는 종료할 수 없습니다.');
             return;
         }
-        const winnerTeam = currentSet.home > currentSet.away ? match.teams.home : match.teams.away;
+        const winnerTeam = winnerOnlySetMatch ? scoreTeam : currentSet.home > currentSet.away ? match.teams.home : match.teams.away;
+        const winnerSide = computeScoreSide(winnerTeam);
+        const nextHome = setSummary.home + (winnerSide === 'home' ? 1 : 0);
+        const nextAway = setSummary.away + (winnerSide === 'away' ? 1 : 0);
+        const targetWins = getSetTargetWins(match);
+        const shouldFinish = targetWins > 0 && (nextHome >= targetWins || nextAway >= targetWins);
         setPosting(true);
         try {
             await onAddComment(match.id, {
                 type: 'normal',
                 content: `${state.currentQuarter} ${VOLLEYBALL_SET_END_TEXT}: ${winnerTeam} 승`,
                 quarter: state.currentQuarter,
+                scoreTeam: winnerOnlySetMatch ? winnerTeam : undefined,
+                scoreAmount: winnerOnlySetMatch ? 1 : undefined,
+                scoreSide: winnerOnlySetMatch ? winnerSide : undefined,
             });
+            if (shouldFinish) {
+                await onUpdate(match.id, { status: 'finished', currentQuarter: null });
+                setStatus('finished');
+            }
+            setScoreTeam('');
         } catch (err) {
             alert('세트 종료 저장 실패: ' + err.message);
         }
@@ -239,7 +263,7 @@ function MatchAdminCard({ match, state, comments, onUpdate, onAddComment, onDele
         e.preventDefault();
         const amount = Number(scoreAmount) || 0;
         const extra = content.trim();
-        const isScoring = !!scoreTeam && amount > 0;
+        const isScoring = !isWinnerOnlySetMatch(match) && !!scoreTeam && amount > 0;
 
         if (!isScoring && !extra) return;
 
@@ -279,18 +303,22 @@ function MatchAdminCard({ match, state, comments, onUpdate, onAddComment, onDele
     const isLive = status === 'live';
     const serverHome = state?.homeScore || 0;
     const serverAway = state?.awayScore || 0;
-    const isScoringMode = !!scoreTeam && Number(scoreAmount) > 0;
-    const volleyballSummary = isVolleyballMatch(match)
-        ? getVolleyballSetSummary(comments, match, quarters, state)
+    const winnerOnlySetMatch = isWinnerOnlySetMatch(match);
+    const isScoringMode = !winnerOnlySetMatch && !!scoreTeam && Number(scoreAmount) > 0;
+    const setSummary = isSetMatch(match)
+        ? getSetSummary(comments, match, quarters, state)
         : null;
-    const displayHome = volleyballSummary ? volleyballSummary.home : serverHome;
-    const displayAway = volleyballSummary ? volleyballSummary.away : serverAway;
-    const currentVolleyballSet = volleyballSummary?.rows.find((row) => row.label === state?.currentQuarter);
+    const hasSetScore = setSummary && (setSummary.home > 0 || setSummary.away > 0);
+    const displayHome = hasSetScore ? setSummary.home : serverHome;
+    const displayAway = hasSetScore ? setSummary.away : serverAway;
+    const currentSet = setSummary?.rows.find((row) => row.label === state?.currentQuarter);
+    const selectableCampuses = winnerOnlySetMatch ? [match.teams.home, match.teams.away] : ALL_CAMPUSES;
     const canCloseCurrentSet =
-        Boolean(currentVolleyballSet) &&
-        !currentVolleyballSet.isEnded &&
-        currentVolleyballSet.home !== currentVolleyballSet.away &&
-        (currentVolleyballSet.home > 0 || currentVolleyballSet.away > 0);
+        Boolean(currentSet) &&
+        !currentSet.isEnded &&
+        (winnerOnlySetMatch
+            ? Boolean(computeScoreSide(scoreTeam))
+            : currentSet.home !== currentSet.away && (currentSet.home > 0 || currentSet.away > 0));
 
     return (
         <article className={`admin-card ${isLive ? 'is-live' : ''}`} style={cardStyle}>
@@ -345,7 +373,7 @@ function MatchAdminCard({ match, state, comments, onUpdate, onAddComment, onDele
             </div>
 
             <div className="ac-score-summary">
-                <span className="ac-score-summary-label">{volleyballSummary ? '세트 스코어' : '현재 점수'}</span>
+                <span className="ac-score-summary-label">{setSummary ? '세트 스코어' : '현재 점수'}</span>
                 <div className="ac-score-summary-row">
                     <span className="ac-ss-team">
                         <CampusBadge campus={match.teams.home} size="sm" />
@@ -359,7 +387,7 @@ function MatchAdminCard({ match, state, comments, onUpdate, onAddComment, onDele
                 </div>
             </div>
 
-            {volleyballSummary && <VolleyballSetPanel match={match} state={state} comments={comments} />}
+            {setSummary && <SetPanel match={match} state={state} comments={comments} />}
 
             <div className="ac-quarter-row">
                 <span className="ac-quarter-label">현재 쿼터</span>
@@ -381,7 +409,7 @@ function MatchAdminCard({ match, state, comments, onUpdate, onAddComment, onDele
                             {q}
                         </button>
                     ))}
-                    {volleyballSummary && state?.currentQuarter && (
+                    {setSummary && state?.currentQuarter && (
                         <button
                             type="button"
                             className="ac-set-end-btn"
@@ -399,7 +427,7 @@ function MatchAdminCard({ match, state, comments, onUpdate, onAddComment, onDele
                     <form onSubmit={post} className={`ac-msg-form ${isScoringMode ? 'is-scoring' : ''}`}>
                         {/* 팀 — 캠퍼스 색 뱃지 */}
                         <div className="ac-msg-pillrow">
-                            <span className="ac-pillrow-label">팀</span>
+                            <span className="ac-pillrow-label">{winnerOnlySetMatch ? '세트 승리' : '팀'}</span>
                             <div className="ac-team-pills">
                                 <button
                                     type="button"
@@ -408,7 +436,7 @@ function MatchAdminCard({ match, state, comments, onUpdate, onAddComment, onDele
                                 >
                                     없음
                                 </button>
-                                {ALL_CAMPUSES.map((c) => {
+                                {selectableCampuses.map((c) => {
                                     const cc = CAMPUS_COLORS[c] || {};
                                     const active = scoreTeam === c;
                                     const style = active
@@ -431,19 +459,25 @@ function MatchAdminCard({ match, state, comments, onUpdate, onAddComment, onDele
 
                         {/* 점수 + 타입 */}
                         <div className="ac-msg-pillrow">
-                            <span className="ac-pillrow-label">점수</span>
-                            <div className="ac-score-pick">
-                                {SCORE_OPTIONS.map((n) => (
-                                    <button
-                                        type="button"
-                                        key={n}
-                                        className={Number(scoreAmount) === n ? 'active' : ''}
-                                        onClick={() => setScoreAmount(Number(scoreAmount) === n ? 0 : n)}
-                                    >
-                                        {n}점
-                                    </button>
-                                ))}
-                            </div>
+                            <span className="ac-pillrow-label">{winnerOnlySetMatch ? '입력' : '점수'}</span>
+                            {winnerOnlySetMatch ? (
+                                <div className="ac-score-pick">
+                                    <span className="ac-set-input-hint">승리 캠퍼스 선택 후 세트 종료</span>
+                                </div>
+                            ) : (
+                                <div className="ac-score-pick">
+                                    {SCORE_OPTIONS.map((n) => (
+                                        <button
+                                            type="button"
+                                            key={n}
+                                            className={Number(scoreAmount) === n ? 'active' : ''}
+                                            onClick={() => setScoreAmount(Number(scoreAmount) === n ? 0 : n)}
+                                        >
+                                            {n}점
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
                             <select
                                 className="ac-field-type ac-field-type-right"
                                 value={isScoringMode ? 'score' : type}

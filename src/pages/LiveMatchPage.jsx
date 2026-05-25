@@ -4,7 +4,7 @@ import CampusBadge from '../components/CampusBadge';
 import { LIVE_MATCHES, CAMPUS_COLORS, getQuarters } from '../data/data';
 import { getLineupForMatch } from '../data/lineup';
 import { fetchLiveStates, fetchComments } from '../lib/liveApi';
-import { getVolleyballSetSummary, isVolleyballMatch } from '../lib/volleyballSets';
+import { getSetSummary, isSetMatch } from '../lib/volleyballSets';
 
 const POLL_STATE_MS = 3000;
 const POLL_COMMENT_MS = 2000;
@@ -198,11 +198,12 @@ function CommentaryFeed({ match, comments }) {
 function ScoreHeader({ match, state, comments = [] }) {
     const home = match.teams.home;
     const away = match.teams.away;
-    const volleyballSummary = isVolleyballMatch(match)
-        ? getVolleyballSetSummary(comments, match, getQuarters(match.sport), state)
+    const setSummary = isSetMatch(match)
+        ? getSetSummary(comments, match, getQuarters(match.sport), state)
         : null;
-    const homeScore = volleyballSummary ? volleyballSummary.home : state.homeScore || 0;
-    const awayScore = volleyballSummary ? volleyballSummary.away : state.awayScore || 0;
+    const hasSetScore = setSummary && (setSummary.home > 0 || setSummary.away > 0);
+    const homeScore = hasSetScore ? setSummary.home : state.homeScore || 0;
+    const awayScore = hasSetScore ? setSummary.away : state.awayScore || 0;
     const isLive = state.status === 'live';
     const isFinished = state.status === 'finished';
     const isUpcoming = state.status === 'upcoming';

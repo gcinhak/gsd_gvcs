@@ -4181,6 +4181,15 @@ img {
     color: #fff;
     border-color: #c2410c;
 }
+.ac-set-input-hint {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.2rem;
+    padding: 0.25rem 0.75rem;
+    color: var(--text-3);
+    font-size: 0.82rem;
+    font-weight: 900;
+}
 .ac-msg-form.is-scoring .ac-score-pick button {
     border-color: #fdba74;
 }

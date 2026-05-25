@@ -78,7 +78,7 @@ export const INITIAL_DASHBOARD_EVENTS = [
     {
         id: 'chess',
         sport: '체스',
-        rule: '1경기',
+        rule: '3판 2선승',
         status: '경기 전',
         winnerKey: 'pending',
         divisions: [

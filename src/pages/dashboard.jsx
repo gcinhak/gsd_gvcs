@@ -11,7 +11,7 @@ import {
 import { fetchComments, fetchLiveStates } from '../lib/liveApi';
 import { LIVE_MATCHES, getQuarters } from '../data/data';
 import { getRelayMatchId, getScorePair } from '../lib/dashboardRelay';
-import { getVolleyballSetSummary, isVolleyballEvent, isVolleyballMatch } from '../lib/volleyballSets';
+import { getSetSummary, getSetTargetWins, isSetEvent, isSetMatch } from '../lib/volleyballSets';
 
 const STATUS_LABELS = {
     upcoming: '경기 전',
@@ -25,9 +25,11 @@ function formatRelayScore(state) {
 }
 
 function formatDashboardScore(event, division, state, comments = [], match) {
-    if (isVolleyballEvent(event)) {
-        const summary = getVolleyballSetSummary(comments, match, match ? getQuarters(match.sport) : [], state);
-        return `${summary.home}:${summary.away}`;
+    if (isSetEvent(event)) {
+        const summary = getSetSummary(comments, match, match ? getQuarters(match.sport) : [], state);
+        const relayScore = getScorePair(state);
+        const score = summary.home > 0 || summary.away > 0 ? summary : relayScore;
+        return `${score.home}:${score.away}`;
     }
     const { home, away } = getScorePair(state);
     return `${home}:${away}`;
@@ -124,9 +126,17 @@ function getRelayDisplayState(event, division, match, relayState, relayComments 
     };
     if (!relayState || !match) return base;
 
-    if (isVolleyballEvent(event)) {
-        const summary = getVolleyballSetSummary(relayComments, match, getQuarters(match.sport), relayState);
-        const winnerTeam = summary.home >= 2 ? match.teams.home : summary.away >= 2 ? match.teams.away : null;
+    if (isSetEvent(event)) {
+        const summary = getSetSummary(relayComments, match, getQuarters(match.sport), relayState);
+        const relayScore = getScorePair(relayState);
+        const score = summary.home > 0 || summary.away > 0 ? summary : relayScore;
+        const targetWins = getSetTargetWins(match);
+        const winnerTeam =
+            targetWins && score.home >= targetWins
+                ? match.teams.home
+                : targetWins && score.away >= targetWins
+                  ? match.teams.away
+                  : null;
         if (winnerTeam) {
             return {
                 state: 'done',
@@ -300,12 +310,12 @@ function ScoreDetailModal({ detail, relayState, comments, loading, onClose }) {
     if (!detail) return null;
 
     const { division, match } = detail;
-    const volleyballSummary = isVolleyballMatch(match)
-        ? getVolleyballSetSummary(comments, match, getQuarters(match.sport), relayState)
+    const setSummary = isSetMatch(match)
+        ? getSetSummary(comments, match, getQuarters(match.sport), relayState)
         : null;
-    const score = volleyballSummary
-        ? `${volleyballSummary.home} : ${volleyballSummary.away}`
-        : formatRelayScore(relayState);
+    const relayScore = getScorePair(relayState);
+    const visibleSetScore = setSummary && (setSummary.home > 0 || setSummary.away > 0) ? setSummary : relayScore;
+    const score = setSummary ? `${visibleSetScore.home} : ${visibleSetScore.away}` : formatRelayScore(relayState);
     const status = relayState?.status || 'upcoming';
 
     return (
@@ -340,10 +350,10 @@ function ScoreDetailModal({ detail, relayState, comments, loading, onClose }) {
                     </div>
                 ) : null}
 
-                {volleyballSummary && (
+                {setSummary && (
                     <div className="db-detail-sets">
                         <div className="db-detail-sets-title">세트별 점수</div>
-                        {volleyballSummary.rows.map((set) => (
+                        {setSummary.rows.map((set) => (
                             <div key={set.label} className="db-detail-set-row">
                                 <span>{set.label}</span>
                                 <strong>
@@ -390,7 +400,7 @@ export default function DashboardPage() {
     const [events, setEvents] = useState(INITIAL_DASHBOARD_EVENTS);
     const [relayStatesMap, setRelayStatesMap] = useState({});
     const [relayCommentsMap, setRelayCommentsMap] = useState({});
-    const [volleyballCommentsMap, setVolleyballCommentsMap] = useState({});
+    const [setCommentsMap, setSetCommentsMap] = useState({});
     const [selectedDetail, setSelectedDetail] = useState(null);
     const [now, setNow] = useState(() => new Date());
 
@@ -401,10 +411,11 @@ export default function DashboardPage() {
         }, {});
     }, []);
 
-    const volleyballMatchIds = useMemo(() => {
-        const event = INITIAL_DASHBOARD_EVENTS.find((item) => item.id === 'volleyball');
-        return (event?.divisions || []).map(getRelayMatchId).filter(Boolean);
-    }, []);
+    const setMatchIds = useMemo(() => {
+        return INITIAL_DASHBOARD_EVENTS.flatMap(getEventDivisions)
+            .map(getRelayMatchId)
+            .filter((matchId) => isSetMatch(liveMatchMap[matchId]));
+    }, [liveMatchMap]);
 
     // 서버에서 대시보드 결과 로드 (10초마다 폴링)
     useEffect(() => {
@@ -450,20 +461,20 @@ export default function DashboardPage() {
     }, []);
 
     useEffect(() => {
-        if (volleyballMatchIds.length === 0) return;
+        if (setMatchIds.length === 0) return;
         let cancelled = false;
 
         const pull = async () => {
             try {
                 const entries = await Promise.all(
-                    volleyballMatchIds.map(async (matchId) => {
+                    setMatchIds.map(async (matchId) => {
                         const data = await fetchComments(matchId, 0);
                         return [matchId, data.comments || []];
                     })
                 );
-                if (!cancelled) setVolleyballCommentsMap(Object.fromEntries(entries));
+                if (!cancelled) setSetCommentsMap(Object.fromEntries(entries));
             } catch {
-                /* volleyball comments unavailable */
+                /* set comments unavailable */
             }
         };
 
@@ -473,7 +484,7 @@ export default function DashboardPage() {
             cancelled = true;
             window.clearInterval(timer);
         };
-    }, [volleyballMatchIds]);
+    }, [setMatchIds]);
 
     useEffect(() => {
         const timer = window.setInterval(() => setNow(new Date()), 1000);
@@ -501,9 +512,9 @@ export default function DashboardPage() {
     const eventContexts = useMemo(() => {
         return events.map((event) => ({
             eventId: event.id,
-            context: getEventContext(event, relayStatesMap, liveMatchMap, volleyballCommentsMap),
+            context: getEventContext(event, relayStatesMap, liveMatchMap, setCommentsMap),
         }));
-    }, [events, liveMatchMap, relayStatesMap, volleyballCommentsMap]);
+    }, [events, liveMatchMap, relayStatesMap, setCommentsMap]);
 
     const eventContextMap = useMemo(() => {
         return eventContexts.reduce((acc, item) => {
@@ -599,7 +610,7 @@ export default function DashboardPage() {
                                                     key={division.id}
                                                     match={match}
                                                     relayState={matchId ? relayStatesMap[matchId] : null}
-                                                    relayComments={matchId ? volleyballCommentsMap[matchId] || [] : []}
+                                                    relayComments={matchId ? setCommentsMap[matchId] || [] : []}
                                                     onOpen={() =>
                                                         setSelectedDetail({ event, division, matchId, match })
                                                     }

@@ -15,7 +15,7 @@ import {
 import { getRelayMatchId, getScorePair } from '../lib/dashboardRelay';
 import { LIVE_MATCHES, getQuarters } from '../data/data';
 import { fetchComments, fetchLiveStates, getStoredPin, setStoredPin } from '../lib/liveApi';
-import { getVolleyballSetSummary, isVolleyballMatch } from '../lib/volleyballSets';
+import { getSetSummary, getSetTargetWins, isSetMatch } from '../lib/volleyballSets';
 
 const RELAY_STATUS_LABELS = {
     upcoming: '경기 전',
@@ -37,20 +37,26 @@ function getDivisionDisplayState(division, relayState, match, relayComments = []
     };
     if (!relayState) return base;
 
-    const summary = isVolleyballMatch(match)
-        ? getVolleyballSetSummary(relayComments, match, getQuarters(match.sport), relayState)
+    const summary = isSetMatch(match)
+        ? getSetSummary(relayComments, match, getQuarters(match.sport), relayState)
         : null;
-    const score = summary || getScorePair(relayState);
+    const relayScore = getScorePair(relayState);
+    const score = summary && (summary.home > 0 || summary.away > 0) ? summary : relayScore;
     const next = {
         ...base,
         scoreText: `${score.home}:${score.away}`,
     };
 
-    const volleyballWinnerTeam =
-        summary && summary.home >= 2 ? match?.teams?.home : summary && summary.away >= 2 ? match?.teams?.away : null;
-    if (volleyballWinnerTeam) {
+    const targetWins = match ? getSetTargetWins(match) : 0;
+    const setWinnerTeam =
+        summary && targetWins && summary.home >= targetWins
+            ? match?.teams?.home
+            : summary && targetWins && summary.away >= targetWins
+              ? match?.teams?.away
+              : null;
+    if (setWinnerTeam) {
         next.state = 'done';
-        next.winnerKey = campusKeyFromTeamName(volleyballWinnerTeam);
+        next.winnerKey = campusKeyFromTeamName(setWinnerTeam);
     } else if (relayState.status === 'live') {
         next.state = 'live';
         next.winnerKey = 'pending';
@@ -288,10 +294,11 @@ export default function AdminDashboardPage() {
         }, {});
     }, []);
 
-    const volleyballMatchIds = useMemo(() => {
-        const event = INITIAL_DASHBOARD_EVENTS.find((item) => item.id === 'volleyball');
-        return (event?.divisions || []).map(getRelayMatchId).filter(Boolean);
-    }, []);
+    const setMatchIds = useMemo(() => {
+        return INITIAL_DASHBOARD_EVENTS.flatMap(getEventDivisions)
+            .map(getRelayMatchId)
+            .filter((matchId) => isSetMatch(liveMatchMap[matchId]));
+    }, [liveMatchMap]);
 
     const counts = useMemo(() => {
         const divisions = events.flatMap(getEventDivisions);
@@ -337,13 +344,13 @@ export default function AdminDashboardPage() {
     }, [authed]);
 
     useEffect(() => {
-        if (!authed || volleyballMatchIds.length === 0) return undefined;
+        if (!authed || setMatchIds.length === 0) return undefined;
         let cancelled = false;
 
         const pull = async () => {
             try {
                 const entries = await Promise.all(
-                    volleyballMatchIds.map(async (matchId) => {
+                    setMatchIds.map(async (matchId) => {
                         const data = await fetchComments(matchId, 0);
                         return [matchId, data.comments || []];
                     })
@@ -360,7 +367,7 @@ export default function AdminDashboardPage() {
             cancelled = true;
             window.clearInterval(timer);
         };
-    }, [authed, volleyballMatchIds]);
+    }, [authed, setMatchIds]);
 
     // 실시간 경기 점수 폴링 (3초마다)
     useEffect(() => {

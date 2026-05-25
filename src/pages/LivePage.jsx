@@ -4,7 +4,7 @@ import PageHeader from '../components/PageHeader';
 import CampusBadge from '../components/CampusBadge';
 import { LIVE_MATCHES, getQuarters } from '../data/data';
 import { fetchComments, fetchLiveStates } from '../lib/liveApi';
-import { getVolleyballSetSummary, isVolleyballMatch } from '../lib/volleyballSets';
+import { getSetSummary, isSetMatch } from '../lib/volleyballSets';
 
 const POLL_MS = 3000;
 
@@ -35,12 +35,13 @@ function MatchCard({ match, state, comments = [] }) {
     const isLive = status === 'live';
     const isFinished = status === 'finished';
     const showScore = !!state && (isLive || isFinished);
-    const volleyballSummary =
-        showScore && isVolleyballMatch(match)
-            ? getVolleyballSetSummary(comments, match, getQuarters(match.sport), state)
+    const setSummary =
+        showScore && isSetMatch(match)
+            ? getSetSummary(comments, match, getQuarters(match.sport), state)
             : null;
-    const homeScore = volleyballSummary ? volleyballSummary.home : state?.homeScore || 0;
-    const awayScore = volleyballSummary ? volleyballSummary.away : state?.awayScore || 0;
+    const hasSetScore = setSummary && (setSummary.home > 0 || setSummary.away > 0);
+    const homeScore = hasSetScore ? setSummary.home : state?.homeScore || 0;
+    const awayScore = hasSetScore ? setSummary.away : state?.awayScore || 0;
 
     return (
         <Link to={`/live/${match.id}`} className={`mc status-${status}`}>
@@ -95,7 +96,7 @@ export default function LivePage() {
     const [statesMap, setStatesMap] = useState({});
     const [commentsMap, setCommentsMap] = useState({});
     const [serverState, setServerState] = useState('connecting');
-    const volleyballMatchIds = useMemo(() => LIVE_MATCHES.filter(isVolleyballMatch).map((match) => match.id), []);
+    const setMatchIds = useMemo(() => LIVE_MATCHES.filter(isSetMatch).map((match) => match.id), []);
 
     useEffect(() => {
         let cancelled = false;
@@ -123,16 +124,16 @@ export default function LivePage() {
         let cancelled = false;
         const pull = async () => {
             try {
-                const activeVolleyballMatches = volleyballMatchIds.filter((matchId) => {
+                const activeSetMatches = setMatchIds.filter((matchId) => {
                     const status = statesMap[matchId]?.status;
                     return status === 'live' || status === 'finished';
                 });
-                if (activeVolleyballMatches.length === 0) {
+                if (activeSetMatches.length === 0) {
                     if (!cancelled) setCommentsMap({});
                     return;
                 }
                 const entries = await Promise.all(
-                    activeVolleyballMatches.map(async (matchId) => {
+                    activeSetMatches.map(async (matchId) => {
                         const data = await fetchComments(matchId, 0);
                         return [matchId, data.comments || []];
                     })
@@ -148,7 +149,7 @@ export default function LivePage() {
             cancelled = true;
             clearInterval(timer);
         };
-    }, [statesMap, volleyballMatchIds]);
+    }, [statesMap, setMatchIds]);
 
     /* LIVE 가 맨 위, 그 다음 시간 순. 종료는 맨 아래. */
     const { live, scheduled, finished } = useMemo(() => {
