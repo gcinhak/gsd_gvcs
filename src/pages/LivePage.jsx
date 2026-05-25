@@ -2,8 +2,9 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import PageHeader from '../components/PageHeader';
 import CampusBadge from '../components/CampusBadge';
-import { LIVE_MATCHES } from '../data/data';
-import { fetchLiveStates } from '../lib/liveApi';
+import { LIVE_MATCHES, getQuarters } from '../data/data';
+import { fetchComments, fetchLiveStates } from '../lib/liveApi';
+import { getVolleyballSetSummary, isVolleyballMatch } from '../lib/volleyballSets';
 
 const POLL_MS = 3000;
 
@@ -29,11 +30,17 @@ function dayLabel(day) {
     return map[day] || day;
 }
 
-function MatchCard({ match, state }) {
+function MatchCard({ match, state, comments = [] }) {
     const status = state?.status || 'upcoming';
     const isLive = status === 'live';
     const isFinished = status === 'finished';
     const showScore = !!state && (isLive || isFinished);
+    const volleyballSummary =
+        showScore && isVolleyballMatch(match)
+            ? getVolleyballSetSummary(comments, match, getQuarters(match.sport), state)
+            : null;
+    const homeScore = volleyballSummary ? volleyballSummary.home : state?.homeScore || 0;
+    const awayScore = volleyballSummary ? volleyballSummary.away : state?.awayScore || 0;
 
     return (
         <Link to={`/live/${match.id}`} className={`mc status-${status}`}>
@@ -64,11 +71,11 @@ function MatchCard({ match, state }) {
             <div className="mc-teams">
                 <div className="mc-team">
                     <CampusBadge campus={match.teams.home} size="md" />
-                    {showScore && <span className="mc-score">{state.homeScore || 0}</span>}
+                    {showScore && <span className="mc-score">{homeScore}</span>}
                 </div>
                 <div className="mc-team">
                     <CampusBadge campus={match.teams.away} size="md" />
-                    {showScore && <span className="mc-score">{state.awayScore || 0}</span>}
+                    {showScore && <span className="mc-score">{awayScore}</span>}
                 </div>
             </div>
 
@@ -79,7 +86,9 @@ function MatchCard({ match, state }) {
 
 export default function LivePage() {
     const [statesMap, setStatesMap] = useState({});
+    const [commentsMap, setCommentsMap] = useState({});
     const [serverState, setServerState] = useState('connecting');
+    const volleyballMatchIds = useMemo(() => LIVE_MATCHES.filter(isVolleyballMatch).map((match) => match.id), []);
 
     useEffect(() => {
         let cancelled = false;
@@ -102,6 +111,37 @@ export default function LivePage() {
             clearInterval(timer);
         };
     }, []);
+
+    useEffect(() => {
+        let cancelled = false;
+        const pull = async () => {
+            try {
+                const activeVolleyballMatches = volleyballMatchIds.filter((matchId) => {
+                    const status = statesMap[matchId]?.status;
+                    return status === 'live' || status === 'finished';
+                });
+                if (activeVolleyballMatches.length === 0) {
+                    if (!cancelled) setCommentsMap({});
+                    return;
+                }
+                const entries = await Promise.all(
+                    activeVolleyballMatches.map(async (matchId) => {
+                        const data = await fetchComments(matchId, 0);
+                        return [matchId, data.comments || []];
+                    })
+                );
+                if (!cancelled) setCommentsMap(Object.fromEntries(entries));
+            } catch {
+                /* keep score cards on last known data */
+            }
+        };
+        pull();
+        const timer = setInterval(pull, POLL_MS);
+        return () => {
+            cancelled = true;
+            clearInterval(timer);
+        };
+    }, [statesMap, volleyballMatchIds]);
 
     /* LIVE 가 맨 위, 그 다음 시간 순. 종료는 맨 아래. */
     const { live, scheduled, finished } = useMemo(() => {
@@ -155,7 +195,12 @@ export default function LivePage() {
                         </header>
                         <div className="mc-grid">
                             {live.map((m) => (
-                                <MatchCard key={m.id} match={m} state={statesMap[m.id]} />
+                                <MatchCard
+                                    key={m.id}
+                                    match={m}
+                                    state={statesMap[m.id]}
+                                    comments={commentsMap[m.id] || []}
+                                />
                             ))}
                         </div>
                     </section>
@@ -174,7 +219,12 @@ export default function LivePage() {
                     ) : (
                         <div className="mc-grid">
                             {scheduled.map((m) => (
-                                <MatchCard key={m.id} match={m} state={statesMap[m.id]} />
+                                <MatchCard
+                                    key={m.id}
+                                    match={m}
+                                    state={statesMap[m.id]}
+                                    comments={commentsMap[m.id] || []}
+                                />
                             ))}
                         </div>
                     )}
@@ -188,7 +238,12 @@ export default function LivePage() {
                         </header>
                         <div className="mc-grid">
                             {finished.map((m) => (
-                                <MatchCard key={m.id} match={m} state={statesMap[m.id]} />
+                                <MatchCard
+                                    key={m.id}
+                                    match={m}
+                                    state={statesMap[m.id]}
+                                    comments={commentsMap[m.id] || []}
+                                />
                             ))}
                         </div>
                     </section>

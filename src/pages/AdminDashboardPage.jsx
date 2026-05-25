@@ -12,13 +12,55 @@ import {
     applyDivisionsToEvents,
 } from '../lib/dashboardStore';
 import { getRelayMatchId, getScorePair } from '../lib/dashboardRelay';
-import { fetchLiveStates, getStoredPin, setStoredPin } from '../lib/liveApi';
+import { LIVE_MATCHES, getQuarters } from '../data/data';
+import { fetchComments, fetchLiveStates, getStoredPin, setStoredPin } from '../lib/liveApi';
+import { getVolleyballSetSummary, isVolleyballMatch } from '../lib/volleyballSets';
 
 const RELAY_STATUS_LABELS = {
     upcoming: '경기 전',
     live: '진행중',
     finished: '경기종료',
 };
+
+function campusKeyFromTeamName(teamName) {
+    if (!teamName) return 'pending';
+    const campus = CAMPUS_OPTIONS.find((option) => teamName.includes(option.name));
+    return campus?.key || 'pending';
+}
+
+function getDivisionDisplayState(division, relayState, match, relayComments = []) {
+    const base = {
+        state: division.state || 'ready',
+        winnerKey: division.winnerKey || 'pending',
+        scoreText: null,
+    };
+    if (!relayState) return base;
+
+    const summary = isVolleyballMatch(match)
+        ? getVolleyballSetSummary(relayComments, match, getQuarters(match.sport), relayState)
+        : null;
+    const score = summary || getScorePair(relayState);
+    const next = {
+        ...base,
+        scoreText: `${score.home}:${score.away}`,
+    };
+
+    if (relayState.status === 'live') {
+        next.state = 'live';
+        next.winnerKey = 'pending';
+    } else if (relayState.status === 'finished') {
+        next.state = 'done';
+        if (score.home !== score.away) {
+            const winnerTeam = score.home > score.away ? match?.teams?.home : match?.teams?.away;
+            next.winnerKey = campusKeyFromTeamName(winnerTeam);
+        }
+    } else if (relayState.status === 'upcoming') {
+        next.state = 'ready';
+        next.winnerKey = 'pending';
+    }
+
+    return next;
+}
 
 function PinGate({ onSuccess }) {
     const [pin, setPin] = useState('');
@@ -59,19 +101,19 @@ function PinGate({ onSuccess }) {
     );
 }
 
-function DivisionControl({ division, relayState, onChange }) {
+function DivisionControl({ division, relayState, match, relayComments, onChange }) {
     // 서버에서 병합된 상태/승자 사용
-    const displayState = division.state || 'ready';
-    const winnerKey = division.winnerKey || 'pending';
+    const derived = getDivisionDisplayState(division, relayState, match, relayComments);
+    const displayState = derived.state;
+    const winnerKey = derived.winnerKey;
     const previewCampus = winnerKey === 'pending' ? CAMPUS.live : getCampus(winnerKey);
-    const { home, away } = getScorePair(relayState);
     const relayStatus = relayState ? RELAY_STATUS_LABELS[relayState.status] || relayState.status : null;
 
     return (
         <div className={`da-division-row is-${displayState}`}>
             <div className="da-division-main">
                 <strong>{division.label}</strong>
-                <span>{relayStatus ? `${relayStatus} · ${home}:${away}` : division.note}</span>
+                <span>{relayStatus ? `${relayStatus} · ${derived.scoreText}` : division.note}</span>
             </div>
             <label>
                 <span>상태</span>
@@ -115,7 +157,7 @@ function DivisionControl({ division, relayState, onChange }) {
     );
 }
 
-function EventAdminCard({ event, relayStatesMap, onChange }) {
+function EventAdminCard({ event, relayStatesMap, relayCommentsMap, liveMatchMap, onChange }) {
     return (
         <article className="da-event-card">
             <header className="da-event-head">
@@ -134,11 +176,14 @@ function EventAdminCard({ event, relayStatesMap, onChange }) {
                             <div className="da-division-list">
                                 {group.divisions.map((division) => {
                                     const matchId = getRelayMatchId(division);
+                                    const match = matchId ? liveMatchMap[matchId] : null;
                                     return (
                                         <DivisionControl
                                             division={division}
                                             key={division.id}
                                             relayState={matchId ? relayStatesMap[matchId] : null}
+                                            match={match}
+                                            relayComments={matchId ? relayCommentsMap[matchId] || [] : []}
                                             onChange={onChange}
                                         />
                                     );
@@ -151,11 +196,14 @@ function EventAdminCard({ event, relayStatesMap, onChange }) {
                 <div className="da-division-list">
                     {event.divisions.map((division) => {
                         const matchId = getRelayMatchId(division);
+                        const match = matchId ? liveMatchMap[matchId] : null;
                         return (
                             <DivisionControl
                                 division={division}
                                 key={division.id}
                                 relayState={matchId ? relayStatesMap[matchId] : null}
+                                match={match}
+                                relayComments={matchId ? relayCommentsMap[matchId] || [] : []}
                                 onChange={onChange}
                             />
                         );
@@ -170,16 +218,39 @@ export default function AdminDashboardPage() {
     const [authed, setAuthed] = useState(() => !!getStoredPin());
     const [events, setEvents] = useState(INITIAL_DASHBOARD_EVENTS);
     const [relayStatesMap, setRelayStatesMap] = useState({});
+    const [relayCommentsMap, setRelayCommentsMap] = useState({});
     const [savedAt, setSavedAt] = useState('');
+
+    const liveMatchMap = useMemo(() => {
+        return LIVE_MATCHES.reduce((acc, match) => {
+            acc[match.id] = match;
+            return acc;
+        }, {});
+    }, []);
+
+    const volleyballMatchIds = useMemo(() => {
+        const event = INITIAL_DASHBOARD_EVENTS.find((item) => item.id === 'volleyball');
+        return (event?.divisions || []).map(getRelayMatchId).filter(Boolean);
+    }, []);
 
     const counts = useMemo(() => {
         const divisions = events.flatMap(getEventDivisions);
+        const displayStates = divisions.map((division) => {
+            const matchId = getRelayMatchId(division);
+            const match = matchId ? liveMatchMap[matchId] : null;
+            return getDivisionDisplayState(
+                division,
+                matchId ? relayStatesMap[matchId] : null,
+                match,
+                matchId ? relayCommentsMap[matchId] || [] : []
+            ).state;
+        });
         return {
-            ready: divisions.filter((d) => d.state === 'ready').length,
-            live: divisions.filter((d) => d.state === 'live').length,
-            done: divisions.filter((d) => d.state === 'done').length,
+            ready: displayStates.filter((state) => state === 'ready').length,
+            live: displayStates.filter((state) => state === 'live').length,
+            done: displayStates.filter((state) => state === 'done').length,
         };
-    }, [events]);
+    }, [events, liveMatchMap, relayCommentsMap, relayStatesMap]);
 
     // 대시보드 결과 로드 (10초마다 폴링)
     const reloadDashboard = async () => {
@@ -204,6 +275,32 @@ export default function AdminDashboardPage() {
             window.clearInterval(timer);
         };
     }, [authed]);
+
+    useEffect(() => {
+        if (!authed || volleyballMatchIds.length === 0) return undefined;
+        let cancelled = false;
+
+        const pull = async () => {
+            try {
+                const entries = await Promise.all(
+                    volleyballMatchIds.map(async (matchId) => {
+                        const data = await fetchComments(matchId, 0);
+                        return [matchId, data.comments || []];
+                    })
+                );
+                if (!cancelled) setRelayCommentsMap(Object.fromEntries(entries));
+            } catch {
+                /* relay comments unavailable */
+            }
+        };
+
+        pull();
+        const timer = window.setInterval(pull, 3000);
+        return () => {
+            cancelled = true;
+            window.clearInterval(timer);
+        };
+    }, [authed, volleyballMatchIds]);
 
     // 실시간 경기 점수 폴링 (3초마다)
     useEffect(() => {
@@ -317,6 +414,8 @@ export default function AdminDashboardPage() {
                             event={event}
                             key={event.id}
                             relayStatesMap={relayStatesMap}
+                            relayCommentsMap={relayCommentsMap}
+                            liveMatchMap={liveMatchMap}
                             onChange={changeDivision}
                         />
                     ))}
