@@ -85,12 +85,17 @@ export default function LineupPage() {
                             key={s}
                             type="button"
                             className={`lp-sport-tab ${sport === s ? 'active' : ''}`}
-                            onClick={() => setSport(s)}
+                            onClick={() => {
+                                setSport(s); // 1. 누른 종목으로 변경
+                                const newCategories = getAllCategoriesForSport(s); // 2. 바뀐 종목의 카테고리 목록 불러오기
+                                setCategory(newCategories[0] || ''); // 3. 무조건 첫 번째 카테고리로 덮어쓰기
+                            }}
                         >
                             {s}
                         </button>
                     ))}
                 </div>
+                
 
                 {/* 카테고리 칩 */}
                 {categories.length > 0 && (
