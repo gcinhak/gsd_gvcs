@@ -95,7 +95,7 @@ export default function LineupPage() {
                         </button>
                     ))}
                 </div>
-                
+
 
                 {/* 카테고리 칩 */}
                 {categories.length > 0 && (
@@ -120,7 +120,10 @@ export default function LineupPage() {
                         <button
                             type="button"
                             className={`lp-campus-pill is-all ${campusFilter === CAMPUS_FILTER_ALL ? 'active' : ''}`}
-                            onClick={() => setCampusFilter(CAMPUS_FILTER_ALL)}
+                            onClick={() => {
+                                setCampusFilter(CAMPUS_FILTER_ALL);
+                                setCategory(categories[0] || ''); 
+                            }}
                         >
                             전체
                         </button>
@@ -136,7 +139,10 @@ export default function LineupPage() {
                                     type="button"
                                     className={`lp-campus-pill is-campus ${active ? 'active' : ''}`}
                                     style={style}
-                                    onClick={() => setCampusFilter(c)}
+                                    onClick={() => {
+                                        setCampusFilter(c);
+                                        setCategory(categories[0] || ''); 
+                                    }}
                                 >
                                     {c}
                                 </button>
@@ -144,6 +150,7 @@ export default function LineupPage() {
                         })}
                     </div>
                 </div>
+
 
                 {/* 캠퍼스 카드: 단일 vs 그리드 — 완전 다른 래퍼로 분기 */}
                 {activeCategory ? (
