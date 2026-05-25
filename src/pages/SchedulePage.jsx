@@ -1,5 +1,3 @@
-<<<<<<< HEAD
-=======
 import { useState, Fragment } from 'react';
 import PageHeader from '../components/PageHeader';
 import CampusBadge from '../components/CampusBadge';
@@ -243,7 +241,7 @@ export default function SchedulePage() {
                                 key={key}
                                 className={`day-tab ${activeDay === key ? 'active' : ''}`}
                                 onClick={() => setActiveDay(key)}
-                            >
+                            >s
                                 <span className="day-tab-emoji" aria-hidden>
                                     {d.emoji}
                                 </span>
@@ -277,4 +275,3 @@ export default function SchedulePage() {
         </div>
     );
 }
->>>>>>> 2ae8f0c0917f37795e9860d749aa8aaf62e111bc
