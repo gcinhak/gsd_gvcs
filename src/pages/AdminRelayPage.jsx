@@ -11,7 +11,7 @@ import {
     getStoredPin,
     setStoredPin,
 } from '../lib/liveApi';
-import { getVolleyballSetSummary, isVolleyballMatch } from '../lib/volleyballSets';
+import { VOLLEYBALL_SET_END_TEXT, getVolleyballSetSummary, isVolleyballMatch } from '../lib/volleyballSets';
 
 const STATUS_OPTIONS = ['upcoming', 'live', 'finished'];
 const COMMENT_TYPES = [
@@ -207,6 +207,28 @@ function MatchAdminCard({ match, state, comments, onUpdate, onAddComment, onDele
         }
     };
 
+    const closeCurrentSet = async () => {
+        if (!volleyballSummary || !state?.currentQuarter) return;
+        const currentSet = volleyballSummary.rows.find((row) => row.label === state.currentQuarter);
+        if (!currentSet || currentSet.isEnded) return;
+        if (currentSet.home === currentSet.away) {
+            alert('동점 세트는 종료할 수 없습니다.');
+            return;
+        }
+        const winnerTeam = currentSet.home > currentSet.away ? match.teams.home : match.teams.away;
+        setPosting(true);
+        try {
+            await onAddComment(match.id, {
+                type: 'normal',
+                content: `${state.currentQuarter} ${VOLLEYBALL_SET_END_TEXT}: ${winnerTeam} 승`,
+                quarter: state.currentQuarter,
+            });
+        } catch (err) {
+            alert('세트 종료 저장 실패: ' + err.message);
+        }
+        setPosting(false);
+    };
+
     const computeScoreSide = (team) => {
         if (team === match.teams.home) return 'home';
         if (team === match.teams.away) return 'away';
@@ -263,6 +285,12 @@ function MatchAdminCard({ match, state, comments, onUpdate, onAddComment, onDele
         : null;
     const displayHome = volleyballSummary ? volleyballSummary.home : serverHome;
     const displayAway = volleyballSummary ? volleyballSummary.away : serverAway;
+    const currentVolleyballSet = volleyballSummary?.rows.find((row) => row.label === state?.currentQuarter);
+    const canCloseCurrentSet =
+        Boolean(currentVolleyballSet) &&
+        !currentVolleyballSet.isEnded &&
+        currentVolleyballSet.home !== currentVolleyballSet.away &&
+        (currentVolleyballSet.home > 0 || currentVolleyballSet.away > 0);
 
     return (
         <article className={`admin-card ${isLive ? 'is-live' : ''}`} style={cardStyle}>
@@ -353,6 +381,16 @@ function MatchAdminCard({ match, state, comments, onUpdate, onAddComment, onDele
                             {q}
                         </button>
                     ))}
+                    {volleyballSummary && state?.currentQuarter && (
+                        <button
+                            type="button"
+                            className="ac-set-end-btn"
+                            onClick={closeCurrentSet}
+                            disabled={!canCloseCurrentSet || posting}
+                        >
+                            세트 종료
+                        </button>
+                    )}
                 </div>
             </div>
 

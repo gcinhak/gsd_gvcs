@@ -111,10 +111,50 @@ function getCellBadgeCampus(winnerKey, displayState) {
     return getCampus('pending');
 }
 
+function campusKeyFromTeamName(teamName) {
+    if (!teamName) return 'pending';
+    const campus = CAMPUS_OPTIONS.find((option) => teamName.includes(option.name));
+    return campus?.key || 'pending';
+}
+
+function getRelayDisplayState(event, division, match, relayState, relayComments = []) {
+    const base = {
+        state: division.state || 'ready',
+        winnerKey: division.winnerKey || 'pending',
+    };
+    if (!relayState || !match) return base;
+
+    if (isVolleyballEvent(event)) {
+        const summary = getVolleyballSetSummary(relayComments, match, getQuarters(match.sport), relayState);
+        const winnerTeam = summary.home >= 2 ? match.teams.home : summary.away >= 2 ? match.teams.away : null;
+        if (winnerTeam) {
+            return {
+                state: 'done',
+                winnerKey: campusKeyFromTeamName(winnerTeam),
+            };
+        }
+    }
+
+    if (relayState.status === 'finished') {
+        const { home, away } = getScorePair(relayState);
+        const winnerTeam = home > away ? match.teams.home : away > home ? match.teams.away : null;
+        return {
+            state: 'done',
+            winnerKey: winnerTeam ? campusKeyFromTeamName(winnerTeam) : 'pending',
+        };
+    }
+
+    if (relayState.status === 'live') return { state: 'live', winnerKey: 'pending' };
+    if (relayState.status === 'upcoming') return { state: 'ready', winnerKey: 'pending' };
+
+    return base;
+}
+
 function ResultCell({ event, division, match, relayState, relayComments = [], onOpen }) {
     // displayState와 winnerKey는 서버에서 이미 병합된 값 사용
-    const displayState = division.state || 'ready';
-    const winnerKey = division.winnerKey || 'pending';
+    const relayDisplay = getRelayDisplayState(event, division, match, relayState, relayComments);
+    const displayState = relayDisplay.state;
+    const winnerKey = relayDisplay.winnerKey;
     const campus = getCellBadgeCampus(winnerKey, displayState);
     const finalScore = formatDashboardScore(event, division, relayState, relayComments, match);
     const showScore = shouldShowDashboardScore(event, division);
