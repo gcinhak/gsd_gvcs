@@ -1,4 +1,4 @@
-import { CAMPUS_COLORS } from '../data';
+import { CAMPUS_COLORS } from '../data/data';
 
 export default function CampusBadge({ campus, size = 'md', soft = false, className = '' }) {
     if (!campus) {

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { LIVE_MATCHES, CAMPUS_COLORS, getQuarters } from '../data';
+import { LIVE_MATCHES, CAMPUS_COLORS, getQuarters } from '../data/data';
 import CampusBadge from '../components/CampusBadge';
 import {
     adminPing,
@@ -104,7 +104,9 @@ function MatchListView({ matches, statesMap, onSelect }) {
                         </div>
                         <div className="adm-row-event">
                             <span className="adm-sport">{m.sport}</span>
-                            <span className="adm-cat">{m.round} · {m.category}</span>
+                            <span className="adm-cat">
+                                {m.round} · {m.category}
+                            </span>
                         </div>
                         <div className="adm-row-teams">
                             <CampusBadge campus={m.teams.home} size="sm" />
@@ -143,7 +145,6 @@ function MatchAdminCard({ match, state, comments, onUpdate, onAddComment, onDele
 
     const [type, setType] = useState('normal');
     const [content, setContent] = useState('');
-    const [msgQuarter, setMsgQuarter] = useState(state?.currentQuarter || '');
     const [scoreTeam, setScoreTeam] = useState('');
     const [scoreAmount, setScoreAmount] = useState(0);
     const [posting, setPosting] = useState(false);
@@ -155,7 +156,12 @@ function MatchAdminCard({ match, state, comments, onUpdate, onAddComment, onDele
     const save = async () => {
         setSaving(true);
         try {
-            await onUpdate(match.id, { status, youtubeId: youtubeId || null });
+            await onUpdate(match.id, {
+                status,
+                youtubeId: youtubeId || null,
+                homeTeam: match.teams.home, // data.js의 팀 이름
+                awayTeam: match.teams.away,
+            });
             setDirty(false);
         } catch (e) {
             alert('저장 실패: ' + e.message);
@@ -166,7 +172,6 @@ function MatchAdminCard({ match, state, comments, onUpdate, onAddComment, onDele
     const quickQuarter = async (q) => {
         try {
             await onUpdate(match.id, { currentQuarter: q || null });
-            setMsgQuarter(q || '');
         } catch (err) {
             alert('쿼터 변경 실패: ' + err.message);
         }
@@ -196,12 +201,12 @@ function MatchAdminCard({ match, state, comments, onUpdate, onAddComment, onDele
                 await onAddComment(match.id, {
                     type: 'score',
                     content: fullMsg,
-                    quarter: msgQuarter || null,
+                    quarter: state?.currentQuarter || null,
                     scoreTeam,
                     scoreAmount: amount,
                     scoreSide: side,
                 });
-                // 팀/점수만 리셋, 쿼터·메시지 입력은 유지
+                // 팀/점수·메시지만 리셋 (쿼터는 매치 상단에서 관리)
                 setScoreTeam('');
                 setScoreAmount(0);
                 setContent('');
@@ -209,7 +214,7 @@ function MatchAdminCard({ match, state, comments, onUpdate, onAddComment, onDele
                 await onAddComment(match.id, {
                     type,
                     content: extra,
-                    quarter: msgQuarter || null,
+                    quarter: state?.currentQuarter || null,
                 });
                 setContent('');
             }
@@ -247,10 +252,15 @@ function MatchAdminCard({ match, state, comments, onUpdate, onAddComment, onDele
                     <span>상태</span>
                     <select
                         value={status}
-                        onChange={(e) => { setStatus(e.target.value); setDirty(true); }}
+                        onChange={(e) => {
+                            setStatus(e.target.value);
+                            setDirty(true);
+                        }}
                     >
                         {STATUS_OPTIONS.map((s) => (
-                            <option key={s} value={s}>{s}</option>
+                            <option key={s} value={s}>
+                                {s}
+                            </option>
                         ))}
                     </select>
                 </label>
@@ -260,7 +270,10 @@ function MatchAdminCard({ match, state, comments, onUpdate, onAddComment, onDele
                         type="text"
                         placeholder="비우면 문자 중계만"
                         value={youtubeId}
-                        onChange={(e) => { setYoutubeId(e.target.value); setDirty(true); }}
+                        onChange={(e) => {
+                            setYoutubeId(e.target.value);
+                            setDirty(true);
+                        }}
                     />
                 </label>
                 <button type="button" className="ac-save" onClick={save} disabled={!dirty || saving}>
@@ -309,31 +322,41 @@ function MatchAdminCard({ match, state, comments, onUpdate, onAddComment, onDele
             {isLive && (
                 <>
                     <form onSubmit={post} className={`ac-msg-form ${isScoringMode ? 'is-scoring' : ''}`}>
-                        <div className="ac-msg-row ac-msg-row-1">
-                            <select
-                                className="ac-field-quarter"
-                                value={msgQuarter}
-                                onChange={(e) => setMsgQuarter(e.target.value)}
-                                aria-label="쿼터"
-                            >
-                                <option value="">쿼터 없음</option>
-                                {quarters.map((q) => (
-                                    <option key={q} value={q}>{q}</option>
-                                ))}
-                            </select>
+                        {/* 팀 — 캠퍼스 색 뱃지 */}
+                        <div className="ac-msg-pillrow">
+                            <span className="ac-pillrow-label">팀</span>
+                            <div className="ac-team-pills">
+                                <button
+                                    type="button"
+                                    className={`ac-team-pill is-none ${!scoreTeam ? 'active' : ''}`}
+                                    onClick={() => setScoreTeam('')}
+                                >
+                                    없음
+                                </button>
+                                {ALL_CAMPUSES.map((c) => {
+                                    const cc = CAMPUS_COLORS[c] || {};
+                                    const active = scoreTeam === c;
+                                    const style = active
+                                        ? { background: cc.bg, color: '#fff', borderColor: cc.bg }
+                                        : { background: cc.soft, color: cc.bg, borderColor: cc.bg };
+                                    return (
+                                        <button
+                                            key={c}
+                                            type="button"
+                                            className={`ac-team-pill ${active ? 'active' : ''}`}
+                                            style={style}
+                                            onClick={() => setScoreTeam(c)}
+                                        >
+                                            {c}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
 
-                            <select
-                                className="ac-field-team"
-                                value={scoreTeam}
-                                onChange={(e) => setScoreTeam(e.target.value)}
-                                aria-label="득점 팀"
-                            >
-                                <option value="">팀 (득점)</option>
-                                {ALL_CAMPUSES.map((c) => (
-                                    <option key={c} value={c}>{c}</option>
-                                ))}
-                            </select>
-
+                        {/* 점수 + 타입 */}
+                        <div className="ac-msg-pillrow">
+                            <span className="ac-pillrow-label">점수</span>
                             <div className="ac-score-pick">
                                 {SCORE_OPTIONS.map((n) => (
                                     <button
@@ -346,20 +369,22 @@ function MatchAdminCard({ match, state, comments, onUpdate, onAddComment, onDele
                                     </button>
                                 ))}
                             </div>
-
                             <select
-                                className="ac-field-type"
+                                className="ac-field-type ac-field-type-right"
                                 value={isScoringMode ? 'score' : type}
                                 onChange={(e) => setType(e.target.value)}
                                 disabled={isScoringMode}
                                 aria-label="메시지 타입"
                             >
                                 {COMMENT_TYPES.map((t) => (
-                                    <option key={t.key} value={t.key}>{t.label}</option>
+                                    <option key={t.key} value={t.key}>
+                                        {t.label}
+                                    </option>
                                 ))}
                             </select>
                         </div>
 
+                        {/* 메시지 + 전송 */}
                         <div className="ac-msg-row ac-msg-row-2">
                             <input
                                 type="text"
@@ -380,33 +405,37 @@ function MatchAdminCard({ match, state, comments, onUpdate, onAddComment, onDele
                         {comments.length === 0 ? (
                             <div className="ac-feed-empty">아직 메시지 없음</div>
                         ) : (
-                            comments.slice().reverse().map((c) => (
-                                <div key={c.id} className={`ac-msg type-${c.type}`}>
-                                    {c.quarter && <span className="ac-msg-quarter">{c.quarter}</span>}
-                                    <span className="ac-msg-type">
-                                        {COMMENT_TYPES.find((t) => t.key === c.type)?.label || c.type}
-                                    </span>
-                                    <span className="ac-msg-content">{c.content}</span>
-                                    {c.scoreAmount > 0 && c.scoreSide && (
-                                        <span className="ac-msg-score-tag">−{c.scoreAmount}점 롤백</span>
-                                    )}
-                                    <button
-                                        type="button"
-                                        className="ac-msg-del"
-                                        onClick={() => {
-                                            const msg = c.scoreAmount > 0 && c.scoreSide
-                                                ? `이 메시지를 삭제하면 ${c.scoreTeam} 점수에서 ${c.scoreAmount}점이 차감됩니다. 계속할까요?`
-                                                : '이 메시지를 삭제할까요?';
-                                            if (window.confirm(msg)) {
-                                                onDeleteComment(match.id, c.id);
-                                            }
-                                        }}
-                                        aria-label="삭제"
-                                    >
-                                        ✕
-                                    </button>
-                                </div>
-                            ))
+                            comments
+                                .slice()
+                                .reverse()
+                                .map((c) => (
+                                    <div key={c.id} className={`ac-msg type-${c.type}`}>
+                                        {c.quarter && <span className="ac-msg-quarter">{c.quarter}</span>}
+                                        <span className="ac-msg-type">
+                                            {COMMENT_TYPES.find((t) => t.key === c.type)?.label || c.type}
+                                        </span>
+                                        <span className="ac-msg-content">{c.content}</span>
+                                        {c.scoreAmount > 0 && c.scoreSide && (
+                                            <span className="ac-msg-score-tag">−{c.scoreAmount}점 롤백</span>
+                                        )}
+                                        <button
+                                            type="button"
+                                            className="ac-msg-del"
+                                            onClick={() => {
+                                                const msg =
+                                                    c.scoreAmount > 0 && c.scoreSide
+                                                        ? `이 메시지를 삭제하면 ${c.scoreTeam} 점수에서 ${c.scoreAmount}점이 차감됩니다. 계속할까요?`
+                                                        : '이 메시지를 삭제할까요?';
+                                                if (window.confirm(msg)) {
+                                                    onDeleteComment(match.id, c.id);
+                                                }
+                                            }}
+                                            aria-label="삭제"
+                                        >
+                                            ✕
+                                        </button>
+                                    </div>
+                                ))
                         )}
                     </div>
                 </>
@@ -527,22 +556,16 @@ export default function AdminRelayPage() {
                                 : '아래 목록에서 중계할 매치를 선택하세요.'}
                         </p>
                     </div>
-                    <button className="ar-logout" onClick={logout}>로그아웃</button>
+                    <button className="ar-logout" onClick={logout}>
+                        로그아웃
+                    </button>
                 </header>
 
                 {!selectedMatch ? (
-                    <MatchListView
-                        matches={LIVE_MATCHES}
-                        statesMap={statesMap}
-                        onSelect={setSelectedMatchId}
-                    />
+                    <MatchListView matches={LIVE_MATCHES} statesMap={statesMap} onSelect={setSelectedMatchId} />
                 ) : (
                     <>
-                        <button
-                            type="button"
-                            className="back-btn ar-back"
-                            onClick={() => setSelectedMatchId(null)}
-                        >
+                        <button type="button" className="back-btn ar-back" onClick={() => setSelectedMatchId(null)}>
                             ← 매치 목록
                         </button>
                         <MatchAdminCard

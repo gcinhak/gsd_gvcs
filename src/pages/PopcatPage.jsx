@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import PageHeader from '../components/PageHeader';
 import CampusBadge from '../components/CampusBadge';
 import AnimatedNumber from '../components/AnimatedNumber';
-import { CAMPUS_COLORS } from '../data';
+import { CAMPUS_COLORS } from '../data/data';
 import { fetchCounts, isPopcatApiConfigured } from '../lib/popcatApi';
 
 const LOCAL_STORAGE_KEY = 'gsd-popcat-counts-v2';
@@ -59,7 +59,7 @@ function readMyClicks() {
     }
 }
 
-export default function PopcatPage() {
+export default function PopcatPage({ embedded = false }) {
     const [counts, setCounts] = useState(() => (isPopcatApiConfigured ? { ...ZERO } : readLocal()));
     const [myCounts, setMyCounts] = useState(() => readMyClicks()); // ← 추가
     const [openCampus, setOpenCampus] = useState(null);
@@ -85,6 +85,7 @@ export default function PopcatPage() {
     const uiDisabled = IS_DISABLED || isBanned || !hasUuid; // 💡 !hasUuid 추가
     const popIdRef = useRef(0);
     const releaseTimers = useRef({});
+    const activePointers = useRef(new Set()); // ← 추가
     const pendingRef = useRef({ ...ZERO });
     const flushTimerRef = useRef(null);
     const schedulerRef = useRef(() => {});
@@ -408,13 +409,15 @@ export default function PopcatPage() {
     const isTied = total > 0 && ranked.every((c) => counts[c] === leaderCount);
 
     return (
-        <div className="page popcat-page">
+        <div className={`${embedded ? '' : 'page '}popcat-page`}>
             <div className="popcat-inner">
-                <PageHeader
-                    eyebrow="POPCAT · BETA"
-                    title="캠퍼스 대결 응원 카운터"
-                    description="문경 · 음성 · 세종 — 가장 많이 응원한 캠퍼스가 이깁니다."
-                />
+                {!embedded && (
+                    <PageHeader
+                        eyebrow="POPCAT · BETA"
+                        title="캠퍼스 대결 응원 카운터"
+                        description="문경 · 음성 · 세종 — 가장 많이 응원한 캠퍼스가 이깁니다."
+                    />
+                )}
 
                 <section className="pop-board">
                     <div className="pb-head">
@@ -488,7 +491,15 @@ export default function PopcatPage() {
                                 }}
                                 onPointerDown={(e) => {
                                     e.preventDefault();
+                                    if (activePointers.current.size > 0) return; // 두 번째 손가락부터 무시
+                                    activePointers.current.add(e.pointerId);
                                     press(campus);
+                                }}
+                                onPointerUp={(e) => {
+                                    activePointers.current.delete(e.pointerId);
+                                }}
+                                onPointerCancel={(e) => {
+                                    activePointers.current.delete(e.pointerId); // 스크롤 등으로 터치가 취소될 때 정리
                                 }}
                                 aria-label={`${campus} 캠퍼스 응원하기`}
                             >

@@ -9,13 +9,15 @@ const SHOW_DEV_TABS = import.meta.env.DEV;
 
 const NAV_ITEMS = [
     { to: '/', label: '홈', end: true },
+    ...(SHOW_DEV_TABS ? [{ to: '/dashboard', label: '현황판' }] : []),
     ...(SHOW_DEV_TABS ? [{ to: '/live', label: 'LIVE', live: true }] : []),
     { to: '/schedule', label: '경기 일정' },
     ...(SHOW_DEV_TABS ? [{ to: '/lineup', label: '라인업' }] : []),
     { to: '/cheers', label: '응원전' },
     //{ to: '/games', label: '경기 영상' },
     { to: '/history', label: '역대 전적' },
-    { to: '/popcat', label: '팝캣' },
+    { to: '/popcat', label: '팝캣', disabled: true },
+    ...(SHOW_DEV_TABS ? [{ to: '/cheer', label: '응원' }] : []),
     { to: '/upcoming', label: '예정 기능' },
 ];
 
@@ -32,20 +34,31 @@ export default function Layout() {
                     </Link>
 
                     <nav className={`primary-nav ${menuOpen ? 'open' : ''}`}>
-                        {NAV_ITEMS.map((item) => (
-                            <NavLink
-                                key={item.to}
-                                to={item.to}
-                                end={item.end}
-                                className={({ isActive }) =>
-                                    `nav-link ${isActive ? 'active' : ''} ${item.live ? 'is-live' : ''}`
-                                }
-                                onClick={() => setMenuOpen(false)}
-                            >
-                                {item.live && <span className="live-dot" aria-hidden />}
-                                {item.label}
-                            </NavLink>
-                        ))}
+                        {NAV_ITEMS.map((item) =>
+                            item.disabled ? (
+                                <span
+                                    key={item.to}
+                                    className="nav-link is-disabled"
+                                    aria-disabled="true"
+                                    title="기능 일시 중단됨"
+                                >
+                                    {item.label}
+                                </span>
+                            ) : (
+                                <NavLink
+                                    key={item.to}
+                                    to={item.to}
+                                    end={item.end}
+                                    className={({ isActive }) =>
+                                        `nav-link ${isActive ? 'active' : ''} ${item.live ? 'is-live' : ''}`
+                                    }
+                                    onClick={() => setMenuOpen(false)}
+                                >
+                                    {item.live && <span className="live-dot" aria-hidden />}
+                                    {item.label}
+                                </NavLink>
+                            )
+                        )}
                     </nav>
 
                     <div className="header-tools">

@@ -1,0 +1,27 @@
+// 종목 부문(division) → Live Relay 경기 ID 매핑.
+// 대시보드에서 라이브 점수를 표시할 때, 어떤 경기의 점수를 보여줄지 찾는 데 사용.
+// (승패 판정/상태 병합은 Worker의 /api/dashboard 가 담당)
+export const DIVISION_RELAY_MATCHES = {
+    'soccer-high-men': 'sat-fb-4',
+    'soccer-mid-men': 'sat-fb-2',
+    'soccer-mix-women': 'sat-fb-3',
+    'basketball-high-men': 'thu-bb-4',
+    'basketball-mid-men': 'thu-bb-3',
+    'basketball-mix-women': 'thu-bb-2',
+    'volleyball-high-men': 'fri-vb-6',
+    'volleyball-mid-men': 'fri-vb-4',
+    'volleyball-mix-women': 'fri-vb-5',
+    'tk-sparring-mid': 'sat-tk-1',
+    'tk-sparring-high': 'sat-tk-2',
+};
+
+export function getRelayMatchId(division) {
+    return division.relayMatchId || DIVISION_RELAY_MATCHES[division.id] || null;
+}
+
+export function getScorePair(relayState) {
+    return {
+        home: Number(relayState?.homeScore) || 0,
+        away: Number(relayState?.awayScore) || 0,
+    };
+}

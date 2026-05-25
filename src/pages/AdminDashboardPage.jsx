@@ -1,29 +1,35 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
+    CAMPUS,
     CAMPUS_OPTIONS,
     STATE_OPTIONS,
+    INITIAL_DASHBOARD_EVENTS,
     getCampus,
     getEventDivisions,
-    readDashboardEvents,
-    resetDashboardEvents,
-    updateDivision,
-    writeDashboardEvents,
+    fetchDashboard,
+    saveDivision,
+    resetDashboardRemote,
+    applyDivisionsToEvents,
 } from '../lib/dashboardStore';
+import { getRelayMatchId, getScorePair } from '../lib/dashboardRelay';
+import { fetchLiveStates, getStoredPin, setStoredPin } from '../lib/liveApi';
 
-const ADMIN_PASSWORD = 'gvcs2026';
+const RELAY_STATUS_LABELS = {
+    upcoming: '경기 전',
+    live: '진행중',
+    finished: '경기종료',
+};
 
-function PasswordGate({ onSuccess }) {
-    const [password, setPassword] = useState('');
+function PinGate({ onSuccess }) {
+    const [pin, setPin] = useState('');
     const [error, setError] = useState('');
 
     const submit = (e) => {
         e.preventDefault();
-        if (password === ADMIN_PASSWORD) {
-            window.sessionStorage.setItem('gvcs-dashboard-admin', 'ok');
-            onSuccess();
-            return;
-        }
-        setError('비밀번호가 올바르지 않습니다.');
+        if (!pin.trim()) return;
+        // PIN 유효성은 첫 저장 시 서버가 검증. 여기서는 저장만.
+        setStoredPin(pin.trim());
+        onSuccess();
     };
 
     return (
@@ -32,16 +38,16 @@ function PasswordGate({ onSuccess }) {
                 <div className="da-gate-card">
                     <span className="da-kicker">DASHBOARD ADMIN</span>
                     <h1>현황판 관리자</h1>
-                    <p>비밀번호를 입력하면 종목별 결과를 바로 수정할 수 있습니다.</p>
+                    <p>관리자 PIN을 입력하면 종목별 경기 결과를 수정할 수 있습니다.</p>
                     <form className="da-login-form" onSubmit={submit}>
                         <input
                             type="password"
-                            value={password}
+                            value={pin}
                             onChange={(e) => {
-                                setPassword(e.target.value);
+                                setPin(e.target.value);
                                 setError('');
                             }}
-                            placeholder="관리자 비밀번호"
+                            placeholder="관리자 PIN"
                             autoFocus
                         />
                         <button type="submit">입장</button>
@@ -53,21 +59,23 @@ function PasswordGate({ onSuccess }) {
     );
 }
 
-function DivisionControl({ event, division, onChange }) {
-    const campus = getCampus(division.winnerKey);
+function DivisionControl({ division, relayState, onChange }) {
+    // 서버에서 병합된 상태/승자 사용
+    const displayState = division.state || 'ready';
+    const winnerKey = division.winnerKey || 'pending';
+    const previewCampus = winnerKey === 'pending' ? CAMPUS.live : getCampus(winnerKey);
+    const { home, away } = getScorePair(relayState);
+    const relayStatus = relayState ? RELAY_STATUS_LABELS[relayState.status] || relayState.status : null;
 
     return (
-        <div className={`da-division-row is-${division.state}`}>
+        <div className={`da-division-row is-${displayState}`}>
             <div className="da-division-main">
                 <strong>{division.label}</strong>
-                <span>{division.note}</span>
+                <span>{relayStatus ? `${relayStatus} · ${home}:${away}` : division.note}</span>
             </div>
             <label>
                 <span>상태</span>
-                <select
-                    value={division.state}
-                    onChange={(e) => onChange(event.id, division.id, { state: e.target.value })}
-                >
+                <select value={displayState} onChange={(e) => onChange(division, { state: e.target.value })}>
                     {STATE_OPTIONS.map((state) => (
                         <option key={state.key} value={state.key}>
                             {state.label}
@@ -76,18 +84,23 @@ function DivisionControl({ event, division, onChange }) {
                 </select>
             </label>
             <label>
-                <span>이긴 캠퍼스</span>
+                <span>승리 캠퍼스</span>
                 <select
-                    value={division.winnerKey === 'pending' ? '' : division.winnerKey}
+                    value={winnerKey === 'pending' ? '' : winnerKey}
                     onChange={(e) => {
-                        const winnerKey = e.target.value || 'pending';
-                        onChange(event.id, division.id, {
-                            winnerKey,
-                            state: winnerKey === 'pending' ? 'ready' : division.state === 'ready' ? 'done' : division.state,
+                        const winnerKeyValue = e.target.value || 'pending';
+                        onChange(division, {
+                            winnerKey: winnerKeyValue,
+                            state:
+                                winnerKeyValue === 'pending'
+                                    ? 'ready'
+                                    : displayState === 'ready'
+                                      ? 'done'
+                                      : displayState,
                         });
                     }}
                 >
-                    <option value="">선택 전</option>
+                    <option value="">선택 안 함</option>
                     {CAMPUS_OPTIONS.map((campusOption) => (
                         <option key={campusOption.key} value={campusOption.key}>
                             {campusOption.name}
@@ -96,13 +109,13 @@ function DivisionControl({ event, division, onChange }) {
                 </select>
             </label>
             <div className="da-campus-preview">
-                <span className={`db-campus-badge ${campus.className} size-sm`}>{campus.name}</span>
+                <span className={`db-campus-badge ${previewCampus.className} size-sm`}>{previewCampus.name}</span>
             </div>
         </div>
     );
 }
 
-function EventAdminCard({ event, onChange }) {
+function EventAdminCard({ event, relayStatesMap, onChange }) {
     return (
         <article className="da-event-card">
             <header className="da-event-head">
@@ -110,10 +123,6 @@ function EventAdminCard({ event, onChange }) {
                     <span>{event.status}</span>
                     <h2>{event.sport}</h2>
                     <p>{event.rule}</p>
-                </div>
-                <div className="da-event-winner">
-                    <span>현재 선두</span>
-                    <strong>{getCampus(event.winnerKey).name}</strong>
                 </div>
             </header>
 
@@ -123,23 +132,34 @@ function EventAdminCard({ event, onChange }) {
                         <section className="da-group" key={group.id}>
                             <h3>{group.title}</h3>
                             <div className="da-division-list">
-                                {group.divisions.map((division) => (
-                                    <DivisionControl
-                                        event={event}
-                                        division={division}
-                                        key={division.id}
-                                        onChange={onChange}
-                                    />
-                                ))}
+                                {group.divisions.map((division) => {
+                                    const matchId = getRelayMatchId(division);
+                                    return (
+                                        <DivisionControl
+                                            division={division}
+                                            key={division.id}
+                                            relayState={matchId ? relayStatesMap[matchId] : null}
+                                            onChange={onChange}
+                                        />
+                                    );
+                                })}
                             </div>
                         </section>
                     ))}
                 </div>
             ) : (
                 <div className="da-division-list">
-                    {event.divisions.map((division) => (
-                        <DivisionControl event={event} division={division} key={division.id} onChange={onChange} />
-                    ))}
+                    {event.divisions.map((division) => {
+                        const matchId = getRelayMatchId(division);
+                        return (
+                            <DivisionControl
+                                division={division}
+                                key={division.id}
+                                relayState={matchId ? relayStatesMap[matchId] : null}
+                                onChange={onChange}
+                            />
+                        );
+                    })}
                 </div>
             )}
         </article>
@@ -147,46 +167,111 @@ function EventAdminCard({ event, onChange }) {
 }
 
 export default function AdminDashboardPage() {
-    const [authed, setAuthed] = useState(() => window.sessionStorage.getItem('gvcs-dashboard-admin') === 'ok');
-    const [events, setEvents] = useState(() => readDashboardEvents());
+    const [authed, setAuthed] = useState(() => !!getStoredPin());
+    const [events, setEvents] = useState(INITIAL_DASHBOARD_EVENTS);
+    const [relayStatesMap, setRelayStatesMap] = useState({});
     const [savedAt, setSavedAt] = useState('');
 
     const counts = useMemo(() => {
         const divisions = events.flatMap(getEventDivisions);
         return {
-            ready: divisions.filter((division) => division.state === 'ready').length,
-            live: divisions.filter((division) => division.state === 'live').length,
-            done: divisions.filter((division) => division.state === 'done').length,
+            ready: divisions.filter((d) => d.state === 'ready').length,
+            live: divisions.filter((d) => d.state === 'live').length,
+            done: divisions.filter((d) => d.state === 'done').length,
         };
     }, [events]);
 
-    useEffect(() => {
-        if (authed) writeDashboardEvents(events);
-    }, [authed, events]);
-
-    const changeDivision = (eventId, divisionId, patch) => {
-        setEvents((prev) => {
-            const next = updateDivision(prev, eventId, divisionId, patch);
-            writeDashboardEvents(next);
-            setSavedAt(new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
-            return next;
-        });
+    // 대시보드 결과 로드 (10초마다 폴링)
+    const reloadDashboard = async () => {
+        try {
+            const { divisions } = await fetchDashboard();
+            setEvents(applyDivisionsToEvents(INITIAL_DASHBOARD_EVENTS, divisions));
+        } catch {
+            /* 무시 */
+        }
     };
 
-    const resetAll = () => {
-        if (!window.confirm('모든 종목 결과를 경기 전/선택 전 상태로 완전히 초기화할까요?')) return;
-        const next = resetDashboardEvents();
-        setEvents(next);
-        writeDashboardEvents(next);
-        setSavedAt('완전 초기화');
+    useEffect(() => {
+        if (!authed) return undefined;
+        let cancelled = false;
+        const load = async () => {
+            if (!cancelled) await reloadDashboard();
+        };
+        load();
+        const timer = window.setInterval(load, 10000);
+        return () => {
+            cancelled = true;
+            window.clearInterval(timer);
+        };
+    }, [authed]);
+
+    // 실시간 경기 점수 폴링 (3초마다)
+    useEffect(() => {
+        if (!authed) return undefined;
+        let cancelled = false;
+        const pull = async () => {
+            try {
+                const data = await fetchLiveStates();
+                if (cancelled) return;
+                const map = {};
+                for (const row of data.matches || []) map[row.matchId] = row;
+                setRelayStatesMap(map);
+            } catch {
+                /* relay API 일시 불가 */
+            }
+        };
+        pull();
+        const timer = window.setInterval(pull, 3000);
+        return () => {
+            cancelled = true;
+            window.clearInterval(timer);
+        };
+    }, [authed]);
+
+    // division 변경 → 서버 저장 (is_manual=1) → 재로드
+    const changeDivision = async (division, patch) => {
+        const pin = getStoredPin();
+        const body = {
+            winner_key: patch.winnerKey ?? division.winnerKey ?? 'pending',
+            state: patch.state ?? division.state ?? 'ready',
+            note: division.note ?? '',
+            is_manual: 1,
+        };
+        try {
+            await saveDivision(division.id, body, pin);
+            setSavedAt(
+                new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+            );
+            await reloadDashboard();
+        } catch (e) {
+            if (String(e.message).includes('401')) {
+                alert('PIN이 올바르지 않습니다. 다시 로그인해주세요.');
+                setStoredPin('');
+                setAuthed(false);
+            } else {
+                alert('저장 실패: ' + e.message);
+            }
+        }
+    };
+
+    const resetAll = async () => {
+        if (!window.confirm('모든 종목 결과를 경기 전 상태로 완전히 초기화할까요?')) return;
+        const pin = getStoredPin();
+        try {
+            await resetDashboardRemote(pin);
+            setSavedAt('완전 초기화');
+            await reloadDashboard();
+        } catch (e) {
+            alert('초기화 실패: ' + e.message);
+        }
     };
 
     const logout = () => {
-        window.sessionStorage.removeItem('gvcs-dashboard-admin');
+        setStoredPin('');
         setAuthed(false);
     };
 
-    if (!authed) return <PasswordGate onSuccess={() => setAuthed(true)} />;
+    if (!authed) return <PinGate onSuccess={() => setAuthed(true)} />;
 
     return (
         <div className="dashboard-admin-page">
@@ -195,24 +280,45 @@ export default function AdminDashboardPage() {
                     <div>
                         <span className="da-kicker">DASHBOARD ADMIN</span>
                         <h1>현황판 관리자</h1>
-                        <p>캠퍼스 선택과 동시에 대시보드에 반영됩니다.</p>
+                        <p>중계 점수와 관리자 선택이 대시보드에 실시간 반영됩니다.</p>
                     </div>
                     <div className="da-actions">
-                        <button type="button" className="da-ghost-btn" onClick={resetAll}>초기화</button>
-                        <button type="button" className="da-ghost-btn" onClick={logout}>로그아웃</button>
+                        <button type="button" className="da-ghost-btn" onClick={resetAll}>
+                            초기화
+                        </button>
+                        <button type="button" className="da-ghost-btn" onClick={logout}>
+                            로그아웃
+                        </button>
                     </div>
                 </header>
 
                 <section className="da-status-strip">
-                    <div><span>경기 전</span><strong>{counts.ready}</strong></div>
-                    <div><span>진행 중</span><strong>{counts.live}</strong></div>
-                    <div><span>경기 후</span><strong>{counts.done}</strong></div>
-                    <div><span>저장</span><strong>{savedAt || '대기'}</strong></div>
+                    <div>
+                        <span>경기 전</span>
+                        <strong>{counts.ready}</strong>
+                    </div>
+                    <div>
+                        <span>진행중</span>
+                        <strong>{counts.live}</strong>
+                    </div>
+                    <div>
+                        <span>경기종료</span>
+                        <strong>{counts.done}</strong>
+                    </div>
+                    <div>
+                        <span>저장</span>
+                        <strong>{savedAt || '대기'}</strong>
+                    </div>
                 </section>
 
                 <section className="da-event-list">
                     {events.map((event) => (
-                        <EventAdminCard event={event} key={event.id} onChange={changeDivision} />
+                        <EventAdminCard
+                            event={event}
+                            key={event.id}
+                            relayStatesMap={relayStatesMap}
+                            onChange={changeDivision}
+                        />
                     ))}
                 </section>
             </div>

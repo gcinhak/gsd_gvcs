@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import CampusBadge from '../components/CampusBadge';
-import { LIVE_MATCHES, CAMPUS_COLORS, getQuarters } from '../data';
+import { LIVE_MATCHES, CAMPUS_COLORS, getQuarters } from '../data/data';
 import { getLineupForMatch } from '../data/lineup';
 import { fetchLiveStates, fetchComments } from '../lib/liveApi';
 
@@ -40,13 +40,12 @@ function LineupCard({ team, members }) {
     const bench = sortByGrade(members.filter((m) => m.bench));
 
     return (
-        <article
-            className="lineup-card"
-            style={color ? { '--card-tint': color.soft, '--card-accent': color.bg } : {}}
-        >
+        <article className="lineup-card" style={color ? { '--card-tint': color.soft, '--card-accent': color.bg } : {}}>
             <header className="lu-head">
                 <CampusBadge campus={team} size="lg" />
-                <span className="lu-count">{starters.length}명{bench.length > 0 && ` · 후보 ${bench.length}`}</span>
+                <span className="lu-count">
+                    {starters.length}명{bench.length > 0 && ` · 후보 ${bench.length}`}
+                </span>
             </header>
             {members.length === 0 ? (
                 <div className="lu-empty">라인업 데이터 입력 대기중</div>
@@ -240,9 +239,8 @@ export default function LiveMatchPage() {
     for (const m of comments) {
         if (m.quarter && counts[m.quarter] != null) counts[m.quarter]++;
     }
-    const filteredComments = selectedQuarter === '__all'
-        ? comments
-        : comments.filter((m) => m.quarter === selectedQuarter);
+    const filteredComments =
+        selectedQuarter === '__all' ? comments : comments.filter((m) => m.quarter === selectedQuarter);
 
     if (!match) {
         return (
@@ -277,7 +275,9 @@ export default function LiveMatchPage() {
                     <div className="lm-meta">
                         <span className="lm-day">{dayLabel(match.day)}</span>
                         {match.startTime && <span className="lm-time">{match.startTime}</span>}
-                        <span className="lm-cat-label">{match.sport} · {match.round} · {match.category}</span>
+                        <span className="lm-cat-label">
+                            {match.sport} · {match.round} · {match.category}
+                        </span>
                     </div>
                     <ScoreHeader match={match} state={state} />
                     <div className="lm-venue">📍 {match.venue}</div>
@@ -320,9 +320,7 @@ export default function LiveMatchPage() {
                         <div className="lm-pre-banner">
                             <div className="lm-pre-icon">{isUpcoming ? '⏰' : '🏁'}</div>
                             <div className="lm-pre-text">
-                                <div className="lm-pre-title">
-                                    {isUpcoming ? '경기 시작 대기중' : '경기 종료'}
-                                </div>
+                                <div className="lm-pre-title">{isUpcoming ? '경기 시작 대기중' : '경기 종료'}</div>
                                 <div className="lm-pre-sub">
                                     {isUpcoming
                                         ? '아래는 양 팀 라인업입니다. 경기가 시작되면 실시간 중계로 전환됩니다.'
@@ -334,7 +332,7 @@ export default function LiveMatchPage() {
                             <LineupCard
                                 team={match.teams.home}
                                 members={
-                                    (match.lineup?.home && match.lineup.home.length > 0)
+                                    match.lineup?.home && match.lineup.home.length > 0
                                         ? match.lineup.home
                                         : getLineupForMatch(match.teams.home, match.sport, match.category)
                                 }
@@ -342,7 +340,7 @@ export default function LiveMatchPage() {
                             <LineupCard
                                 team={match.teams.away}
                                 members={
-                                    (match.lineup?.away && match.lineup.away.length > 0)
+                                    match.lineup?.away && match.lineup.away.length > 0
                                         ? match.lineup.away
                                         : getLineupForMatch(match.teams.away, match.sport, match.category)
                                 }

@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { YEARS } from '../data';
+import { YEARS } from '../data/data';
 import PageHeader from '../components/PageHeader';
 
 export default function CheersYearPage() {

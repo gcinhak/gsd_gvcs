@@ -2,22 +2,22 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import PageHeader from '../components/PageHeader';
 import CampusBadge from '../components/CampusBadge';
-import { LIVE_MATCHES } from '../data';
+import { LIVE_MATCHES } from '../data/data';
 import { fetchLiveStates } from '../lib/liveApi';
 
 const POLL_MS = 3000;
 
 const SPORT_EMOJI = {
-    '농구': '🏀',
-    '배구': '🏐',
-    '축구': '⚽',
-    '태권도': '🥋',
-    '탁구': '🏓',
-    '체스': '♟️',
-    '계주': '🏃',
-    '이어달리기': '🏃',
-    '중거리달리기': '🏃',
-    '줄다리기': '🪢',
+    농구: '🏀',
+    배구: '🏐',
+    축구: '⚽',
+    태권도: '🥋',
+    탁구: '🏓',
+    체스: '♟️',
+    계주: '🏃',
+    이어달리기: '🏃',
+    중거리달리기: '🏃',
+    줄다리기: '🪢',
 };
 
 function dayLabel(day) {
@@ -53,12 +53,12 @@ function MatchCard({ match, state }) {
 
             <div className="mc-event">
                 <span className="mc-sport">
-                    <span className="mc-sport-emoji" aria-hidden>{SPORT_EMOJI[match.sport] || '🎽'}</span>
+                    <span className="mc-sport-emoji" aria-hidden>
+                        {SPORT_EMOJI[match.sport] || '🎽'}
+                    </span>
                     <span className="mc-sport-name">{match.sport}</span>
                 </span>
-                <span className={`mc-round round-${match.round === '결선' ? 'final' : 'prelim'}`}>
-                    {match.round}
-                </span>
+                <span className={`mc-round round-${match.round === '결선' ? 'final' : 'prelim'}`}>{match.round}</span>
             </div>
 
             <div className="mc-teams">
