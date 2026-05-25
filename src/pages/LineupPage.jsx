@@ -120,10 +120,7 @@ export default function LineupPage() {
                         <button
                             type="button"
                             className={`lp-campus-pill is-all ${campusFilter === CAMPUS_FILTER_ALL ? 'active' : ''}`}
-                            onClick={() => {
-                                setCampusFilter(CAMPUS_FILTER_ALL);
-                                setCategory(categories[0] || ''); 
-                            }}
+                            onClick={() => setCampusFilter(CAMPUS_FILTER_ALL)}
                         >
                             전체
                         </button>
@@ -139,10 +136,7 @@ export default function LineupPage() {
                                     type="button"
                                     className={`lp-campus-pill is-campus ${active ? 'active' : ''}`}
                                     style={style}
-                                    onClick={() => {
-                                        setCampusFilter(c);
-                                        setCategory(categories[0] || ''); 
-                                    }}
+                                    onClick={() => setCampusFilter(c)}
                                 >
                                     {c}
                                 </button>
