@@ -137,13 +137,13 @@ function checkAdmin(req, env) {
     return pin === env.ADMIN_PIN;
 }
 
-function json(data, status = 200) {
+// req 매개변수 추가 및 getCorsHeaders 적용
+function json(req, data, status = 200) {
     return new Response(JSON.stringify(data), {
         status,
-        headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
+        headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' },
     });
 }
-
 function campusKeyFromName(name = '') {
     if (name.includes('문경')) return 'mungyeong';
     if (name.includes('음성')) return 'eumseong';

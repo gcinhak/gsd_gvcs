@@ -36,9 +36,7 @@ function MatchCard({ match, state, comments = [] }) {
     const isFinished = status === 'finished';
     const showScore = !!state && (isLive || isFinished);
     const setSummary =
-        showScore && isSetMatch(match)
-            ? getSetSummary(comments, match, getQuarters(match.sport), state)
-            : null;
+        showScore && isSetMatch(match) ? getSetSummary(comments, match, getQuarters(match.sport), state) : null;
     const hasSetScore = setSummary && (setSummary.home > 0 || setSummary.away > 0);
     const homeScore = hasSetScore ? setSummary.home : state?.homeScore || 0;
     const awayScore = hasSetScore ? setSummary.away : state?.awayScore || 0;
@@ -74,13 +72,16 @@ function MatchCard({ match, state, comments = [] }) {
                     <CampusBadge campus={match.teams.home} size="md" />
                 </div>
                 {showScore ? (
-                    <div className="mc-scoreline" aria-label={`${match.teams.home} ${homeScore} 대 ${awayScore} ${match.teams.away}`}>
+                    <div
+                        className="mc-scoreline"
+                        aria-label={`${match.teams.home} ${homeScore} 대 ${awayScore} ${match.teams.away}`}
+                    >
                         <span className="mc-score">{homeScore}</span>
                         <span className="mc-score-colon">:</span>
                         <span className="mc-score">{awayScore}</span>
                     </div>
                 ) : (
-                    <span className="mc-scoreline mc-scoreline-empty" aria-hidden />
+                    <span className="mc-vs">VS</span>
                 )}
                 <div className="mc-team mc-team-away">
                     <CampusBadge campus={match.teams.away} size="md" />

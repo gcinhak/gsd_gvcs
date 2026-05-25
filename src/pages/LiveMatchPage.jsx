@@ -92,34 +92,26 @@ function CommentaryFeed({ match, comments }) {
 
     // 시간순 정렬 및 누적 스코어 계산
     const sortedComments = [...comments].sort((a, b) => (a.ts || 0) - (b.ts || 0));
-    
+
     let runningHomeScore = 0;
     let runningAwayScore = 0;
 
     const processedComments = sortedComments.map((c) => {
         let isHomeScored = false;
         let isAwayScored = false;
-        
-        if (c.type === 'score') {
-            let points = 1; 
-            if (c.content?.includes('3점')) points = 3;
-            else if (c.content?.includes('2점')) points = 2;
-            else if (c.content?.includes('1점') || c.content?.includes('자유투')) points = 1;
 
-            isHomeScored = c.team === 'home' || c.team === homeTeamName || c.content?.includes(homeTeamName);
-            isAwayScored = c.team === 'away' || c.team === awayTeamName || c.content?.includes(awayTeamName);
-
-            if (isHomeScored) runningHomeScore += points;
-            else if (isAwayScored) runningAwayScore += points;
+        if (c.type === 'score' && c.scoreSide) {
+            const points = Number(c.scoreAmount) || 0;
+            if (c.scoreSide === 'home') runningHomeScore += points;
+            else if (c.scoreSide === 'away') runningAwayScore += points;
         }
-
         return {
             ...c,
             currentHomeScore: runningHomeScore,
             currentAwayScore: runningAwayScore,
             isHomeScored,
             isAwayScored,
-            scoringCampus: isHomeScored ? homeTeamName : (isAwayScored ? awayTeamName : null)
+            scoringCampus: isHomeScored ? homeTeamName : isAwayScored ? awayTeamName : null,
         };
     });
 
@@ -129,16 +121,18 @@ function CommentaryFeed({ match, comments }) {
         <div className="cf-list">
             {ordered.map((c) => {
                 const isScore = c.type === 'score';
-                
+
                 // 팀 색상 매칭
-                const teamColorsKey = Object.keys(CAMPUS_COLORS).find(k => c.scoringCampus && c.scoringCampus.includes(k));
+                const teamColorsKey = Object.keys(CAMPUS_COLORS).find(
+                    (k) => c.scoringCampus && c.scoringCampus.includes(k)
+                );
                 const teamInfo = teamColorsKey ? CAMPUS_COLORS[teamColorsKey] : null;
-                
+
                 // 💡 프리미엄 카드 스타일 동적 적용
                 const msgStyle = {};
                 if (isScore && teamInfo) {
-                    msgStyle.backgroundColor = teamInfo.soft;     // 칸 전체 연한 배경색
-                    msgStyle.borderColor = teamInfo.bg;           // 테두리를 팀 메인 컬러로 깔맞춤
+                    msgStyle.backgroundColor = teamInfo.soft; // 칸 전체 연한 배경색
+                    msgStyle.borderColor = teamInfo.bg; // 테두리를 팀 메인 컬러로 깔맞춤
                     msgStyle.borderLeft = `4px solid ${teamInfo.bg}`; // 왼쪽 액센트 포인트 바 추가
                 } else {
                     // 일반 중계도 정렬 통일감을 주기 위해 은은한 기본 왼쪽 선 추가
@@ -149,7 +143,6 @@ function CommentaryFeed({ match, comments }) {
 
                 return (
                     <div key={c.id} className="cf-msg" style={msgStyle}>
-                        
                         {/* 💡 왼쪽 구역: 세트(쿼터)와 시간을 칼정렬 */}
                         <div className="cf-time-col">
                             {c.quarter ? (
@@ -159,35 +152,35 @@ function CommentaryFeed({ match, comments }) {
                             )}
                             <span className="cf-time">{formatTime(c.ts)}</span>
                         </div>
-                        
+
                         {/* 오른쪽 구역: 스코어와 텍스트 가로 정렬 */}
                         <div className="cf-content-inline">
-                            
                             {/* 💡 고급화된 알약 형태의 스코어 보드 */}
                             {isScore && (
                                 <div className="cf-score-inline">
-                                    <span style={{ 
-                                        color: c.isHomeScored ? teamMainColor : 'var(--text-3)', 
-                                        fontWeight: c.isHomeScored ? '900' : '600' 
-                                    }}>
+                                    <span
+                                        style={{
+                                            color: c.isHomeScored ? teamMainColor : 'var(--text-3)',
+                                            fontWeight: c.isHomeScored ? '900' : '600',
+                                        }}
+                                    >
                                         {c.currentHomeScore}
                                     </span>
                                     <span className="cf-score-dash">:</span>
-                                    <span style={{ 
-                                        color: c.isAwayScored ? teamMainColor : 'var(--text-3)', 
-                                        fontWeight: c.isAwayScored ? '900' : '600' 
-                                    }}>
+                                    <span
+                                        style={{
+                                            color: c.isAwayScored ? teamMainColor : 'var(--text-3)',
+                                            fontWeight: c.isAwayScored ? '900' : '600',
+                                        }}
+                                    >
                                         {c.currentAwayScore}
                                     </span>
                                 </div>
                             )}
-                            
+
                             {/* 중계 텍스트 */}
-                            <div className={`cf-text-inline ${isScore ? 'is-score-text' : ''}`}>
-                                {c.content}
-                            </div>
+                            <div className={`cf-text-inline ${isScore ? 'is-score-text' : ''}`}>{c.content}</div>
                         </div>
-                        
                     </div>
                 );
             })}
@@ -198,9 +191,7 @@ function CommentaryFeed({ match, comments }) {
 function ScoreHeader({ match, state, comments = [] }) {
     const home = match.teams.home;
     const away = match.teams.away;
-    const setSummary = isSetMatch(match)
-        ? getSetSummary(comments, match, getQuarters(match.sport), state)
-        : null;
+    const setSummary = isSetMatch(match) ? getSetSummary(comments, match, getQuarters(match.sport), state) : null;
     const hasSetScore = setSummary && (setSummary.home > 0 || setSummary.away > 0);
     const homeScore = hasSetScore ? setSummary.home : state.homeScore || 0;
     const awayScore = hasSetScore ? setSummary.away : state.awayScore || 0;

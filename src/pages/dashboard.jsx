@@ -1,4 +1,5 @@
 ﻿import { useEffect, useMemo, useState } from 'react';
+import LiveClock from '../components/LiveClock';
 import {
     CAMPUS_OPTIONS,
     CAMPUS,
@@ -83,17 +84,6 @@ function MatchupPills({ matchup }) {
             ))}
         </span>
     );
-}
-
-function formatDashboardDate(date) {
-    const pad = (value) => String(value).padStart(2, '0');
-    const weekday = ['일', '월', '화', '수', '목', '금', '토'][date.getDay()];
-    return `${date.getFullYear()}.${pad(date.getMonth() + 1)}.${pad(date.getDate())} (${weekday})`;
-}
-
-function formatDashboardTime(date) {
-    const pad = (value) => String(value).padStart(2, '0');
-    return `${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
 }
 
 function formatCommentTime(ts) {
@@ -256,7 +246,8 @@ function getEventContext(event, relayStatesMap = {}, liveMatchMap = {}, relayCom
     const allDone = divisions.length > 0 && divisions.every((d) => d.state === 'done');
     const isDone = allDone || Boolean(event.manualWinnerKey || majorityWinnerKey);
     const isLive = divisions.some((d) => d.state === 'live');
-    const winnerKey = event.manualWinnerKey || majorityWinnerKey || (allDone ? getLeadingCampusFromDivisions(divisions) : 'pending');
+    const winnerKey =
+        event.manualWinnerKey || majorityWinnerKey || (allDone ? getLeadingCampusFromDivisions(divisions) : 'pending');
     return { divisions, isDone, isLive, winnerKey };
 }
 
@@ -285,17 +276,6 @@ function getLeadingCampusFromDivisions(divisions) {
     return sorted[0][0];
 }
 
-function getCampusWinCounts(events) {
-    const counts = CAMPUS_OPTIONS.reduce((acc, campus) => ({ ...acc, [campus.key]: 0 }), {});
-    for (const event of events) {
-        const context = getEventContext(event);
-        if (!context.isDone) continue;
-        if (counts[context.winnerKey] === undefined) continue;
-        counts[context.winnerKey] += 1;
-    }
-    return counts;
-}
-
 function getCampusWinCountsFromContexts(contexts) {
     const counts = CAMPUS_OPTIONS.reduce((acc, campus) => ({ ...acc, [campus.key]: 0 }), {});
     for (const context of contexts) {
@@ -310,9 +290,7 @@ function ScoreDetailModal({ detail, relayState, comments, loading, onClose }) {
     if (!detail) return null;
 
     const { division, match } = detail;
-    const setSummary = isSetMatch(match)
-        ? getSetSummary(comments, match, getQuarters(match.sport), relayState)
-        : null;
+    const setSummary = isSetMatch(match) ? getSetSummary(comments, match, getQuarters(match.sport), relayState) : null;
     const relayScore = getScorePair(relayState);
     const visibleSetScore = setSummary && (setSummary.home > 0 || setSummary.away > 0) ? setSummary : relayScore;
     const score = setSummary ? `${visibleSetScore.home} : ${visibleSetScore.away}` : formatRelayScore(relayState);
@@ -402,7 +380,6 @@ export default function DashboardPage() {
     const [relayCommentsMap, setRelayCommentsMap] = useState({});
     const [setCommentsMap, setSetCommentsMap] = useState({});
     const [selectedDetail, setSelectedDetail] = useState(null);
-    const [now, setNow] = useState(() => new Date());
 
     const liveMatchMap = useMemo(() => {
         return LIVE_MATCHES.reduce((acc, match) => {
@@ -487,11 +464,6 @@ export default function DashboardPage() {
     }, [setMatchIds]);
 
     useEffect(() => {
-        const timer = window.setInterval(() => setNow(new Date()), 1000);
-        return () => window.clearInterval(timer);
-    }, []);
-
-    useEffect(() => {
         if (!selectedDetail?.matchId) return;
         let cancelled = false;
         const matchId = selectedDetail.matchId;
@@ -555,10 +527,7 @@ export default function DashboardPage() {
                 <div className="db-live-panel" aria-label="현재 진행 상태">
                     <span className="db-live-dot" />
                     <strong>LIVE</strong>
-                    <time className="db-live-clock" dateTime={now.toISOString()}>
-                        <span className="db-live-time">{formatDashboardTime(now)}</span>
-                        <span className="db-live-date">{formatDashboardDate(now)}</span>
-                    </time>
+                    <LiveClock />
                     <span className="db-live-summary">
                         {stats.done}/{stats.total} 완료 · {stats.live} 진행
                     </span>
