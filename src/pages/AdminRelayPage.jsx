@@ -11,6 +11,7 @@ import {
     getStoredPin,
     setStoredPin,
 } from '../lib/liveApi';
+import { getVolleyballSetSummary, isVolleyballMatch } from '../lib/volleyballSets';
 
 const STATUS_OPTIONS = ['upcoming', 'live', 'finished'];
 const COMMENT_TYPES = [
@@ -137,6 +138,35 @@ function MatchListView({ matches, statesMap, onSelect }) {
     );
 }
 
+function VolleyballSetPanel({ match, state, comments }) {
+    const sets = getQuarters(match.sport);
+    const summary = getVolleyballSetSummary(comments, match, sets, state);
+
+    return (
+        <div className="ac-volley-sets">
+            <div className="ac-volley-sets-head">
+                <span>세트별 점수</span>
+                <strong>
+                    {match.teams.home} {summary.home} : {summary.away} {match.teams.away}
+                </strong>
+            </div>
+            <div className="ac-volley-set-list">
+                {summary.rows.map((set) => (
+                    <div key={set.label} className={`ac-volley-set ${set.winnerSide ? 'is-decided' : ''}`}>
+                        <span className="ac-volley-set-label">{set.label}</span>
+                        <span className="ac-volley-set-score">
+                            {set.home} : {set.away}
+                        </span>
+                        <span className="ac-volley-set-winner">
+                            {set.winnerTeam ? <CampusBadge campus={set.winnerTeam} size="sm" /> : '진행/대기'}
+                        </span>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+}
+
 function MatchAdminCard({ match, state, comments, onUpdate, onAddComment, onDeleteComment }) {
     const [status, setStatus] = useState(state?.status || 'upcoming');
     const [youtubeId, setYoutubeId] = useState(state?.youtubeId || '');
@@ -228,6 +258,11 @@ function MatchAdminCard({ match, state, comments, onUpdate, onAddComment, onDele
     const serverHome = state?.homeScore || 0;
     const serverAway = state?.awayScore || 0;
     const isScoringMode = !!scoreTeam && Number(scoreAmount) > 0;
+    const volleyballSummary = isVolleyballMatch(match)
+        ? getVolleyballSetSummary(comments, match, quarters, state)
+        : null;
+    const displayHome = volleyballSummary ? volleyballSummary.home : serverHome;
+    const displayAway = volleyballSummary ? volleyballSummary.away : serverAway;
 
     return (
         <article className={`admin-card ${isLive ? 'is-live' : ''}`} style={cardStyle}>
@@ -282,19 +317,21 @@ function MatchAdminCard({ match, state, comments, onUpdate, onAddComment, onDele
             </div>
 
             <div className="ac-score-summary">
-                <span className="ac-score-summary-label">현재 점수</span>
+                <span className="ac-score-summary-label">{volleyballSummary ? '세트 스코어' : '현재 점수'}</span>
                 <div className="ac-score-summary-row">
                     <span className="ac-ss-team">
                         <CampusBadge campus={match.teams.home} size="sm" />
-                        <strong>{serverHome}</strong>
+                        <strong>{displayHome}</strong>
                     </span>
                     <span className="ac-ss-sep">:</span>
                     <span className="ac-ss-team">
-                        <strong>{serverAway}</strong>
+                        <strong>{displayAway}</strong>
                         <CampusBadge campus={match.teams.away} size="sm" />
                     </span>
                 </div>
             </div>
+
+            {volleyballSummary && <VolleyballSetPanel match={match} state={state} comments={comments} />}
 
             <div className="ac-quarter-row">
                 <span className="ac-quarter-label">현재 쿼터</span>
@@ -472,7 +509,7 @@ export default function AdminRelayPage() {
                 setStatesMap(map);
 
                 // 상세 화면이 열려 있는 매치만 코멘트 폴링
-                if (selectedMatchId && map[selectedMatchId]?.status === 'live') {
+                if (selectedMatchId && map[selectedMatchId]?.status !== 'upcoming') {
                     try {
                         const cd = await fetchComments(selectedMatchId);
                         if (!cancelled) {
