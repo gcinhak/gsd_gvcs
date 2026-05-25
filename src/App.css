@@ -6892,6 +6892,68 @@ img {
     line-height: 1;
     white-space: nowrap;
 }
+
+.ac-volley-sets,
+.db-detail-sets {
+    margin: 0 1.15rem 0.9rem;
+    padding: 0.75rem;
+    border: 1px solid #dbeafe;
+    border-radius: 8px;
+    background: #f8fbff;
+}
+
+.ac-volley-sets {
+    margin: 0;
+}
+
+.ac-volley-sets-head,
+.db-detail-sets-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.55rem;
+    color: var(--text);
+    font-size: 0.82rem;
+    font-weight: 950;
+}
+
+.ac-volley-set-list,
+.db-detail-sets {
+    display: grid;
+    gap: 0.42rem;
+}
+
+.ac-volley-set,
+.db-detail-set-row {
+    display: grid;
+    grid-template-columns: minmax(3.8rem, auto) 1fr auto;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.45rem 0.55rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 7px;
+    background: #ffffff;
+    color: var(--text-2);
+    font-size: 0.8rem;
+    font-weight: 850;
+}
+
+.ac-volley-set-score,
+.db-detail-set-row strong {
+    justify-self: center;
+    color: var(--text);
+    font-size: 0.95rem;
+    font-weight: 950;
+}
+
+.ac-volley-set-winner,
+.db-detail-set-row span:last-child {
+    justify-self: end;
+    color: var(--muted);
+    font-size: 0.76rem;
+    font-weight: 850;
+}
 .db-matchup-line {
     max-width: 100%;
     overflow: hidden;

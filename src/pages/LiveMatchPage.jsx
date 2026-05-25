@@ -4,6 +4,7 @@ import CampusBadge from '../components/CampusBadge';
 import { LIVE_MATCHES, CAMPUS_COLORS, getQuarters } from '../data/data';
 import { getLineupForMatch } from '../data/lineup';
 import { fetchLiveStates, fetchComments } from '../lib/liveApi';
+import { getVolleyballSetSummary, isVolleyballMatch } from '../lib/volleyballSets';
 
 const POLL_STATE_MS = 3000;
 const POLL_COMMENT_MS = 2000;
@@ -194,9 +195,14 @@ function CommentaryFeed({ match, comments }) {
     );
 }
 
-function ScoreHeader({ match, state }) {
+function ScoreHeader({ match, state, comments = [] }) {
     const home = match.teams.home;
     const away = match.teams.away;
+    const volleyballSummary = isVolleyballMatch(match)
+        ? getVolleyballSetSummary(comments, match, getQuarters(match.sport), state)
+        : null;
+    const homeScore = volleyballSummary ? volleyballSummary.home : state.homeScore || 0;
+    const awayScore = volleyballSummary ? volleyballSummary.away : state.awayScore || 0;
     const isLive = state.status === 'live';
     const isFinished = state.status === 'finished';
     const isUpcoming = state.status === 'upcoming';
@@ -218,9 +224,9 @@ function ScoreHeader({ match, state }) {
                     <CampusBadge campus={home} size="lg" />
                 </div>
                 <div className="sb-score">
-                    <span className="sb-num">{state.homeScore || 0}</span>
+                    <span className="sb-num">{homeScore}</span>
                     <span className="sb-sep">:</span>
-                    <span className="sb-num">{state.awayScore || 0}</span>
+                    <span className="sb-num">{awayScore}</span>
                 </div>
                 <div className="sb-team sb-team-away">
                     <CampusBadge campus={away} size="lg" />
@@ -371,7 +377,7 @@ export default function LiveMatchPage() {
                             {match.sport} · {match.round} · {match.category}
                         </span>
                     </div>
-                    <ScoreHeader match={match} state={state} />
+                    <ScoreHeader match={match} state={state} comments={comments} />
                     <div className="lm-venue">📍 {match.venue}</div>
                 </header>
 

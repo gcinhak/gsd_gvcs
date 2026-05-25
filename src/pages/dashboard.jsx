@@ -9,8 +9,9 @@ import {
     applyDivisionsToEvents,
 } from '../lib/dashboardStore';
 import { fetchComments, fetchLiveStates } from '../lib/liveApi';
-import { LIVE_MATCHES } from '../data/data';
+import { LIVE_MATCHES, getQuarters } from '../data/data';
 import { getRelayMatchId, getScorePair } from '../lib/dashboardRelay';
+import { getVolleyballSetSummary, isVolleyballEvent, isVolleyballMatch } from '../lib/volleyballSets';
 
 const STATUS_LABELS = {
     upcoming: '경기 전',
@@ -23,7 +24,11 @@ function formatRelayScore(state) {
     return `${Number(state.homeScore) || 0} : ${Number(state.awayScore) || 0}`;
 }
 
-function formatDashboardScore(event, division, state) {
+function formatDashboardScore(event, division, state, comments = [], match) {
+    if (isVolleyballEvent(event)) {
+        const summary = getVolleyballSetSummary(comments, match, match ? getQuarters(match.sport) : [], state);
+        return `${summary.home}:${summary.away}`;
+    }
     const { home, away } = getScorePair(state);
     return `${home}:${away}`;
 }
@@ -106,12 +111,12 @@ function getCellBadgeCampus(winnerKey, displayState) {
     return getCampus('pending');
 }
 
-function ResultCell({ event, division, match, relayState, onOpen }) {
+function ResultCell({ event, division, match, relayState, relayComments = [], onOpen }) {
     // displayState와 winnerKey는 서버에서 이미 병합된 값 사용
     const displayState = division.state || 'ready';
     const winnerKey = division.winnerKey || 'pending';
     const campus = getCellBadgeCampus(winnerKey, displayState);
-    const finalScore = formatDashboardScore(event, division, relayState);
+    const finalScore = formatDashboardScore(event, division, relayState, relayComments, match);
     const showScore = shouldShowDashboardScore(event, division);
     const matchup = getPendingMatchup(event, division, match);
     const hasWinner = winnerKey !== 'pending';
@@ -212,7 +217,12 @@ function ScoreDetailModal({ detail, relayState, comments, loading, onClose }) {
     if (!detail) return null;
 
     const { division, match } = detail;
-    const score = formatRelayScore(relayState);
+    const volleyballSummary = isVolleyballMatch(match)
+        ? getVolleyballSetSummary(comments, match, getQuarters(match.sport), relayState)
+        : null;
+    const score = volleyballSummary
+        ? `${volleyballSummary.home} : ${volleyballSummary.away}`
+        : formatRelayScore(relayState);
     const status = relayState?.status || 'upcoming';
 
     return (
@@ -246,6 +256,21 @@ function ScoreDetailModal({ detail, relayState, comments, loading, onClose }) {
                         <span>{match.teams.away}</span>
                     </div>
                 ) : null}
+
+                {volleyballSummary && (
+                    <div className="db-detail-sets">
+                        <div className="db-detail-sets-title">세트별 점수</div>
+                        {volleyballSummary.rows.map((set) => (
+                            <div key={set.label} className="db-detail-set-row">
+                                <span>{set.label}</span>
+                                <strong>
+                                    {set.home} : {set.away}
+                                </strong>
+                                <span>{set.winnerTeam || '진행/대기'}</span>
+                            </div>
+                        ))}
+                    </div>
+                )}
 
                 {relayState?.currentQuarter && (
                     <div className="db-detail-quarter">현재 구간: {relayState.currentQuarter}</div>
@@ -282,6 +307,7 @@ export default function DashboardPage() {
     const [events, setEvents] = useState(INITIAL_DASHBOARD_EVENTS);
     const [relayStatesMap, setRelayStatesMap] = useState({});
     const [relayCommentsMap, setRelayCommentsMap] = useState({});
+    const [volleyballCommentsMap, setVolleyballCommentsMap] = useState({});
     const [selectedDetail, setSelectedDetail] = useState(null);
     const [now, setNow] = useState(() => new Date());
 
@@ -290,6 +316,11 @@ export default function DashboardPage() {
             acc[match.id] = match;
             return acc;
         }, {});
+    }, []);
+
+    const volleyballMatchIds = useMemo(() => {
+        const event = INITIAL_DASHBOARD_EVENTS.find((item) => item.id === 'volleyball');
+        return (event?.divisions || []).map(getRelayMatchId).filter(Boolean);
     }, []);
 
     // 서버에서 대시보드 결과 로드 (10초마다 폴링)
@@ -334,6 +365,32 @@ export default function DashboardPage() {
             window.clearInterval(timer);
         };
     }, []);
+
+    useEffect(() => {
+        if (volleyballMatchIds.length === 0) return;
+        let cancelled = false;
+
+        const pull = async () => {
+            try {
+                const entries = await Promise.all(
+                    volleyballMatchIds.map(async (matchId) => {
+                        const data = await fetchComments(matchId, 0);
+                        return [matchId, data.comments || []];
+                    })
+                );
+                if (!cancelled) setVolleyballCommentsMap(Object.fromEntries(entries));
+            } catch {
+                /* volleyball comments unavailable */
+            }
+        };
+
+        pull();
+        const timer = window.setInterval(pull, 4000);
+        return () => {
+            cancelled = true;
+            window.clearInterval(timer);
+        };
+    }, [volleyballMatchIds]);
 
     useEffect(() => {
         const timer = window.setInterval(() => setNow(new Date()), 1000);
@@ -443,6 +500,7 @@ export default function DashboardPage() {
                                                     key={division.id}
                                                     match={match}
                                                     relayState={matchId ? relayStatesMap[matchId] : null}
+                                                    relayComments={matchId ? volleyballCommentsMap[matchId] || [] : []}
                                                     onOpen={() =>
                                                         setSelectedDetail({ event, division, matchId, match })
                                                     }
