@@ -450,20 +450,25 @@ function isVolleyballRelayMatch(matchId) {
     return typeof matchId === 'string' && matchId.startsWith('fri-vb-');
 }
 
-function getSetWinsFromComments(comments = []) {
+const VOLLEYBALL_SET_END_TEXT = '세트 종료';
+
+function getSetWinsFromComments(comments = [], forceClosed = false) {
     const setMap = new Map();
     for (const comment of comments) {
-        if (!comment.quarter || !comment.score_side) continue;
-        const amount = Number(comment.score_amount) || 0;
-        if (amount <= 0) continue;
+        if (!comment.quarter) continue;
         if (!setMap.has(comment.quarter)) setMap.set(comment.quarter, { home: 0, away: 0 });
         const row = setMap.get(comment.quarter);
+        if (String(comment.content || '').includes(VOLLEYBALL_SET_END_TEXT)) row.isEnded = true;
+        if (!comment.score_side) continue;
+        const amount = Number(comment.score_amount) || 0;
+        if (amount <= 0) continue;
         if (comment.score_side === 'home') row.home += amount;
         if (comment.score_side === 'away') row.away += amount;
     }
 
     const wins = { home: 0, away: 0 };
     for (const row of setMap.values()) {
+        if (!forceClosed && !row.isEnded) continue;
         if (row.home > row.away) wins.home += 1;
         if (row.away > row.home) wins.away += 1;
     }
@@ -475,7 +480,7 @@ async function getDashboard(env) {
         env.DB.prepare('SELECT * FROM division_results').all(),
         env.DB.prepare('SELECT * FROM live_match_state').all(),
         env.DB.prepare(
-            "SELECT match_id, quarter, score_amount, score_side FROM live_comments WHERE match_id LIKE 'fri-vb-%' AND score_amount > 0"
+            "SELECT match_id, content, quarter, score_amount, score_side FROM live_comments WHERE match_id LIKE 'fri-vb-%'"
         ).all(),
     ]);
     const divMap = Object.fromEntries((divRows.results || []).map((r) => [r.division_id, r]));
@@ -492,10 +497,11 @@ async function getDashboard(env) {
         const match = matchMap[relayMatchId];
 
         if (!div.is_manual) {
-            if (match?.status === 'finished') {
-                const setWins = isVolleyballRelayMatch(relayMatchId)
-                    ? getSetWinsFromComments(volleyballCommentsMap[relayMatchId] || [])
-                    : null;
+            const setWins = isVolleyballRelayMatch(relayMatchId)
+                ? getSetWinsFromComments(volleyballCommentsMap[relayMatchId] || [], match?.status === 'finished')
+                : null;
+            const hasVolleyballWinner = setWins && (setWins.home >= 2 || setWins.away >= 2);
+            if (match?.status === 'finished' || hasVolleyballWinner) {
                 const home = setWins ? setWins.home : Number(match.home_score) || 0;
                 const away = setWins ? setWins.away : Number(match.away_score) || 0;
                 if (home !== away) {

@@ -45,7 +45,12 @@ function getDivisionDisplayState(division, relayState, match, relayComments = []
         scoreText: `${score.home}:${score.away}`,
     };
 
-    if (relayState.status === 'live') {
+    const volleyballWinnerTeam =
+        summary && summary.home >= 2 ? match?.teams?.home : summary && summary.away >= 2 ? match?.teams?.away : null;
+    if (volleyballWinnerTeam) {
+        next.state = 'done';
+        next.winnerKey = campusKeyFromTeamName(volleyballWinnerTeam);
+    } else if (relayState.status === 'live') {
         next.state = 'live';
         next.winnerKey = 'pending';
     } else if (relayState.status === 'finished') {

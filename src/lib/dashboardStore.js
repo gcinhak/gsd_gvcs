@@ -279,7 +279,10 @@ export function resetDashboardEvents() {
 
 // ── API 함수 (D1 기반) ────────────────────────────────────────────────────────
 
-const DASHBOARD_API = import.meta.env.DEV ? '' : 'https://gsd-gvcs-popcat.gcinhak.workers.dev';
+const DASHBOARD_API = (
+    import.meta.env.VITE_POPCAT_API_URL ||
+    (import.meta.env.DEV ? '' : 'https://gsd-gvcs-popcat.gcinhak.workers.dev')
+).replace(/\/$/, '');
 
 export async function fetchDashboard() {
     const res = await fetch(`${DASHBOARD_API}/api/dashboard`, { cache: 'no-store' });
