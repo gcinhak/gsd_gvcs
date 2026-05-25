@@ -5568,7 +5568,7 @@ img {
     padding: 0;
     touch-action: manipulation;
 }
-.gwm-hole.has-mole { background: radial-gradient(ellipse at 50% 70%, #57534e 0%, #1c1917 70%); }
+.gwm-hole.has-mole { background: radial-gradient(ellipse at 50% 70%, #a8956a 0%, #5c4a2a 70%); }
 .gwm-mole {
     position: absolute;
     bottom: 4px;
