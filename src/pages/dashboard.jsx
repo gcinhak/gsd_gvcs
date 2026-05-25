@@ -242,10 +242,24 @@ function getEventStatusLabelFromContext(event, context) {
 
 function getEventContext(event, relayStatesMap = {}, liveMatchMap = {}, relayCommentsMap = {}) {
     const divisions = getDerivedEventDivisions(event, relayStatesMap, liveMatchMap, relayCommentsMap);
-    const isDone = divisions.length > 0 && divisions.every((d) => d.state === 'done');
+    const majorityWinnerKey = getMajorityCampusFromDivisions(divisions);
+    const allDone = divisions.length > 0 && divisions.every((d) => d.state === 'done');
+    const isDone = allDone || Boolean(event.manualWinnerKey || majorityWinnerKey);
     const isLive = divisions.some((d) => d.state === 'live');
-    const winnerKey = event.manualWinnerKey || getLeadingCampusFromDivisions(divisions);
+    const winnerKey = event.manualWinnerKey || majorityWinnerKey || (allDone ? getLeadingCampusFromDivisions(divisions) : 'pending');
     return { divisions, isDone, isLive, winnerKey };
+}
+
+function getMajorityCampusFromDivisions(divisions) {
+    const scores = CAMPUS_OPTIONS.reduce((acc, campus) => ({ ...acc, [campus.key]: 0 }), {});
+    for (const div of divisions) {
+        if (div.state !== 'done') continue;
+        if (scores[div.winnerKey] === undefined) continue;
+        scores[div.winnerKey] += 1;
+    }
+    const sorted = Object.entries(scores).sort((a, b) => b[1] - a[1]);
+    if ((sorted[0]?.[1] || 0) <= divisions.length / 2) return null;
+    return sorted[0][0];
 }
 
 function getLeadingCampusFromDivisions(divisions) {

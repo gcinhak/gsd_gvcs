@@ -115,7 +115,7 @@ export default {
             if (path === '/api/dashboard' && method === 'GET') return getDashboard(env);
             if (path.startsWith('/api/dashboard/division/') && method === 'PUT') {
                 if (!checkAdmin(req, env)) return json({ error: 'unauthorized' }, 401);
-                return saveDivision(path.split('/')[4], req, env);
+                return saveDivision(decodeURIComponent(path.split('/')[4] || ''), req, env);
             }
             if (path === '/api/dashboard/reset' && method === 'POST') {
                 if (!checkAdmin(req, env)) return json({ error: 'unauthorized' }, 401);

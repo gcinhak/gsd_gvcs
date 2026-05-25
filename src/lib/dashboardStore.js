@@ -309,6 +309,10 @@ export async function resetDashboardRemote(pin) {
     return res.json();
 }
 
+export function getEventWinnerDivisionId(eventId) {
+    return `event:${eventId}`;
+}
+
 export function applyDivisionsToEvents(events, divisionsFromServer) {
     return events.map((event) => {
         const applyDiv = (div) => {
@@ -322,15 +326,22 @@ export function applyDivisionsToEvents(events, divisionsFromServer) {
             };
         };
 
-        if (event.groups) {
-            return {
+        const nextEvent = event.groups
+            ? {
                 ...event,
                 groups: event.groups.map((g) => ({
                     ...g,
                     divisions: g.divisions.map(applyDiv),
                 })),
-            };
-        }
-        return { ...event, divisions: event.divisions.map(applyDiv) };
+            }
+            : { ...event, divisions: event.divisions.map(applyDiv) };
+        const eventWinner = divisionsFromServer[getEventWinnerDivisionId(event.id)];
+        const manualWinnerKey =
+            eventWinner?.winner_key && eventWinner.winner_key !== 'pending' ? eventWinner.winner_key : null;
+        return {
+            ...nextEvent,
+            manualWinnerKey,
+            winnerKey: manualWinnerKey || getLeadingCampusKey(nextEvent),
+        };
     });
 }
