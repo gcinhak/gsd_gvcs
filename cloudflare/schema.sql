@@ -64,3 +64,12 @@ INSERT INTO territory_state (campus, claims) VALUES
     ('음성', 0),
     ('세종', 0)
 ON CONFLICT(campus) DO NOTHING;
+
+CREATE TABLE IF NOT EXISTS division_results (
+  division_id  TEXT    PRIMARY KEY,
+  winner_key   TEXT    NOT NULL DEFAULT 'pending',
+  state        TEXT    NOT NULL DEFAULT 'ready',
+  note         TEXT    NOT NULL DEFAULT '경기 예정',
+  is_manual    INTEGER NOT NULL DEFAULT 0,
+  updated_at   INTEGER NOT NULL DEFAULT 0
+);
