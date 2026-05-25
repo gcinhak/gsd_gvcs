@@ -221,8 +221,27 @@ function TaekwondoGroups({ event, groups, liveMatchMap, relayStatesMap, onOpenDe
     );
 }
 
-function getEventContext(event) {
-    const divisions = getEventDivisions(event);
+function getDerivedEventDivisions(event, relayStatesMap = {}, liveMatchMap = {}, relayCommentsMap = {}) {
+    return getEventDivisions(event).map((division) => {
+        const matchId = getRelayMatchId(division);
+        const match = matchId ? liveMatchMap[matchId] : null;
+        const relayState = matchId ? relayStatesMap[matchId] : null;
+        const relayComments = matchId ? relayCommentsMap[matchId] || [] : [];
+        return {
+            ...division,
+            ...getRelayDisplayState(event, division, match, relayState, relayComments),
+        };
+    });
+}
+
+function getEventStatusLabelFromContext(event, context) {
+    if (context.isDone) return '경기 종료';
+    if (context.isLive) return '진행 중';
+    return event.status;
+}
+
+function getEventContext(event, relayStatesMap = {}, liveMatchMap = {}, relayCommentsMap = {}) {
+    const divisions = getDerivedEventDivisions(event, relayStatesMap, liveMatchMap, relayCommentsMap);
     const isDone = divisions.length > 0 && divisions.every((d) => d.state === 'done');
     const isLive = divisions.some((d) => d.state === 'live');
     const winnerKey = event.manualWinnerKey || getLeadingCampusFromDivisions(divisions);
@@ -246,6 +265,16 @@ function getCampusWinCounts(events) {
     const counts = CAMPUS_OPTIONS.reduce((acc, campus) => ({ ...acc, [campus.key]: 0 }), {});
     for (const event of events) {
         const context = getEventContext(event);
+        if (!context.isDone) continue;
+        if (counts[context.winnerKey] === undefined) continue;
+        counts[context.winnerKey] += 1;
+    }
+    return counts;
+}
+
+function getCampusWinCountsFromContexts(contexts) {
+    const counts = CAMPUS_OPTIONS.reduce((acc, campus) => ({ ...acc, [campus.key]: 0 }), {});
+    for (const context of contexts) {
         if (!context.isDone) continue;
         if (counts[context.winnerKey] === undefined) continue;
         counts[context.winnerKey] += 1;
@@ -455,15 +484,30 @@ export default function DashboardPage() {
         };
     }, [selectedDetail]);
 
+    const eventContexts = useMemo(() => {
+        return events.map((event) => ({
+            eventId: event.id,
+            context: getEventContext(event, relayStatesMap, liveMatchMap, volleyballCommentsMap),
+        }));
+    }, [events, liveMatchMap, relayStatesMap, volleyballCommentsMap]);
+
+    const eventContextMap = useMemo(() => {
+        return eventContexts.reduce((acc, item) => {
+            acc[item.eventId] = item.context;
+            return acc;
+        }, {});
+    }, [eventContexts]);
+
     const stats = useMemo(() => {
-        const allDivisions = events.flatMap(getEventDivisions);
+        const contexts = eventContexts.map((item) => item.context);
+        const allDivisions = contexts.flatMap((context) => context.divisions);
         return {
             total: allDivisions.length,
             done: allDivisions.filter((d) => d.state === 'done').length,
             live: allDivisions.filter((d) => d.state === 'live').length,
-            campusWins: getCampusWinCounts(events),
+            campusWins: getCampusWinCountsFromContexts(contexts),
         };
-    }, [events]);
+    }, [eventContexts]);
 
     return (
         <div className="page dashboard-page">
@@ -499,9 +543,10 @@ export default function DashboardPage() {
             <section className="db-board" aria-label="종목별 결과 현황">
                 <div className="db-event-list">
                     {events.map((event) => {
-                        const context = getEventContext(event);
+                        const context = eventContextMap[event.id] || getEventContext(event);
                         const isChampion = context.isDone && context.winnerKey !== 'pending';
                         const eventCampus = isChampion ? getCampus(context.winnerKey) : getCampus('pending');
+                        const eventStatus = getEventStatusLabelFromContext(event, context);
 
                         return (
                             <article
@@ -511,7 +556,7 @@ export default function DashboardPage() {
                                 <div className="db-event-top">
                                     <div className="db-event-title-row">
                                         <h2>{event.sport}</h2>
-                                        <span className="db-event-status">{event.status}</span>
+                                        <span className="db-event-status">{eventStatus}</span>
                                     </div>
                                     {isChampion && (
                                         <div className="db-winner-box is-final">

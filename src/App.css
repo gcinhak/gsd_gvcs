@@ -3793,6 +3793,56 @@ img {
     letter-spacing: 0.02em;
 }
 
+.mc-teams {
+    display: grid;
+    grid-template-columns: minmax(70px, 1fr) auto minmax(70px, 1fr);
+    align-items: center;
+    gap: 0.55rem;
+}
+
+.mc-team {
+    gap: 0;
+}
+
+.mc-team-home {
+    justify-content: flex-end;
+}
+
+.mc-team-away {
+    justify-content: flex-start;
+}
+
+.mc-team + .mc-team::before {
+    content: none;
+}
+
+.mc-scoreline {
+    display: inline-flex;
+    align-items: baseline;
+    justify-content: center;
+    min-width: 4.2rem;
+    color: var(--text);
+    font-family: 'Black Han Sans', sans-serif;
+    line-height: 1;
+}
+
+.mc-scoreline .mc-score {
+    margin-left: 0;
+    min-width: auto;
+    text-align: center;
+}
+
+.mc-scoreline-empty {
+    visibility: hidden;
+}
+
+.mc-score-colon {
+    margin: 0 0.14rem;
+    font-size: 1.05rem;
+    font-weight: 950;
+    color: var(--muted);
+}
+
 /* 매치 상세 - 스코어보드 (테마색 따라감) */
 .scoreboard {
     background: linear-gradient(135deg, var(--primary-dark), var(--primary));
@@ -6820,6 +6870,7 @@ img {
     font-size: clamp(1.22rem, 1.85vw, 1.68rem);
     line-height: 1;
     font-weight: 900;
+    white-space: nowrap;
 }
 .db-event-top p {
     margin-top: 0.12rem;
@@ -6886,6 +6937,17 @@ img {
 }
 .db-event-card.event-relay .db-result-grid {
     grid-template-columns: 1fr;
+}
+.db-event-card.event-relay .db-event-title-row {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.24rem;
+}
+.db-event-card.event-relay .db-event-top h2 {
+    font-size: clamp(1.45rem, 1.7vw, 1.8rem);
+}
+.db-event-card.event-relay .db-event-status {
+    margin-bottom: 0;
 }
 .db-result-cell {
     min-height: 0;

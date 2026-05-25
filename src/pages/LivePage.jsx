@@ -69,13 +69,20 @@ function MatchCard({ match, state, comments = [] }) {
             </div>
 
             <div className="mc-teams">
-                <div className="mc-team">
+                <div className="mc-team mc-team-home">
                     <CampusBadge campus={match.teams.home} size="md" />
-                    {showScore && <span className="mc-score">{homeScore}</span>}
                 </div>
-                <div className="mc-team">
+                {showScore ? (
+                    <div className="mc-scoreline" aria-label={`${match.teams.home} ${homeScore} 대 ${awayScore} ${match.teams.away}`}>
+                        <span className="mc-score">{homeScore}</span>
+                        <span className="mc-score-colon">:</span>
+                        <span className="mc-score">{awayScore}</span>
+                    </div>
+                ) : (
+                    <span className="mc-scoreline mc-scoreline-empty" aria-hidden />
+                )}
+                <div className="mc-team mc-team-away">
                     <CampusBadge campus={match.teams.away} size="md" />
-                    {showScore && <span className="mc-score">{awayScore}</span>}
                 </div>
             </div>
 
