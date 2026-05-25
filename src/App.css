@@ -5568,7 +5568,7 @@ img {
     padding: 0;
     touch-action: manipulation;
 }
-.gwm-hole.has-mole { background: radial-gradient(ellipse at 50% 70%, #57534e 0%, #1c1917 70%); }
+.gwm-hole.has-mole { background: radial-gradient(ellipse at 50% 70%, #a8956a 0%, #5c4a2a 70%); }
 .gwm-mole {
     position: absolute;
     bottom: 4px;
@@ -6892,6 +6892,68 @@ img {
     line-height: 1;
     white-space: nowrap;
 }
+
+.ac-volley-sets,
+.db-detail-sets {
+    margin: 0 1.15rem 0.9rem;
+    padding: 0.75rem;
+    border: 1px solid #dbeafe;
+    border-radius: 8px;
+    background: #f8fbff;
+}
+
+.ac-volley-sets {
+    margin: 0;
+}
+
+.ac-volley-sets-head,
+.db-detail-sets-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.55rem;
+    color: var(--text);
+    font-size: 0.82rem;
+    font-weight: 950;
+}
+
+.ac-volley-set-list,
+.db-detail-sets {
+    display: grid;
+    gap: 0.42rem;
+}
+
+.ac-volley-set,
+.db-detail-set-row {
+    display: grid;
+    grid-template-columns: minmax(3.8rem, auto) 1fr auto;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.45rem 0.55rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 7px;
+    background: #ffffff;
+    color: var(--text-2);
+    font-size: 0.8rem;
+    font-weight: 850;
+}
+
+.ac-volley-set-score,
+.db-detail-set-row strong {
+    justify-self: center;
+    color: var(--text);
+    font-size: 0.95rem;
+    font-weight: 950;
+}
+
+.ac-volley-set-winner,
+.db-detail-set-row span:last-child {
+    justify-self: end;
+    color: var(--muted);
+    font-size: 0.76rem;
+    font-weight: 850;
+}
 .db-matchup-line {
     max-width: 100%;
     overflow: hidden;
@@ -7373,4 +7435,95 @@ img {
     font-weight: 950;
     line-height: 1;
     white-space: nowrap;
+}
+/* -------------------------------------------
+   한 줄(콤팩트) 형태의 중계 컨테이너 
+------------------------------------------- */
+.cf-msg.type-score {
+    padding: 8px 12px !important;
+}
+
+.cf-msg {
+    display: flex;
+    flex-direction: row;
+    align-items: center; /* 세로 기준 가운데 정렬 */
+    gap: 12px;
+    padding: 8px 12px !important; /* 위 아래 크기 타이트하게 */
+    margin-bottom: 8px;
+    border-radius: 8px;
+    
+    /* 기본 배경 및 테두리 */
+    background-color: var(--surface-2);
+    border: 1px solid var(--border); 
+}
+
+/* 💡 왼쪽 시간+세트 컬럼 (위아래에서 -> 가로 1열 배치로 변경) */
+/* 💡 왼쪽 시간+세트 컬럼 (가운데 정렬 완벽하게 수정) */
+.cf-time-col {
+    display: flex;
+    flex-direction: row; 
+    align-items: center;
+    justify-content: center; /* 👈 여기서 정확히 중앙에 오게 만듦 */
+    gap: 6px; 
+    width: 92px; 
+    flex-shrink: 0;
+    border-right: 1px solid rgba(0, 0, 0, 0.08); /* 임의의 구분선 */
+    /* padding-right: 10px; <-- 이 녀석이 쏠림의 원인이었으므로 삭제합니다! */
+}
+.cf-time {
+    font-size: 0.8rem;
+    color: var(--muted);
+    font-weight: 500;
+    white-space: nowrap;
+}
+.cf-quarter-mini {
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: var(--primary);
+    background-color: var(--primary-soft);
+    padding: 2px 4px;
+    border-radius: 4px;
+    white-space: nowrap;
+}
+
+/* 오른쪽 콘텐츠: 스코어와 텍스트를 "옆으로 나란히" 배치 */
+.cf-content-inline {
+    flex: 1;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    min-width: 0; 
+}
+
+/* 득점 스코어 박스 (굵은 폰트와 사각형 스타일) */
+.cf-score-inline {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 1.1rem;
+    font-weight: 800; /* 💡 폰트 굵게 유지 */
+    background-color: rgba(255, 255, 255, 0.65); 
+    padding: 3px 8px;
+    border-radius: 6px;
+    flex-shrink: 0;
+    border: 1px solid rgba(0,0,0,0.05); 
+}
+.cf-score-dash {
+    color: var(--muted-2);
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+/* 중계 내용 텍스트 */
+.cf-text-inline {
+    font-size: 0.9rem;
+    color: var(--text-2);
+    line-height: 1.4;
+    word-break: keep-all; 
+}
+.cf-text-inline.is-score-text {
+    font-weight: 600; /* 득점 텍스트 굵게 */
+    color: var(--text);
 }
