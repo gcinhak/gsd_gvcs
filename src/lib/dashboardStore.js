@@ -107,7 +107,7 @@ export const INITIAL_DASHBOARD_EVENTS = [
             {
                 id: 'taekwondo-sparring',
                 title: '겨루기',
-                divisions: [division('tk-sparring-mid', '겨루기(중)'), division('tk-sparring-high', '겨루기(고)')],
+                divisions: [division('tk-sparring-mid', '겨루기(여)'), division('tk-sparring-high', '겨루기(남)')],
             },
         ],
     },
