@@ -156,7 +156,12 @@ function MatchAdminCard({ match, state, comments, onUpdate, onAddComment, onDele
     const save = async () => {
         setSaving(true);
         try {
-            await onUpdate(match.id, { status, youtubeId: youtubeId || null });
+            await onUpdate(match.id, {
+                status,
+                youtubeId: youtubeId || null,
+                homeTeam: match.teams.home, // data.js의 팀 이름
+                awayTeam: match.teams.away,
+            });
             setDirty(false);
         } catch (e) {
             alert('저장 실패: ' + e.message);

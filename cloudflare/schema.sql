@@ -73,3 +73,6 @@ CREATE TABLE IF NOT EXISTS division_results (
   is_manual    INTEGER NOT NULL DEFAULT 0,
   updated_at   INTEGER NOT NULL DEFAULT 0
 );
+
+ALTER TABLE live_match_state ADD COLUMN home_team TEXT NOT NULL DEFAULT '';
+ALTER TABLE live_match_state ADD COLUMN away_team TEXT NOT NULL DEFAULT '';
