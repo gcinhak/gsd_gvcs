@@ -6949,14 +6949,18 @@ img {
     grid-template-columns: 1fr;
 }
 .db-event-card.event-relay .db-event-title-row {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 0.24rem;
+    align-items: center;
+    flex-direction: row;
+    gap: 0.32rem;
+    padding-left: 0;
 }
 .db-event-card.event-relay .db-event-top h2 {
-    font-size: clamp(1.45rem, 1.7vw, 1.8rem);
+    font-size: clamp(1.38rem, 1.55vw, 1.62rem);
 }
 .db-event-card.event-relay .db-event-status {
+    min-height: 1rem;
+    padding: 0.1rem 0.34rem;
+    font-size: 0.54rem;
     margin-bottom: 0;
 }
 .db-result-cell {
