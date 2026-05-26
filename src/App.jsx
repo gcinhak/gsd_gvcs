@@ -12,7 +12,6 @@ import LiveMatchPage from './pages/LiveMatchPage';
 import AdminRelayPage from './pages/AdminRelayPage';
 import LineupPage from './pages/LineupPage';
 import CheerHubPage from './pages/CheerHubPage';
-// import PopcatPage from './pages/PopcatPage';
 import DashboardPage from './pages/dashboard.jsx';
 import AdminDashboardPage from './pages/AdminDashboardPage';
 import './App.css';
@@ -38,7 +37,6 @@ export default function App() {
                         <Route path="/games" element={<GamesPage />} />
                         <Route path="/history" element={<HistoryPage />} />
                         <Route path="/cheer" element={<CheerHubPage />} />
-                        {/* <Route path="/popcat" element={<PopcatPage />} /> */}
                         <Route path="/about" element={<UpcomingPage />} />
                         <Route path="/upcoming" element={<Navigate to="/about" replace />} />
                         {/* 기존 경로 호환 */}
