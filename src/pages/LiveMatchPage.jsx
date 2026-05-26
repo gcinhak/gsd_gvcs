@@ -102,8 +102,13 @@ function CommentaryFeed({ match, comments }) {
 
         if (c.type === 'score' && c.scoreSide) {
             const points = Number(c.scoreAmount) || 0;
-            if (c.scoreSide === 'home') runningHomeScore += points;
-            else if (c.scoreSide === 'away') runningAwayScore += points;
+            if (c.scoreSide === 'home') {
+                runningHomeScore += points;
+                isHomeScored = true; // ← 추가
+            } else if (c.scoreSide === 'away') {
+                runningAwayScore += points;
+                isAwayScored = true; // ← 추가
+            }
         }
 
         return {

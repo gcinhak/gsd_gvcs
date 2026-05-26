@@ -88,7 +88,7 @@ function MatchupPills({ matchup }) {
 
 function formatCommentTime(ts) {
     if (!ts) return '';
-    const date = new Date(ts);
+    const date = new Date(ts * 1000); // ← * 1000 추가
     if (Number.isNaN(date.getTime())) return '';
     return date.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
 }
