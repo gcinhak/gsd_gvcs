@@ -3185,7 +3185,7 @@ img {
 
 @media (max-width: 480px) {
     .mc-grid {
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns: 1fr;
     }
     .mc {
         padding: 0.7rem 0.85rem;
@@ -3392,7 +3392,10 @@ img {
     font-weight: 600;
     color: var(--text-3);
     cursor: pointer;
-    transition: background 0.12s, border-color 0.12s, color 0.12s;
+    transition:
+        background 0.12s,
+        border-color 0.12s,
+        color 0.12s;
 }
 .cf-lineup-btn:hover {
     background: var(--primary-soft);
@@ -3438,7 +3441,10 @@ img {
     color: var(--muted);
     font-size: 0.95rem;
 }
-.lineup-modal-close:hover { background: var(--border); color: var(--text); }
+.lineup-modal-close:hover {
+    background: var(--border);
+    color: var(--text);
+}
 .lineup-modal-title {
     margin: 0 0 0.3rem;
     font-family: 'Black Han Sans', sans-serif;
@@ -3698,7 +3704,9 @@ img {
     font-size: 0.98rem;
     font-weight: 700;
     cursor: pointer;
-    transition: color 0.12s, border-color 0.12s;
+    transition:
+        color 0.12s,
+        border-color 0.12s;
     margin-bottom: -1.5px;
 }
 .ar-tab:hover {
@@ -3716,7 +3724,9 @@ img {
     gap: 0.9rem;
 }
 @media (min-width: 720px) {
-    .scoring-grid { grid-template-columns: 1fr 1fr; }
+    .scoring-grid {
+        grid-template-columns: 1fr 1fr;
+    }
 }
 .scoring-card {
     background: var(--surface);
@@ -3766,7 +3776,9 @@ img {
     transition: transform 0.15s;
     line-height: 1;
 }
-.scoring-chevron.is-open { transform: rotate(180deg); }
+.scoring-chevron.is-open {
+    transform: rotate(180deg);
+}
 .scoring-mini-totals {
     display: inline-flex;
     gap: 0.3rem;
@@ -3804,7 +3816,9 @@ img {
     font-weight: 700;
     color: var(--muted);
     cursor: pointer;
-    transition: background 0.12s, color 0.12s;
+    transition:
+        background 0.12s,
+        color 0.12s;
     letter-spacing: 0.02em;
 }
 .ssp-pill:hover:not(.active) {
@@ -3832,8 +3846,13 @@ img {
     animation: ssp-blink 1s ease-in-out infinite;
 }
 @keyframes ssp-blink {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.35; }
+    0%,
+    100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.35;
+    }
 }
 
 .scoring-meta {
@@ -3844,14 +3863,20 @@ img {
     font-size: 0.88rem;
     color: var(--text-3);
 }
-.scoring-day { font-weight: 700; color: var(--text); }
+.scoring-day {
+    font-weight: 700;
+    color: var(--text);
+}
 .scoring-time {
     padding: 0.12rem 0.5rem;
     background: var(--bg-soft);
     border-radius: 10px;
     font-size: 0.78rem;
 }
-.scoring-cat { font-weight: 700; color: var(--text); }
+.scoring-cat {
+    font-weight: 700;
+    color: var(--text);
+}
 .scoring-status {
     padding: 0.2rem 0.6rem;
     border-radius: 12px;
@@ -3880,7 +3905,9 @@ img {
     background: var(--c-soft, var(--bg-soft));
     border: 2px solid transparent;
     border-radius: 10px;
-    transition: border-color 0.12s, box-shadow 0.12s;
+    transition:
+        border-color 0.12s,
+        box-shadow 0.12s;
 }
 .scoring-input.is-winner {
     border-color: var(--c, var(--primary));
@@ -3912,7 +3939,7 @@ img {
     top: -10px;
     right: -8px;
     font-size: 1.2rem;
-    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.25));
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.25));
 }
 .scoring-foot {
     display: flex;
@@ -3943,7 +3970,9 @@ img {
 }
 
 /* 승점제(중거리) 입력 카드 */
-.placement-card { grid-column: 1 / -1; }
+.placement-card {
+    grid-column: 1 / -1;
+}
 .pl-rule {
     padding: 0.55rem 0.75rem;
     background: var(--bg-soft);
@@ -3961,7 +3990,9 @@ img {
     margin-bottom: 0.4rem;
     text-transform: uppercase;
 }
-.pl-participants { margin-bottom: 0.9rem; }
+.pl-participants {
+    margin-bottom: 0.9rem;
+}
 .pl-participants-row {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
@@ -3997,7 +4028,9 @@ img {
     border-color: var(--c, var(--primary));
 }
 
-.pl-ranks { margin-bottom: 0.9rem; }
+.pl-ranks {
+    margin-bottom: 0.9rem;
+}
 .pl-rank-row {
     display: flex;
     align-items: center;
@@ -4005,7 +4038,9 @@ img {
     padding: 0.4rem 0;
     border-bottom: 1px dashed var(--border);
 }
-.pl-rank-row:last-child { border-bottom: none; }
+.pl-rank-row:last-child {
+    border-bottom: none;
+}
 .pl-rank-label {
     flex-shrink: 0;
     display: inline-flex;
@@ -4038,12 +4073,20 @@ img {
     font-size: 0.88rem;
     font-weight: 700;
     cursor: pointer;
-    transition: transform 0.08s, box-shadow 0.1s;
+    transition:
+        transform 0.08s,
+        box-shadow 0.1s;
 }
-.pl-rank-pill:hover:not(:disabled) { transform: translateY(-1px); }
-.pl-rank-pill.active { box-shadow: 0 4px 12px rgba(0,0,0,0.18); }
+.pl-rank-pill:hover:not(:disabled) {
+    transform: translateY(-1px);
+}
+.pl-rank-pill.active {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+}
 
-.pl-totals { margin-bottom: 0.6rem; }
+.pl-totals {
+    margin-bottom: 0.6rem;
+}
 .pl-totals-row {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
@@ -4059,7 +4102,9 @@ img {
     background: var(--c-soft, var(--bg-soft));
     border: 2px solid transparent;
     border-radius: 10px;
-    transition: border-color 0.12s, box-shadow 0.12s;
+    transition:
+        border-color 0.12s,
+        box-shadow 0.12s;
 }
 .pl-total-cell.is-winner {
     border-color: var(--c, var(--primary));
@@ -4079,7 +4124,9 @@ img {
 }
 
 /* 이어달리기 / 줄다리기 채점제 */
-.fp-pick { margin-bottom: 0.9rem; }
+.fp-pick {
+    margin-bottom: 0.9rem;
+}
 .fp-pills {
     display: flex;
     gap: 0.5rem;
@@ -4092,12 +4139,20 @@ img {
     font-size: 1rem;
     font-weight: 700;
     cursor: pointer;
-    transition: transform 0.08s, box-shadow 0.1s;
+    transition:
+        transform 0.08s,
+        box-shadow 0.1s;
 }
-.fp-pill:hover:not(:disabled) { transform: translateY(-1px); }
-.fp-pill.active { box-shadow: 0 6px 14px rgba(0,0,0,0.2); }
+.fp-pill:hover:not(:disabled) {
+    transform: translateY(-1px);
+}
+.fp-pill.active {
+    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.2);
+}
 
-.sets-list { margin-bottom: 0.6rem; }
+.sets-list {
+    margin-bottom: 0.6rem;
+}
 .sets-winner-line {
     padding: 0.55rem 0.7rem;
     background: var(--bg-soft);
@@ -4127,9 +4182,18 @@ img {
     text-transform: uppercase;
     letter-spacing: 0.05em;
 }
-.tt-cell { text-align: center; }
-.tt-cell-label { text-align: left; padding-left: 0.3rem; font-size: 0.95rem; color: var(--text); }
-.tt-cell-head { color: var(--text); }
+.tt-cell {
+    text-align: center;
+}
+.tt-cell-label {
+    text-align: left;
+    padding-left: 0.3rem;
+    font-size: 0.95rem;
+    color: var(--text);
+}
+.tt-cell-head {
+    color: var(--text);
+}
 .tt-cell input {
     width: 100%;
     padding: 0.45rem 0.4rem;
@@ -4140,7 +4204,9 @@ img {
     font-size: 1rem;
     font-weight: 700;
     color: var(--text);
-    transition: border-color 0.1s, box-shadow 0.1s;
+    transition:
+        border-color 0.1s,
+        box-shadow 0.1s;
 }
 .tt-cell input:focus {
     outline: none;
@@ -4152,7 +4218,10 @@ img {
     box-shadow: 0 0 0 2px color-mix(in srgb, var(--c) 25%, transparent);
     background: #fff;
 }
-.tt-cell-winner { font-size: 0.9rem; color: var(--muted); }
+.tt-cell-winner {
+    font-size: 0.9rem;
+    color: var(--muted);
+}
 
 /* 체스 승점 테이블 */
 .chess-table {
@@ -4170,7 +4239,9 @@ img {
     background: var(--c-soft, transparent);
     border: 2px solid transparent;
     border-radius: 10px;
-    transition: border-color 0.12s, box-shadow 0.12s;
+    transition:
+        border-color 0.12s,
+        box-shadow 0.12s;
 }
 .chess-row.is-winner {
     border-color: var(--c);
@@ -4185,8 +4256,12 @@ img {
     letter-spacing: 0.05em;
     padding: 0 0.5rem;
 }
-.chess-cell { text-align: center; }
-.chess-cell-label { text-align: left; }
+.chess-cell {
+    text-align: center;
+}
+.chess-cell-label {
+    text-align: left;
+}
 .chess-cell input {
     width: 100%;
     padding: 0.4rem 0.35rem;
@@ -4206,7 +4281,10 @@ img {
     font-size: 1.3rem;
     color: var(--text);
 }
-.chess-total-h { font-family: inherit; font-size: inherit; }
+.chess-total-h {
+    font-family: inherit;
+    font-size: inherit;
+}
 .ar-eyebrow {
     font-size: 0.72rem;
     color: var(--primary);
@@ -4998,8 +5076,13 @@ img {
     animation: setEndPulse 1.4s ease-in-out infinite;
 }
 @keyframes setEndPulse {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.45); }
-    50% { box-shadow: 0 0 0 6px rgba(245, 158, 11, 0); }
+    0%,
+    100% {
+        box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.45);
+    }
+    50% {
+        box-shadow: 0 0 0 6px rgba(245, 158, 11, 0);
+    }
 }
 .ac-set-end-btn:disabled {
     opacity: 0.5;
@@ -5546,7 +5629,9 @@ img {
     border-radius: 12px;
     overflow: hidden;
     padding: 2px;
-    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.35), inset 0 0 0 1px rgba(255,255,255,0.06);
+    box-shadow:
+        0 4px 24px rgba(0, 0, 0, 0.35),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.06);
 }
 /* 글자 밖 셀 — 완전 투명, 배경(어둠)만 보임 */
 .terr-cell {
@@ -5569,11 +5654,27 @@ img {
 
 /* ── 페인트볼 스플랫 애니메이션 ── */
 @keyframes paintball-splat {
-    0%   { transform: scale(0.15); filter: brightness(2.2) saturate(1.8); opacity: 0.7; }
-    30%  { transform: scale(1.7);  filter: brightness(1.6) saturate(1.4); opacity: 1; }
-    55%  { transform: scale(0.9);  filter: brightness(1.1); }
-    75%  { transform: scale(1.08); }
-    100% { transform: scale(1);    filter: brightness(1) saturate(1); }
+    0% {
+        transform: scale(0.15);
+        filter: brightness(2.2) saturate(1.8);
+        opacity: 0.7;
+    }
+    30% {
+        transform: scale(1.7);
+        filter: brightness(1.6) saturate(1.4);
+        opacity: 1;
+    }
+    55% {
+        transform: scale(0.9);
+        filter: brightness(1.1);
+    }
+    75% {
+        transform: scale(1.08);
+    }
+    100% {
+        transform: scale(1);
+        filter: brightness(1) saturate(1);
+    }
 }
 .terr-cell.is-splat {
     animation: paintball-splat 0.6s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
@@ -8303,7 +8404,6 @@ img {
     font-weight: 900;
     line-height: 1;
     white-space: nowrap;
-
 }
 /* -------------------------------------------
    한 줄(콤팩트) 형태의 중계 컨테이너 
@@ -8410,4 +8510,3 @@ img {
     font-weight: 600; /* 득점 텍스트 굵게 */
     color: var(--text);
 }
-
