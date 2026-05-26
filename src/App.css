@@ -3782,6 +3782,60 @@ img {
     font-weight: 700;
     white-space: nowrap;
 }
+
+/* 채점제 카드 상태 픽커 (예정 / LIVE / 완료) */
+.scoring-status-picker {
+    display: inline-flex;
+    gap: 2px;
+    padding: 2px;
+    background: var(--bg-soft);
+    border-radius: 14px;
+    border: 1px solid var(--border);
+}
+.ssp-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0.22rem 0.65rem;
+    background: transparent;
+    border: none;
+    border-radius: 12px;
+    font-size: 0.74rem;
+    font-weight: 700;
+    color: var(--muted);
+    cursor: pointer;
+    transition: background 0.12s, color 0.12s;
+    letter-spacing: 0.02em;
+}
+.ssp-pill:hover:not(.active) {
+    background: rgba(0, 0, 0, 0.06);
+    color: var(--text);
+}
+.ssp-pill.active.ssp-upcoming {
+    background: #94a3b8;
+    color: #fff;
+}
+.ssp-pill.active.ssp-live {
+    background: #dc2626;
+    color: #fff;
+    box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.25);
+}
+.ssp-pill.active.ssp-finished {
+    background: #10b981;
+    color: #fff;
+}
+.ssp-live-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #fff;
+    animation: ssp-blink 1s ease-in-out infinite;
+}
+@keyframes ssp-blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.35; }
+}
+
 .scoring-meta {
     display: flex;
     align-items: center;

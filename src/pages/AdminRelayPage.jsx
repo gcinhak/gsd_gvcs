@@ -607,6 +607,51 @@ function MatchAdminCard({ match, state, comments, onUpdate, onAddComment, onDele
    채점제(태권체조·품새 / 중거리 등) — 경기 끝나면 점수 한번에 입력
 ──────────────────────────────────────────────────────────── */
 
+const STATUS_PILLS = [
+    { key: 'upcoming', label: '예정' },
+    { key: 'live', label: 'LIVE' },
+    { key: 'finished', label: '완료' },
+];
+
+/** 모든 scoring 카드 헤더에 공용으로 들어가는 상태 픽커. 클릭 시 즉시 서버 반영. */
+function StatusPicker({ matchId, currentStatus, onUpdate }) {
+    const [pending, setPending] = useState(null);
+    const status = pending || currentStatus || 'upcoming';
+    const set = async (e, key) => {
+        e.stopPropagation(); // 카드 expand 토글 방지
+        if (key === status) return;
+        setPending(key);
+        try {
+            await onUpdate(matchId, { status: key });
+        } catch (err) {
+            alert('상태 변경 실패: ' + err.message);
+        } finally {
+            setPending(null);
+        }
+    };
+    return (
+        <span
+            className="scoring-status-picker"
+            role="group"
+            aria-label="경기 상태"
+            onClick={(e) => e.stopPropagation()}
+        >
+            {STATUS_PILLS.map((p) => (
+                <button
+                    key={p.key}
+                    type="button"
+                    className={`ssp-pill ssp-${p.key} ${status === p.key ? 'active' : ''}`}
+                    onClick={(e) => set(e, p.key)}
+                    aria-pressed={status === p.key}
+                >
+                    {p.key === 'live' && status === 'live' && <span className="ssp-live-dot" aria-hidden />}
+                    {p.label}
+                </button>
+            ))}
+        </span>
+    );
+}
+
 const PLACEMENT_POINTS = [20, 15, 10, 7, 5]; // 1등~5등
 const FINISHER_POINT = 2; // 완주한 그 외 선수
 
@@ -719,9 +764,7 @@ function PlacementScoringCard({ match, state, comments = [], onAddComment, onUpd
                             ))}
                         </span>
                     )}
-                    <span className={`scoring-status ${isFinished ? 'is-finished' : ''}`}>
-                        {isFinished ? '완료' : '대기'}
-                    </span>
+                    <StatusPicker matchId={match.id} currentStatus={state?.status} onUpdate={onUpdate} />
                     <span className={`scoring-chevron ${open ? 'is-open' : ''}`} aria-hidden>▾</span>
                 </div>
             </button>
@@ -938,9 +981,7 @@ function TableTennisScoringCard({ match, state, comments = [], onAddComment, onU
                             </span>
                         </span>
                     )}
-                    <span className={`scoring-status ${isFinished ? 'is-finished' : ''}`}>
-                        {isFinished ? '완료' : '대기'}
-                    </span>
+                    <StatusPicker matchId={match.id} currentStatus={state?.status} onUpdate={onUpdate} />
                     <span className={`scoring-chevron ${open ? 'is-open' : ''}`} aria-hidden>▾</span>
                 </div>
             </button>
@@ -1108,9 +1149,7 @@ function ChessScoringCard({ match, state, comments = [], onAddComment, onUpdate 
                             ))}
                         </span>
                     )}
-                    <span className={`scoring-status ${isFinished ? 'is-finished' : ''}`}>
-                        {isFinished ? '완료' : '대기'}
-                    </span>
+                    <StatusPicker matchId={match.id} currentStatus={state?.status} onUpdate={onUpdate} />
                     <span className={`scoring-chevron ${open ? 'is-open' : ''}`} aria-hidden>▾</span>
                 </div>
             </button>
@@ -1215,9 +1254,7 @@ function FirstPlaceScoringCard({ match, state, comments = [], onAddComment, onUp
                             </span>
                         </span>
                     )}
-                    <span className={`scoring-status ${isFinished ? 'is-finished' : ''}`}>
-                        {isFinished ? '완료' : '대기'}
-                    </span>
+                    <StatusPicker matchId={match.id} currentStatus={state?.status} onUpdate={onUpdate} />
                     <span className={`scoring-chevron ${open ? 'is-open' : ''}`} aria-hidden>▾</span>
                 </div>
             </button>
@@ -1345,9 +1382,7 @@ function SetsScoringCard({ match, state, comments = [], onAddComment, onUpdate }
                             </span>
                         </span>
                     )}
-                    <span className={`scoring-status ${isFinished ? 'is-finished' : ''}`}>
-                        {isFinished ? '완료' : '대기'}
-                    </span>
+                    <StatusPicker matchId={match.id} currentStatus={state?.status} onUpdate={onUpdate} />
                     <span className={`scoring-chevron ${open ? 'is-open' : ''}`} aria-hidden>▾</span>
                 </div>
             </button>
@@ -1485,9 +1520,7 @@ function SimpleScoringCard({ match, state, comments = [], onAddComment, onUpdate
                             ))}
                         </span>
                     )}
-                    <span className={`scoring-status ${isFinished ? 'is-finished' : ''}`}>
-                        {isFinished ? '완료' : '대기'}
-                    </span>
+                    <StatusPicker matchId={match.id} currentStatus={state?.status} onUpdate={onUpdate} />
                     <span className={`scoring-chevron ${open ? 'is-open' : ''}`} aria-hidden>▾</span>
                 </div>
             </button>
