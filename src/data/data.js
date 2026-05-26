@@ -231,11 +231,40 @@ export const SCHEDULE = {
             },
             {
                 name: '조치원복합커뮤니티센터 · 중회의실',
-                subtitle: '체스 — 장소 3곳 운영',
-                kind: 'timeline',
-                items: [
-                    { start: '12:00', end: '13:00', round: '결선', label: '체스 중등부', meta: '45분' },
-                    { start: '13:00', end: '14:00', round: '결선', label: '체스 고등부', meta: '45분' },
+                subtitle: '체스 — 보드 3개 동시 진행',
+                kind: 'courts',
+                courtNames: ['보드 1', '보드 2', '보드 3'],
+                rows: [
+                    {
+                        num: '1라운드',
+                        start: '12:00',
+                        end: '12:30',
+                        courts: [
+                            { round: '결선', category: '7-8학년', match: '문경 VS 음성' },
+                            { round: '결선', category: '9-10학년', match: '세종 VS 문경' },
+                            { round: '결선', category: '11-12학년', match: '음성 VS 세종' },
+                        ],
+                    },
+                    {
+                        num: '2라운드',
+                        start: '12:40',
+                        end: '13:10',
+                        courts: [
+                            { round: '결선', category: '7-8학년', match: '음성 VS 세종' },
+                            { round: '결선', category: '9-10학년', match: '문경 VS 음성' },
+                            { round: '결선', category: '11-12학년', match: '세종 VS 문경' },
+                        ],
+                    },
+                    {
+                        num: '3라운드',
+                        start: '13:20',
+                        end: '13:50',
+                        courts: [
+                            { round: '결선', category: '7-8학년', match: '세종 VS 문경' },
+                            { round: '결선', category: '9-10학년', match: '음성 VS 세종' },
+                            { round: '결선', category: '11-12학년', match: '문경 VS 음성' },
+                        ],
+                    },
                 ],
             },
             {
