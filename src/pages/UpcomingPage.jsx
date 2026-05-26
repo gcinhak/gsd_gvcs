@@ -1,5 +1,5 @@
 import PageHeader from '../components/PageHeader';
-
+// 개발자 명단
 const DEVELOPERS = ['이다인', '정다희', '송민호', '김윤지', '조인택', '이하은', '정강우', '한수정', '홍성흔'];
 
 export default function UpcomingPage() {
