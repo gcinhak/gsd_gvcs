@@ -132,7 +132,7 @@ function drawRoundedSpike(ctx, ox, oy, angle, len, w, clr, rng) {
         ox - Math.cos(angle) * w * 0.4,
         oy - Math.sin(angle) * w * 0.4,
         ox + Math.cos(perp) * w,
-        oy + Math.sin(perp) * w,
+        oy + Math.sin(perp) * w
     );
     ctx.closePath();
     ctx.fillStyle = clr;
@@ -156,7 +156,7 @@ function drawSplatoonSplat(ctx, cx, cy, size, clr, rng) {
             cy + Math.sin(a) * size * (1.1 + rng()),
             size * (0.28 + rng() * 0.38),
             clr,
-            rng,
+            rng
         );
     }
     const nDrops = 3 + Math.floor(rng() * 5);
@@ -168,7 +168,7 @@ function drawSplatoonSplat(ctx, cx, cy, size, clr, rng) {
             cy + Math.sin(a) * size * (1.5 + rng() * 2.2),
             size * (0.07 + rng() * 0.16),
             clr,
-            rng,
+            rng
         );
     }
 }
@@ -244,7 +244,8 @@ function randWeightedPos(letterPixels, snapImageData, targetRgb, rng) {
         const [x, y] = pos;
 
         // ① 흰 영역 점수: 3×3 평균 알파 (낮을수록 좋음)
-        let alphaSum = 0, cnt = 0;
+        let alphaSum = 0,
+            cnt = 0;
         for (let dy = -1; dy <= 1; dy++) {
             for (let dx = -1; dx <= 1; dx++) {
                 const nx = Math.min(CANVAS_W - 1, Math.max(0, x + dx));
@@ -272,7 +273,7 @@ function randWeightedPos(letterPixels, snapImageData, targetRgb, rng) {
                     const ny = Math.min(CANVAS_H - 1, Math.max(0, y + dy));
                     const idx = (ny * CANVAS_W + nx) * 4;
                     if (snapImageData.data[idx + 3] > 64) {
-                        const dr = Math.abs(snapImageData.data[idx]     - tr);
+                        const dr = Math.abs(snapImageData.data[idx] - tr);
                         const dg = Math.abs(snapImageData.data[idx + 1] - tg);
                         const db = Math.abs(snapImageData.data[idx + 2] - tb);
                         if (dr + dg + db < 80) sameColorCount++;
@@ -301,7 +302,7 @@ function calcSplatCount(delta, total, letterPixelCount) {
     const fraction = delta / (total || 200000);
     // 스플랫 1개 평균 커버 픽셀 ≈ 175px (블롭+스파이크+위성 합산)
     // fraction * 글자픽셀수 = 목표 커버 픽셀수 → ÷175 = 필요 스플랫 수
-    return Math.round(fraction * letterPixelCount / 20);
+    return Math.round((fraction * letterPixelCount) / 20);
 }
 
 function TerritoryMap({ state, onStatsUpdate, onAnimationStart, onAnimationEnd }) {
@@ -337,8 +338,7 @@ function TerritoryMap({ state, onStatsUpdate, onAnimationStart, onAnimationEnd }
         const id = lCtx.getImageData(0, 0, CANVAS_W, CANVAS_H);
         const pixels = [];
         for (let y = 0; y < CANVAS_H; y += 2)
-            for (let x = 0; x < CANVAS_W; x += 2)
-                if (id.data[(y * CANVAS_W + x) * 4 + 3] > 128) pixels.push([x, y]);
+            for (let x = 0; x < CANVAS_W; x += 2) if (id.data[(y * CANVAS_W + x) * 4 + 3] > 128) pixels.push([x, y]);
         letterPixelsRef.current = pixels;
 
         const sc = document.createElement('canvas');
@@ -376,9 +376,7 @@ function TerritoryMap({ state, onStatsUpdate, onAnimationStart, onAnimationEnd }
         if (!lp || !sc || !onStatsUpdate) return;
         const sCtx = sc.getContext('2d');
         const id = sCtx.getImageData(0, 0, CANVAS_W, CANVAS_H);
-        const campusRgb = Object.fromEntries(
-            CAMPUSES.map((c) => [c, hexToRgb(CAMPUS_COLORS[c]?.bg || '#888')])
-        );
+        const campusRgb = Object.fromEntries(CAMPUSES.map((c) => [c, hexToRgb(CAMPUS_COLORS[c]?.bg || '#888')]));
         const counts = Object.fromEntries(CAMPUSES.map((c) => [c, 0]));
         let empty = 0;
         const step = 3; // 샘플 간격 (정확도↑)
@@ -387,14 +385,24 @@ function TerritoryMap({ state, onStatsUpdate, onAnimationStart, onAnimationEnd }
             const [px, py] = lp[i];
             const idx = (py * CANVAS_W + px) * 4;
             total++;
-            if (id.data[idx + 3] < 20) { empty++; continue; }
-            const rv = id.data[idx], gv = id.data[idx + 1], bv = id.data[idx + 2];
-            let best = null, bestD = 120;
+            if (id.data[idx + 3] < 20) {
+                empty++;
+                continue;
+            }
+            const rv = id.data[idx],
+                gv = id.data[idx + 1],
+                bv = id.data[idx + 2];
+            let best = null,
+                bestD = 120;
             for (const [campus, [cr, cg, cb]] of Object.entries(campusRgb)) {
                 const d = Math.abs(rv - cr) + Math.abs(gv - cg) + Math.abs(bv - cb);
-                if (d < bestD) { bestD = d; best = campus; }
+                if (d < bestD) {
+                    bestD = d;
+                    best = campus;
+                }
             }
-            if (best) counts[best]++; else empty++;
+            if (best) counts[best]++;
+            else empty++;
         }
         onStatsUpdate({ counts, empty, total });
     }
@@ -510,7 +518,6 @@ function TerritoryMap({ state, onStatsUpdate, onAnimationStart, onAnimationEnd }
         }
     }
 
-
     /* RAF 루프 — 임팩트가 살아있는 동안 render()를 계속 호출 */
     const rafRef = useRef(null);
     function tickImpacts() {
@@ -547,10 +554,10 @@ function TerritoryMap({ state, onStatsUpdate, onAnimationStart, onAnimationEnd }
         const rng = rngRef.current;
 
         // 변화량 계산 (증가/감소 모두 추적)
-        const gained = {};   // 늘어난 캠퍼스 { campus: delta }
-        const lost   = {};   // 줄어든 캠퍼스 { campus: |delta| }
+        const gained = {}; // 늘어난 캠퍼스 { campus: delta }
+        const lost = {}; // 줄어든 캠퍼스 { campus: |delta| }
         for (const c of CAMPUSES) {
-            const delta = (state.campuses[c] || 0) - (prev ? (prev.campuses[c] || 0) : 0);
+            const delta = (state.campuses[c] || 0) - (prev ? prev.campuses[c] || 0 : 0);
             if (delta > 0) gained[c] = delta;
             if (delta < 0) lost[c] = -delta;
         }
@@ -604,10 +611,13 @@ function TerritoryMap({ state, onStatsUpdate, onAnimationStart, onAnimationEnd }
                     // 완료 후 캔버스 상태 저장
                     try {
                         const dataUrl = sc.toDataURL('image/png');
-                        localStorage.setItem('gvcs-territory-canvas', JSON.stringify({
-                            seed: stateToSeed(state),
-                            dataUrl,
-                        }));
+                        localStorage.setItem(
+                            'gvcs-territory-canvas',
+                            JSON.stringify({
+                                seed: stateToSeed(state),
+                                dataUrl,
+                            })
+                        );
                     } catch {}
                     return;
                 }
@@ -637,7 +647,10 @@ function TerritoryMap({ state, onStatsUpdate, onAnimationStart, onAnimationEnd }
         let entryIdx = 0;
 
         function fireNext() {
-            if (entryIdx >= entries.length) { if (onAnimationEnd) onAnimationEnd(); return; }
+            if (entryIdx >= entries.length) {
+                if (onAnimationEnd) onAnimationEnd();
+                return;
+            }
             const [campus, delta] = entries[entryIdx++];
             const clr = CAMPUS_COLORS[campus]?.bg || '#888';
             const myRgb = hexToRgb(clr);
@@ -646,9 +659,7 @@ function TerritoryMap({ state, onStatsUpdate, onAnimationStart, onAnimationEnd }
             let snapId = sCtx.getImageData(0, 0, CANVAS_W, CANVAS_H);
 
             // 강탈 시: 어떤 적을 덮을지 결정 (lost 중 가장 많이 줄어든 캠퍼스)
-            const enemyCampus = isSteal
-                ? Object.entries(lost).sort((a, b) => b[1] - a[1])[0]?.[0]
-                : null;
+            const enemyCampus = isSteal ? Object.entries(lost).sort((a, b) => b[1] - a[1])[0]?.[0] : null;
             const enemyRgb = enemyCampus ? hexToRgb(CAMPUS_COLORS[enemyCampus]?.bg || '#888') : null;
 
             function nextSplat() {
@@ -660,9 +671,10 @@ function TerritoryMap({ state, onStatsUpdate, onAnimationStart, onAnimationEnd }
                 if (n % 4 === 0) snapId = sCtx.getImageData(0, 0, CANVAS_W, CANVAS_H);
 
                 // 강탈이면 적 픽셀 위를 선호, 아니면 흰 영역 선호
-                const pos = isSteal && enemyRgb
-                    ? randStealPos(lp, snapId, enemyRgb, myRgb, rng)
-                    : randWeightedPos(lp, snapId, myRgb, rng);
+                const pos =
+                    isSteal && enemyRgb
+                        ? randStealPos(lp, snapId, enemyRgb, myRgb, rng)
+                        : randWeightedPos(lp, snapId, myRgb, rng);
 
                 if (pos) {
                     const size = 4.5 + rng() * 9.0; // 게임 플레이 스플랫 더 크게
@@ -896,7 +908,16 @@ export default function TerritoryPage() {
                     onAnimationEnd={() => setIsAnimating(false)}
                 />
                 <TerritoryLegend state={state} />
-                <p style={{ fontSize: '11px', color: 'var(--color-text-tertiary)', margin: '0.3rem 0 0', textAlign: 'center' }}>실제 점수와 보이는 시각적 비율이 상이할 수 있음에 주의하세요</p>
+                <p
+                    style={{
+                        fontSize: '11px',
+                        color: 'var(--color-text-tertiary)',
+                        margin: '0.3rem 0 0',
+                        textAlign: 'center',
+                    }}
+                >
+                    실제 점수와 보이는 시각적 비율이 상이할 수 있음에 주의하세요
+                </p>
                 <span className={`terr-vis-overlay mode-${mode}`}>
                     <span className="terr-vis-cta">
                         {!myCampus
