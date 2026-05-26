@@ -127,7 +127,7 @@ export const SCHEDULE = {
         emoji: '🏀',
         matches: [
             { start: '13:00', end: '13:40', round: '예선', category: '남자 고등', match: '문경 VS 음성' },
-            { start: '13:40', end: '14:20', round: '예선', category: '남자 중등', match: '미정' },
+            { start: '13:40', end: '14:20', round: '예선', category: '남자 중등', match: '미정 VS 미정' },
             { start: '14:20', end: '15:00', round: '결선', category: '여자 연합', match: '문경 VS 음성' },
             { start: '15:00', end: '15:40', round: '결선', category: '남자 중등', match: '미정 VS 미정' },
             { start: '15:40', end: '16:20', round: '결선', category: '남자 고등', match: '세종 VS 예선 승리 팀' },
