@@ -190,13 +190,29 @@ function MatchAdminCard({ match, state, comments, onUpdate, onAddComment, onDele
     const colors = CAMPUS_COLORS[match.teams.home];
     const cardStyle = colors ? { borderTopColor: colors.bg } : {};
 
+    /** 상태 변경 즉시 반영 — 점수·YouTube 입력 없이도 가능 */
+    const updateStatus = async (next) => {
+        if (next === status) return;
+        setStatus(next);
+        try {
+            await onUpdate(match.id, {
+                status: next,
+                homeTeam: match.teams.home,
+                awayTeam: match.teams.away,
+            });
+        } catch (e) {
+            alert('상태 변경 실패: ' + e.message);
+            setStatus(status); // 롤백
+        }
+    };
+
+    /** YouTube ID만 따로 저장 (상태는 위에서 즉시 반영됨) */
     const save = async () => {
         setSaving(true);
         try {
             await onUpdate(match.id, {
-                status,
                 youtubeId: youtubeId || null,
-                homeTeam: match.teams.home, // data.js의 팀 이름
+                homeTeam: match.teams.home,
                 awayTeam: match.teams.away,
             });
             setDirty(false);
@@ -389,10 +405,7 @@ function MatchAdminCard({ match, state, comments, onUpdate, onAddComment, onDele
                     <span>상태</span>
                     <select
                         value={status}
-                        onChange={(e) => {
-                            setStatus(e.target.value);
-                            setDirty(true);
-                        }}
+                        onChange={(e) => updateStatus(e.target.value)}
                     >
                         {STATUS_OPTIONS.map((s) => (
                             <option key={s} value={s}>

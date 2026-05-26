@@ -18,6 +18,19 @@ export const DIVISION_RELAY_MATCHES = {
     'tug-adults': 'sat-tug-2',
     'tk-sparring-mid': 'sat-tk-1',
     'tk-sparring-high': 'sat-tk-2',
+    // 채점제 매치 매핑
+    'tk-routine': 'sat-tk-demo',
+    'tk-poomsae-mid': 'sat-tk-poomsae-mid',
+    'tk-poomsae-high': 'sat-tk-poomsae-high',
+    'distance-mid-women': 'sat-mid-mid-f',
+    'distance-mid-men': 'sat-mid-mid-m',
+    'distance-high-women': 'sat-mid-high-f',
+    'distance-high-men': 'sat-mid-high-m',
+    'relay-main': 'sat-relay',
+    'table-mid': 'sat-tt-mid',
+    'table-high': 'sat-tt-high',
+    'table-popular': 'sat-tt-popular',
+    'table-staff': 'sat-tt-staff',
 };
 
 export function getRelayMatchId(division) {

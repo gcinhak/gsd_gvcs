@@ -109,12 +109,111 @@ function campusKeyFromTeamName(teamName) {
     return campus?.key || 'pending';
 }
 
+/**
+ * 채점제 매치(mode='scoring')의 승자 캠퍼스 이름 추출.
+ * teams.home/away가 플레이스홀더라 일반 점수 비교가 안 되므로 코멘트에서 직접 계산.
+ */
+function getScoringWinner(match, comments = []) {
+    if (!match || match.mode !== 'scoring') return null;
+    const type = match.scoringType;
+
+    const pickMax = (obj) => {
+        let winner = null;
+        let max = -Infinity;
+        for (const [c, n] of Object.entries(obj)) {
+            if (n > max) { max = n; winner = c; }
+        }
+        return max > -Infinity ? winner : null;
+    };
+
+    if (type === 'sets') {
+        // 줄다리기 — '1세트', '2세트' 코멘트 각각의 scoreTeam = 그 세트 승자
+        const wins = {};
+        for (const c of comments) {
+            if (!c?.scoreTeam || !/^\d+세트$/.test(String(c?.quarter || ''))) continue;
+            wins[c.scoreTeam] = (wins[c.scoreTeam] || 0) + 1;
+        }
+        const targetWins = Math.ceil((match.setCount || 3) / 2);
+        for (const [c, n] of Object.entries(wins)) {
+            if (n >= targetWins) return c;
+        }
+        return pickMax(wins);
+    }
+
+    if (type === 'tableTennis') {
+        // 탁구 — 세트별 캠퍼스 점수. 각 세트 최고점 = 그 세트 승자, 최다 세트 승 = 매치 승자
+        const setScores = {};
+        for (const c of comments) {
+            const q = String(c?.quarter || '');
+            if (!c?.scoreTeam || !/^\d+세트$/.test(q)) continue;
+            const n = Number(c.scoreAmount) || 0;
+            if (!setScores[q]) setScores[q] = {};
+            setScores[q][c.scoreTeam] = n;
+        }
+        const setWins = {};
+        for (const q of Object.keys(setScores)) {
+            const scores = setScores[q];
+            let bestC = null;
+            let bestN = -1;
+            let tie = false;
+            for (const [c, n] of Object.entries(scores)) {
+                if (n > bestN) { bestN = n; bestC = c; tie = false; }
+                else if (n === bestN) tie = true;
+            }
+            if (!tie && bestC) setWins[bestC] = (setWins[bestC] || 0) + 1;
+        }
+        return pickMax(setWins);
+    }
+
+    if (type === 'chess') {
+        // 체스 — 합계 코멘트(quarter 없음)만 사용
+        const totals = {};
+        for (const c of comments) {
+            if (!c?.scoreTeam || c?.scoreAmount == null) continue;
+            if (c.quarter) continue;
+            totals[c.scoreTeam] = Number(c.scoreAmount) || 0;
+        }
+        return pickMax(totals);
+    }
+
+    if (type === 'firstPlace') {
+        // 이어달리기 — 1등 코멘트
+        const c = comments.find((x) => x?.scoreTeam);
+        return c?.scoreTeam || null;
+    }
+
+    // 기본 (simple / placements 등) — 캠퍼스별 가장 큰 scoreAmount 가 합계
+    const totals = {};
+    for (const c of comments) {
+        if (!c?.scoreTeam || c?.scoreAmount == null) continue;
+        if (c.quarter) continue; // W/D/L 같은 부속 카운트는 무시
+        const n = Number(c.scoreAmount);
+        if (!Number.isFinite(n)) continue;
+        totals[c.scoreTeam] = Math.max(totals[c.scoreTeam] || 0, n);
+    }
+    return pickMax(totals);
+}
+
 function getRelayDisplayState(event, division, match, relayState, relayComments = []) {
     const base = {
         state: division.state || 'ready',
         winnerKey: division.winnerKey || 'pending',
     };
     if (!relayState || !match) return base;
+
+    // ── 채점제 매치는 캠퍼스별 코멘트에서 직접 승자 계산 ──
+    if (match.mode === 'scoring') {
+        if (relayState.status === 'finished') {
+            const winnerName = getScoringWinner(match, relayComments);
+            return {
+                state: 'done',
+                winnerKey: winnerName ? campusKeyFromTeamName(winnerName) : 'pending',
+            };
+        }
+        if (relayState.status === 'live') return { state: 'live', winnerKey: 'pending' };
+        if (relayState.status === 'upcoming') return { state: 'ready', winnerKey: 'pending' };
+        return base;
+    }
 
     if (isSetEvent(event)) {
         const summary = getSetSummary(relayComments, match, getQuarters(match.sport), relayState);
@@ -440,9 +539,14 @@ export default function DashboardPage() {
     }, []);
 
     const setMatchIds = useMemo(() => {
-        return INITIAL_DASHBOARD_EVENTS.flatMap(getEventDivisions)
+        const ids = INITIAL_DASHBOARD_EVENTS.flatMap(getEventDivisions)
             .map(getRelayMatchId)
-            .filter((matchId) => isSetMatch(liveMatchMap[matchId]));
+            .filter(Boolean)
+            .filter((matchId) => {
+                const m = liveMatchMap[matchId];
+                return m && (isSetMatch(m) || m.mode === 'scoring');
+            });
+        return [...new Set(ids)];
     }, [liveMatchMap]);
 
     // 서버에서 대시보드 결과 로드 (10초마다 폴링)
