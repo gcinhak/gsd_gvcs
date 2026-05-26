@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import PageHeader from '../components/PageHeader';
 import CampusBadge from '../components/CampusBadge';
-import { LIVE_MATCHES, getQuarters } from '../data/data';
+import { RELAY_MATCHES, getQuarters } from '../data/data';
 import { fetchComments, fetchLiveStates } from '../lib/liveApi';
 import { getSetSummary, isSetMatch } from '../lib/volleyballSets';
 
@@ -97,7 +97,7 @@ export default function LivePage() {
     const [statesMap, setStatesMap] = useState({});
     const [commentsMap, setCommentsMap] = useState({});
     const [serverState, setServerState] = useState('connecting');
-    const setMatchIds = useMemo(() => LIVE_MATCHES.filter(isSetMatch).map((match) => match.id), []);
+    const setMatchIds = useMemo(() => RELAY_MATCHES.filter(isSetMatch).map((match) => match.id), []);
 
     useEffect(() => {
         let cancelled = false;
@@ -164,7 +164,7 @@ export default function LivePage() {
         const liveArr = [];
         const upcomingArr = [];
         const finishedArr = [];
-        for (const m of LIVE_MATCHES) {
+        for (const m of RELAY_MATCHES) {
             const st = statesMap[m.id]?.status || 'upcoming';
             if (st === 'live') liveArr.push(m);
             else if (st === 'finished') finishedArr.push(m);

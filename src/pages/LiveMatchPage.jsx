@@ -274,6 +274,7 @@ export default function LiveMatchPage() {
     });
     const [comments, setComments] = useState([]);
     const [selectedQuarter, setSelectedQuarter] = useState('__all');
+    const [lineupModalOpen, setLineupModalOpen] = useState(false);
 
     /* state 폴링 */
     useEffect(() => {
@@ -360,6 +361,14 @@ export default function LiveMatchPage() {
     const hasCommentary = comments.length > 0;
     const showRelayUi = isLive || (state.status === 'finished' && hasCommentary);
 
+    const resolveLineup = (campus) => {
+        const overrideKey = campus === match.teams.home ? 'home' : 'away';
+        if (match.lineup?.[overrideKey] && match.lineup[overrideKey].length > 0) {
+            return match.lineup[overrideKey];
+        }
+        return getLineupForMatch(campus, match.sport, match.category);
+    };
+
     return (
         <div className="page live-match-page">
             <div className="lm-inner">
@@ -396,6 +405,14 @@ export default function LiveMatchPage() {
                         <aside className="lm-chat">
                             <header className="cf-head">
                                 <span className="cf-title">📣 문자 중계</span>
+                                <button
+                                    type="button"
+                                    className="cf-lineup-btn"
+                                    onClick={() => setLineupModalOpen(true)}
+                                    title="선수 명단 보기"
+                                >
+                                    📋 선수 명단
+                                </button>
                                 {isLive && (
                                     <span className="cf-live-badge">
                                         <span className="lm-live-dot" aria-hidden /> LIVE
@@ -425,26 +442,35 @@ export default function LiveMatchPage() {
                             </div>
                         </div>
                         <div className="lineup-grid">
-                            <LineupCard
-                                team={match.teams.home}
-                                members={
-                                    match.lineup?.home && match.lineup.home.length > 0
-                                        ? match.lineup.home
-                                        : getLineupForMatch(match.teams.home, match.sport, match.category)
-                                }
-                            />
-                            <LineupCard
-                                team={match.teams.away}
-                                members={
-                                    match.lineup?.away && match.lineup.away.length > 0
-                                        ? match.lineup.away
-                                        : getLineupForMatch(match.teams.away, match.sport, match.category)
-                                }
-                            />
+                            <LineupCard team={match.teams.home} members={resolveLineup(match.teams.home)} />
+                            <LineupCard team={match.teams.away} members={resolveLineup(match.teams.away)} />
                         </div>
                     </div>
                 )}
             </div>
+
+            {lineupModalOpen && (
+                <div className="lineup-modal-backdrop" onClick={() => setLineupModalOpen(false)}>
+                    <div className="lineup-modal" onClick={(e) => e.stopPropagation()}>
+                        <button
+                            type="button"
+                            className="lineup-modal-close"
+                            onClick={() => setLineupModalOpen(false)}
+                            aria-label="닫기"
+                        >
+                            ✕
+                        </button>
+                        <h3 className="lineup-modal-title">📋 선수 명단</h3>
+                        <div className="lineup-modal-meta">
+                            {match.sport} · {match.category}
+                        </div>
+                        <div className="lineup-grid lineup-modal-grid">
+                            <LineupCard team={match.teams.home} members={resolveLineup(match.teams.home)} />
+                            <LineupCard team={match.teams.away} members={resolveLineup(match.teams.away)} />
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

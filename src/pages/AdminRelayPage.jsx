@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { LIVE_MATCHES, CAMPUS_COLORS, getQuarters } from '../data/data';
+import { RELAY_MATCHES, SCORING_MATCHES, CAMPUS_COLORS, getQuarters } from '../data/data';
 import CampusBadge from '../components/CampusBadge';
 import {
     adminPing,
@@ -184,6 +184,7 @@ function MatchAdminCard({ match, state, comments, onUpdate, onAddComment, onDele
     const [scoreTeam, setScoreTeam] = useState('');
     const [scoreAmount, setScoreAmount] = useState(0);
     const [posting, setPosting] = useState(false);
+    const [pendingSetEnd, setPendingSetEnd] = useState(false);
 
     const quarters = getQuarters(match.sport);
     const colors = CAMPUS_COLORS[match.teams.home];
@@ -208,49 +209,85 @@ function MatchAdminCard({ match, state, comments, onUpdate, onAddComment, onDele
     const quickQuarter = async (q) => {
         try {
             await onUpdate(match.id, { currentQuarter: q || null });
+            // 다른 세트로 옮겨가면 대기 중인 세트 종료는 자동 취소
+            setPendingSetEnd(false);
         } catch (err) {
             alert('쿼터 변경 실패: ' + err.message);
         }
     };
 
-    const closeCurrentSet = async () => {
+    /** 세트 종료 버튼을 누르면 즉시 전송하지 않고, 다음 전송이 세트 종료가 되도록 큐잉만 한다. */
+    const queueOrCancelSetEnd = () => {
+        if (pendingSetEnd) {
+            setPendingSetEnd(false);
+            return;
+        }
         if (!setSummary || !state?.currentQuarter) return;
-        const winnerOnlySetMatch = isWinnerOnlySetMatch(match);
-        const currentSet = setSummary.rows.find((row) => row.label === state.currentQuarter);
-        if (!currentSet || currentSet.isEnded) return;
-        if (winnerOnlySetMatch && !scoreTeam) {
+        const winnerOnlySetMatchLocal = isWinnerOnlySetMatch(match);
+        const cur = setSummary.rows.find((row) => row.label === state.currentQuarter);
+        if (!cur || cur.isEnded) return;
+        if (winnerOnlySetMatchLocal && !scoreTeam) {
             alert('세트 승리 캠퍼스를 먼저 선택해주세요.');
             return;
         }
-        if (!winnerOnlySetMatch && currentSet.home === currentSet.away) {
+        if (!winnerOnlySetMatchLocal && cur.home === cur.away) {
             alert('동점 세트는 종료할 수 없습니다.');
             return;
         }
-        const winnerTeam = winnerOnlySetMatch ? scoreTeam : currentSet.home > currentSet.away ? match.teams.home : match.teams.away;
+        setPendingSetEnd(true);
+    };
+
+    /** 실제 세트 종료 전송 — post()에서 pendingSetEnd가 true일 때 호출. */
+    const submitSetEnd = async () => {
+        if (!setSummary || !state?.currentQuarter) return false;
+        const winnerOnlySetMatchLocal = isWinnerOnlySetMatch(match);
+        const cur = setSummary.rows.find((row) => row.label === state.currentQuarter);
+        if (!cur || cur.isEnded) {
+            setPendingSetEnd(false);
+            return false;
+        }
+        if (winnerOnlySetMatchLocal && !scoreTeam) {
+            alert('세트 승리 캠퍼스를 먼저 선택해주세요.');
+            return false;
+        }
+        if (!winnerOnlySetMatchLocal && cur.home === cur.away) {
+            alert('동점 세트는 종료할 수 없습니다.');
+            return false;
+        }
+        const winnerTeam = winnerOnlySetMatchLocal
+            ? scoreTeam
+            : cur.home > cur.away
+                ? match.teams.home
+                : match.teams.away;
         const winnerSide = computeScoreSide(winnerTeam);
         const nextHome = setSummary.home + (winnerSide === 'home' ? 1 : 0);
         const nextAway = setSummary.away + (winnerSide === 'away' ? 1 : 0);
         const targetWins = getSetTargetWins(match);
         const shouldFinish = targetWins > 0 && (nextHome >= targetWins || nextAway >= targetWins);
-        setPosting(true);
+        const extra = content.trim();
+        const baseMsg = `${state.currentQuarter} ${VOLLEYBALL_SET_END_TEXT}: ${winnerTeam} 승`;
+        const fullMsg = extra ? `${baseMsg} ${extra}` : baseMsg;
         try {
             await onAddComment(match.id, {
                 type: 'normal',
-                content: `${state.currentQuarter} ${VOLLEYBALL_SET_END_TEXT}: ${winnerTeam} 승`,
+                content: fullMsg,
                 quarter: state.currentQuarter,
-                scoreTeam: winnerOnlySetMatch ? winnerTeam : undefined,
-                scoreAmount: winnerOnlySetMatch ? 1 : undefined,
-                scoreSide: winnerOnlySetMatch ? winnerSide : undefined,
+                scoreTeam: winnerOnlySetMatchLocal ? winnerTeam : undefined,
+                scoreAmount: winnerOnlySetMatchLocal ? 1 : undefined,
+                scoreSide: winnerOnlySetMatchLocal ? winnerSide : undefined,
             });
             if (shouldFinish) {
                 await onUpdate(match.id, { status: 'finished', currentQuarter: null });
                 setStatus('finished');
             }
             setScoreTeam('');
+            setContent('');
+            setPendingSetEnd(false);
+            return true;
         } catch (err) {
             alert('세트 종료 저장 실패: ' + err.message);
+            return false;
         }
-        setPosting(false);
     };
 
     const computeScoreSide = (team) => {
@@ -261,6 +298,15 @@ function MatchAdminCard({ match, state, comments, onUpdate, onAddComment, onDele
 
     const post = async (e) => {
         e.preventDefault();
+
+        // 세트 종료가 큐잉돼 있으면 전송 = 세트 종료 확정
+        if (pendingSetEnd) {
+            setPosting(true);
+            await submitSetEnd();
+            setPosting(false);
+            return;
+        }
+
         const amount = Number(scoreAmount) || 0;
         const extra = content.trim();
         const isScoring = !isWinnerOnlySetMatch(match) && !!scoreTeam && amount > 0;
@@ -412,11 +458,12 @@ function MatchAdminCard({ match, state, comments, onUpdate, onAddComment, onDele
                     {setSummary && state?.currentQuarter && (
                         <button
                             type="button"
-                            className="ac-set-end-btn"
-                            onClick={closeCurrentSet}
-                            disabled={!canCloseCurrentSet || posting}
+                            className={`ac-set-end-btn ${pendingSetEnd ? 'is-pending' : ''}`}
+                            onClick={queueOrCancelSetEnd}
+                            disabled={(!canCloseCurrentSet && !pendingSetEnd) || posting}
+                            title={pendingSetEnd ? '취소하려면 다시 클릭' : '다음 전송이 세트 종료로 처리됩니다'}
                         >
-                            세트 종료
+                            {pendingSetEnd ? '세트 종료 대기 (전송 누르면 확정)' : '세트 종료'}
                         </button>
                     )}
                 </div>
@@ -505,8 +552,11 @@ function MatchAdminCard({ match, state, comments, onUpdate, onAddComment, onDele
                                 value={content}
                                 onChange={(e) => setContent(e.target.value)}
                             />
-                            <button type="submit" disabled={posting || (!isScoringMode && !content.trim())}>
-                                {posting ? '…' : isScoringMode ? '득점 전송' : '전송'}
+                            <button
+                                type="submit"
+                                disabled={posting || (!pendingSetEnd && !isScoringMode && !content.trim())}
+                            >
+                                {posting ? '…' : pendingSetEnd ? '세트 종료 전송' : isScoringMode ? '득점 전송' : '전송'}
                             </button>
                         </div>
                     </form>
@@ -553,11 +603,146 @@ function MatchAdminCard({ match, state, comments, onUpdate, onAddComment, onDele
     );
 }
 
+/* ────────────────────────────────────────────────────────────
+   채점제(태권체조·품새) — 경기 끝나면 3 캠퍼스 점수 한번에 입력
+──────────────────────────────────────────────────────────── */
+function ScoringMatchCard({ match, state, comments = [], onAddComment, onUpdate }) {
+    // 이미 저장된 score 코멘트에서 캠퍼스별 점수 추출
+    const existingScores = {};
+    for (const c of comments) {
+        if (c?.scoreTeam && c?.scoreAmount != null) {
+            existingScores[c.scoreTeam] = Number(c.scoreAmount);
+        }
+    }
+
+    const [scores, setScores] = useState(() => ({
+        문경: existingScores['문경'] ?? '',
+        음성: existingScores['음성'] ?? '',
+        세종: existingScores['세종'] ?? '',
+    }));
+    const [saving, setSaving] = useState(false);
+    const [saved, setSaved] = useState(false);
+    const isFinished = state?.status === 'finished';
+
+    const setOne = (campus, val) => {
+        setSaved(false);
+        setScores((s) => ({ ...s, [campus]: val }));
+    };
+
+    const winnerCampus = (() => {
+        let win = null;
+        let max = -Infinity;
+        for (const c of ALL_CAMPUSES) {
+            const n = Number(scores[c]);
+            if (!Number.isFinite(n)) continue;
+            if (n > max) {
+                max = n;
+                win = c;
+            }
+        }
+        return max > -Infinity ? win : null;
+    })();
+
+    const submit = async () => {
+        const entries = ALL_CAMPUSES.map((c) => ({ campus: c, score: Number(scores[c]) }))
+            .filter((e) => Number.isFinite(e.score) && e.score !== 0);
+        if (entries.length === 0) {
+            alert('점수를 1개 이상 입력해주세요.');
+            return;
+        }
+        setSaving(true);
+        try {
+            for (const { campus, score } of entries) {
+                await onAddComment(match.id, {
+                    type: 'score',
+                    content: `${campus} ${score}점`,
+                    scoreTeam: campus,
+                    scoreAmount: score,
+                });
+            }
+            await onUpdate(match.id, { status: 'finished' });
+            setSaved(true);
+        } catch (err) {
+            alert('저장 실패: ' + err.message);
+        }
+        setSaving(false);
+    };
+
+    return (
+        <article className={`scoring-card ${isFinished ? 'is-finished' : ''}`}>
+            <header className="scoring-head">
+                <div className="scoring-meta">
+                    <span className="scoring-day">{match.day.slice(5)}</span>
+                    {match.startTime && <span className="scoring-time">{match.startTime}</span>}
+                    <span className="scoring-cat">{match.sport} · {match.category}</span>
+                </div>
+                <span className={`scoring-status ${isFinished ? 'is-finished' : ''}`}>
+                    {isFinished ? '완료' : '대기'}
+                </span>
+            </header>
+            <div className="scoring-inputs">
+                {ALL_CAMPUSES.map((c) => {
+                    const cc = CAMPUS_COLORS[c] || {};
+                    const isWinner = winnerCampus === c && Number(scores[c]) > 0;
+                    return (
+                        <label key={c} className={`scoring-input ${isWinner ? 'is-winner' : ''}`}
+                               style={{ '--c': cc.bg, '--c-soft': cc.soft }}>
+                            <span className="scoring-input-label">{c}</span>
+                            <input
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                value={scores[c]}
+                                onChange={(e) => setOne(c, e.target.value)}
+                                disabled={saving}
+                                placeholder="0"
+                            />
+                            {isWinner && <span className="scoring-trophy">🏆</span>}
+                        </label>
+                    );
+                })}
+            </div>
+            <div className="scoring-foot">
+                {saved && <span className="scoring-saved">✓ 저장됨</span>}
+                <button
+                    type="button"
+                    className="scoring-save"
+                    onClick={submit}
+                    disabled={saving}
+                >
+                    {saving ? '저장중…' : isFinished ? '재저장' : '저장 (결과 확정)'}
+                </button>
+            </div>
+        </article>
+    );
+}
+
+function ScoringPanel({ matches, statesMap, commentsMap, onAddComment, onUpdate }) {
+    if (matches.length === 0) {
+        return <div className="empty-state"><p>채점제 종목이 없습니다.</p></div>;
+    }
+    return (
+        <div className="scoring-grid">
+            {matches.map((m) => (
+                <ScoringMatchCard
+                    key={m.id}
+                    match={m}
+                    state={statesMap[m.id]}
+                    comments={commentsMap[m.id] || []}
+                    onAddComment={onAddComment}
+                    onUpdate={onUpdate}
+                />
+            ))}
+        </div>
+    );
+}
+
 export default function AdminRelayPage() {
     const [authed, setAuthed] = useState(false);
     const [statesMap, setStatesMap] = useState({});
     const [commentsMap, setCommentsMap] = useState({});
     const [selectedMatchId, setSelectedMatchId] = useState(null);
+    const [tab, setTab] = useState('relay'); // 'relay' | 'scoring'
 
     useEffect(() => {
         const stored = getStoredPin();
@@ -591,6 +776,20 @@ export default function AdminRelayPage() {
                         /* ignore */
                     }
                 }
+
+                // 채점제 탭에서는 모든 scoring 매치의 코멘트를 로드 (점수 표시용)
+                if (tab === 'scoring') {
+                    for (const sm of SCORING_MATCHES) {
+                        if (map[sm.id]?.status === 'upcoming') continue;
+                        try {
+                            const cd = await fetchComments(sm.id);
+                            if (cancelled) return;
+                            setCommentsMap((prev) => ({ ...prev, [sm.id]: cd.comments || [] }));
+                        } catch {
+                            /* ignore */
+                        }
+                    }
+                }
             } catch {
                 /* ignore */
             }
@@ -602,7 +801,7 @@ export default function AdminRelayPage() {
             cancelled = true;
             clearInterval(timer);
         };
-    }, [authed, selectedMatchId]);
+    }, [authed, selectedMatchId, tab]);
 
     const onUpdate = async (matchId, patch) => {
         const updated = await adminUpdateMatch(matchId, patch);
@@ -649,7 +848,7 @@ export default function AdminRelayPage() {
 
     if (!authed) return <PinGate onSuccess={() => setAuthed(true)} />;
 
-    const selectedMatch = selectedMatchId ? LIVE_MATCHES.find((m) => m.id === selectedMatchId) : null;
+    const selectedMatch = selectedMatchId ? RELAY_MATCHES.find((m) => m.id === selectedMatchId) : null;
     const sState = selectedMatchId ? statesMap[selectedMatchId] : null;
 
     return (
@@ -660,9 +859,11 @@ export default function AdminRelayPage() {
                         <div className="ar-eyebrow">ADMIN · LIVE RELAY</div>
                         <h1 className="ar-title">중계 관리 콘솔</h1>
                         <p className="ar-sub">
-                            {selectedMatchId
-                                ? '매치를 중계하는 중입니다. 메시지 입력 시 점수도 자동 누적됩니다.'
-                                : '아래 목록에서 중계할 매치를 선택하세요.'}
+                            {tab === 'scoring'
+                                ? '채점제 종목(태권체조·품새)은 경기 끝나고 캠퍼스별 점수를 한번에 입력하세요.'
+                                : selectedMatchId
+                                    ? '매치를 중계하는 중입니다. 메시지 입력 시 점수도 자동 누적됩니다.'
+                                    : '아래 목록에서 중계할 매치를 선택하세요.'}
                         </p>
                     </div>
                     <button className="ar-logout" onClick={logout}>
@@ -670,8 +871,36 @@ export default function AdminRelayPage() {
                     </button>
                 </header>
 
-                {!selectedMatch ? (
-                    <MatchListView matches={LIVE_MATCHES} statesMap={statesMap} onSelect={setSelectedMatchId} />
+                <div className="ar-tabs">
+                    <button
+                        type="button"
+                        className={`ar-tab ${tab === 'relay' ? 'active' : ''}`}
+                        onClick={() => setTab('relay')}
+                    >
+                        📺 문자 중계
+                    </button>
+                    <button
+                        type="button"
+                        className={`ar-tab ${tab === 'scoring' ? 'active' : ''}`}
+                        onClick={() => {
+                            setTab('scoring');
+                            setSelectedMatchId(null);
+                        }}
+                    >
+                        🥋 채점제 입력
+                    </button>
+                </div>
+
+                {tab === 'scoring' ? (
+                    <ScoringPanel
+                        matches={SCORING_MATCHES}
+                        statesMap={statesMap}
+                        commentsMap={commentsMap}
+                        onAddComment={onAddComment}
+                        onUpdate={onUpdate}
+                    />
+                ) : !selectedMatch ? (
+                    <MatchListView matches={RELAY_MATCHES} statesMap={statesMap} onSelect={setSelectedMatchId} />
                 ) : (
                     <>
                         <button type="button" className="back-btn ar-back" onClick={() => setSelectedMatchId(null)}>

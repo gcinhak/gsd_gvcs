@@ -973,6 +973,26 @@ export function getQuarters(sport) {
    - lineup 은 데이터 들어오면 home/away 배열에 { number, name, position } 형태로 채우면
      LiveMatchPage 가 자동으로 라인업 카드를 렌더링함.
 ────────────────────────────────────────────────────────── */
+/**
+ * 라이브·문자중계 대상 종목.
+ * 결과만 등록하는 종목(체스, 줄다리기, 이어달리기, 중거리, 태권체조, 품새)은 /live 와 admin/relay 에서 숨기고
+ * 결과는 현황판에서 관리한다. 태권도는 '겨루기'만 중계 대상.
+ */
+export const RELAY_SPORTS = new Set(['축구', '농구', '배구', '탁구']);
+
+export function isRelayableMatch(match) {
+    if (!match || !match.sport) return false;
+    if (match.mode === 'scoring') return false;
+    if (RELAY_SPORTS.has(match.sport)) return true;
+    if (match.sport === '태권도' && String(match.category || '').includes('겨루기')) return true;
+    return false;
+}
+
+/** 채점제 매치: 경기 끝나면 3 캠퍼스 점수를 한번에 입력하는 종목. */
+export function isScoringMatch(match) {
+    return match?.mode === 'scoring';
+}
+
 export const LIVE_MATCHES = [
     // ─── 5/28 (목) 농구 ───
     {
@@ -1155,6 +1175,43 @@ export const LIVE_MATCHES = [
         teams: { home: '문경', away: '음성' },
         lineup: { home: [], away: [] },
     },
+    // ─── 채점제 (결과등록) ───
+    {
+        id: 'sat-tk-demo',
+        day: '2026-05-30',
+        startTime: '10:30',
+        sport: '태권도',
+        round: '결선',
+        category: '태권체조',
+        venue: '보조실내체육관 1층',
+        teams: { home: '문경', away: '음성' },
+        mode: 'scoring',
+        lineup: { home: [], away: [] },
+    },
+    {
+        id: 'sat-tk-poomsae-mid',
+        day: '2026-05-30',
+        startTime: '11:00',
+        sport: '태권도',
+        round: '결선',
+        category: '품새 (중)',
+        venue: '보조실내체육관 1층',
+        teams: { home: '문경', away: '음성' },
+        mode: 'scoring',
+        lineup: { home: [], away: [] },
+    },
+    {
+        id: 'sat-tk-poomsae-high',
+        day: '2026-05-30',
+        startTime: '11:20',
+        sport: '태권도',
+        round: '결선',
+        category: '품새 (고)',
+        venue: '보조실내체육관 1층',
+        teams: { home: '문경', away: '음성' },
+        mode: 'scoring',
+        lineup: { home: [], away: [] },
+    },
     {
         id: 'sat-chess-1',
         day: '2026-05-30',
@@ -1211,6 +1268,12 @@ export const LIVE_MATCHES = [
         lineup: { home: [], away: [] },
     },
 ];
+
+/** 라이브 중계 가능한 매치만 필터링한 배열 (UI에서 직접 사용). */
+export const RELAY_MATCHES = LIVE_MATCHES.filter(isRelayableMatch);
+
+/** 채점제 매치 목록. */
+export const SCORING_MATCHES = LIVE_MATCHES.filter(isScoringMatch);
 
 /* ──────────────────────────────────────────────────────────
    하이라이트 영상 (Popcat 페이지 등에서 사용)
