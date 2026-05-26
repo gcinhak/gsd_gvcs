@@ -16,8 +16,7 @@ const NAV_ITEMS = [
     { to: '/cheers', label: '응원전' },
     //{ to: '/games', label: '경기 영상' },
     { to: '/history', label: '역대 전적' },
-    { to: '/popcat', label: '팝캣', disabled: true },
-    ...(SHOW_DEV_TABS ? [{ to: '/cheer', label: '응원' }] : []),
+    ...(SHOW_DEV_TABS ? [{ to: '/cheer', label: '🏰 점령전' }] : []),
     { to: '/about', label: 'About' },
 ];
 
