@@ -1440,12 +1440,6 @@ export const UPCOMING_FEATURES = [
         status: '준비중',
     },
     {
-        key: 'popcat',
-        title: '팝캣 클릭 카운터',
-        desc: '문경·음성·세종 3캠퍼스가 클릭으로 겨루는 응원 카운터.',
-        status: '베타',
-    },
-    {
         key: 'highlight',
         title: '하이라이트 전용 창',
         desc: '명장면만 모아 보는 하이라이트 전용 페이지.',
