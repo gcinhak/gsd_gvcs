@@ -6877,6 +6877,8 @@ img {
 .db-topline,
 .db-board {
     width: min(100% - 1rem, 1560px);
+    margin-left: auto;
+    margin-right: auto;
 }
 .db-topline {
     grid-template-columns: minmax(150px, 0.62fr) minmax(360px, 1.62fr) minmax(260px, 0.76fr);
