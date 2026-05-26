@@ -328,10 +328,73 @@ export const LINEUP = {
         },
         */
     },
-    음성: {},
-    세종: {},
+    음성: {
+        농구: { // 💡 배구 등 다른 종목일 경우 '농구'라는 글자를 알맞게 수정해 주세요.
+            남중: [
+                { no: 1, grade: 9, name: '구준표' },
+                { no: 2, grade: 9, name: '권성현' },
+                { no: 3, grade: 9, name: '구주찬' },
+                { no: 4, grade: 9, name: '손유찬' },
+                { no: 5, grade: 9, name: '조병준' },
+                { no: 6, grade: 9, name: '이유준' },
+                { no: 7, grade: 9, name: '김예준' },
+                { no: 8, grade: 9, name: '이도훈' },
+            ],
+            여연합: [
+                { no: 1, grade: 8, name: '인시연' },
+                { no: 2, grade: 9, name: '박지인' },
+                { no: 3, grade: 10, name: '박예하' },
+                { no: 4, grade: 12, name: '강수연' },
+                { no: 5, grade: 11, name: '허윤성' },
+                { no: 6, grade: 10, name: '김유나' },
+                { no: 7, grade: 9, name: '김은' },
+                { no: 8, grade: 10, name: '황서현' },
+                { no: 9, grade: 9, name: '유하미' },
+                { no: 10, grade: 11, name: '김서정' },
+            ],
+            남고: [
+                { no: 1, grade: 12, name: '한영진' },
+                { no: 2, grade: 12, name: '김영래' },
+                { no: 3, grade: 12, name: '이예준' },
+                { no: 4, grade: 12, name: '박근호' },
+                { no: 5, grade: 12, name: '안정우' },
+                { no: 6, grade: 11, name: '조한' },
+                { no: 7, grade: 10, name: '박시헌' },
+                { no: 8, grade: 11, name: '김영빈' },
+                { no: 9, grade: 10, name: '정우성' },
+                { no: 10, grade: 10, name: '유수호' },
+            ],
+        },
+    },
+    세종: {
+        농구: { // 💡 배구 등 다른 종목일 경우 '농구'라는 글자를 알맞게 수정해 주세요.
+            남중: [
+                { no: 1, grade: 9, name: '임희수' },
+                { no: 2, grade: 9, name: '김루아' },
+                { no: 3, grade: 7, name: '이산' },
+                { no: 4, grade: 7, name: '이나건' },
+                { no: 5, grade: 7, name: '정은수' },
+                { no: 6, grade: 9, name: '박지완' },
+                { no: 7, grade: 8, name: '문단우' },
+                { no: 8, grade: 8, name: '박노엘' },
+                { no: 9, grade: 8, name: '미국캠1' },
+                { no: 10, grade: 9, name: '미국캠2' },
+            ],
+            남고: [
+                { no: 1, grade: 12, name: '김형민' },
+                { no: 2, grade: 12, name: '손주환' },
+                { no: 3, grade: 10, name: '김민후' },
+                { no: 4, grade: 10, name: '강한성' },
+                { no: 5, grade: 11, name: '박환상' },
+                { no: 6, grade: 10, name: '정현수' },
+                { no: 7, grade: 12, name: '김주한' },
+                { no: 8, grade: 10, name: '최사무엘' },
+                { no: 9, grade: 10, name: '김시온' },
+                { no: 10, grade: 10, name: '미국캠1' },
+            ],
+        },
+    },
 };
-
 /* ───── Helpers ───── */
 
 const SUPPORTED_CAMPUSES = ['문경', '음성', '세종'];
@@ -427,3 +490,4 @@ export function getLineupForMatch(campus, sport, category) {
     }
     return [];
 }
+
