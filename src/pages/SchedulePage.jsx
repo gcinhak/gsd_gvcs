@@ -241,7 +241,7 @@ export default function SchedulePage() {
                                 key={key}
                                 className={`day-tab ${activeDay === key ? 'active' : ''}`}
                                 onClick={() => setActiveDay(key)}
-                            >s
+                            >
                                 <span className="day-tab-emoji" aria-hidden>
                                     {d.emoji}
                                 </span>

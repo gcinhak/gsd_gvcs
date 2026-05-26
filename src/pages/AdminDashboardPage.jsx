@@ -10,11 +10,12 @@ import {
     saveDivision,
     resetDashboardRemote,
     applyDivisionsToEvents,
+    getEventWinnerDivisionId,
 } from '../lib/dashboardStore';
 import { getRelayMatchId, getScorePair } from '../lib/dashboardRelay';
 import { LIVE_MATCHES, getQuarters } from '../data/data';
 import { fetchComments, fetchLiveStates, getStoredPin, setStoredPin } from '../lib/liveApi';
-import { getVolleyballSetSummary, isVolleyballMatch } from '../lib/volleyballSets';
+import { getSetSummary, getSetTargetWins, isSetMatch } from '../lib/volleyballSets';
 
 const RELAY_STATUS_LABELS = {
     upcoming: '경기 전',
@@ -36,20 +37,26 @@ function getDivisionDisplayState(division, relayState, match, relayComments = []
     };
     if (!relayState) return base;
 
-    const summary = isVolleyballMatch(match)
-        ? getVolleyballSetSummary(relayComments, match, getQuarters(match.sport), relayState)
+    const summary = isSetMatch(match)
+        ? getSetSummary(relayComments, match, getQuarters(match.sport), relayState)
         : null;
-    const score = summary || getScorePair(relayState);
+    const relayScore = getScorePair(relayState);
+    const score = summary && (summary.home > 0 || summary.away > 0) ? summary : relayScore;
     const next = {
         ...base,
         scoreText: `${score.home}:${score.away}`,
     };
 
-    const volleyballWinnerTeam =
-        summary && summary.home >= 2 ? match?.teams?.home : summary && summary.away >= 2 ? match?.teams?.away : null;
-    if (volleyballWinnerTeam) {
+    const targetWins = match ? getSetTargetWins(match) : 0;
+    const setWinnerTeam =
+        summary && targetWins && summary.home >= targetWins
+            ? match?.teams?.home
+            : summary && targetWins && summary.away >= targetWins
+              ? match?.teams?.away
+              : null;
+    if (setWinnerTeam) {
         next.state = 'done';
-        next.winnerKey = campusKeyFromTeamName(volleyballWinnerTeam);
+        next.winnerKey = campusKeyFromTeamName(setWinnerTeam);
     } else if (relayState.status === 'live') {
         next.state = 'live';
         next.winnerKey = 'pending';
@@ -65,6 +72,41 @@ function getDivisionDisplayState(division, relayState, match, relayComments = []
     }
 
     return next;
+}
+
+function getEventWinnerSummary(event, relayStatesMap, relayCommentsMap, liveMatchMap) {
+    const scores = CAMPUS_OPTIONS.reduce((acc, campus) => ({ ...acc, [campus.key]: 0 }), {});
+    const divisions = getEventDivisions(event).map((division) => {
+        const matchId = getRelayMatchId(division);
+        const match = matchId ? liveMatchMap[matchId] : null;
+        return getDivisionDisplayState(
+            division,
+            matchId ? relayStatesMap[matchId] : null,
+            match,
+            matchId ? relayCommentsMap[matchId] || [] : []
+        );
+    });
+
+    for (const division of divisions) {
+        if (division.state !== 'done') continue;
+        if (scores[division.winnerKey] === undefined) continue;
+        scores[division.winnerKey] += 1;
+    }
+
+    const doneCount = divisions.filter((division) => division.state === 'done').length;
+    const sorted = Object.entries(scores).sort((a, b) => b[1] - a[1]);
+    const topScore = sorted[0]?.[1] || 0;
+    const majorityWinnerKey = topScore > divisions.length / 2 ? sorted[0][0] : null;
+    const tiedCampusKeys = sorted.filter(([, score]) => score === topScore && score > 0).map(([key]) => key);
+
+    return {
+        divisions,
+        isTie: doneCount > 0 && !majorityWinnerKey && tiedCampusKeys.length > 1,
+        tiedCampusKeys,
+        manualWinnerKey: event.manualWinnerKey || null,
+        majorityWinnerKey,
+        displayWinnerKey: event.manualWinnerKey || majorityWinnerKey || null,
+    };
 }
 
 function PinGate({ onSuccess }) {
@@ -162,7 +204,9 @@ function DivisionControl({ division, relayState, match, relayComments, onChange 
     );
 }
 
-function EventAdminCard({ event, relayStatesMap, relayCommentsMap, liveMatchMap, onChange }) {
+function EventAdminCard({ event, relayStatesMap, relayCommentsMap, liveMatchMap, onChange, onEventWinnerChange }) {
+    const winnerSummary = getEventWinnerSummary(event, relayStatesMap, relayCommentsMap, liveMatchMap);
+
     return (
         <article className="da-event-card">
             <header className="da-event-head">
@@ -170,6 +214,23 @@ function EventAdminCard({ event, relayStatesMap, relayCommentsMap, liveMatchMap,
                     <span>{event.status}</span>
                     <h2>{event.sport}</h2>
                     <p>{event.rule}</p>
+                </div>
+                <div className="da-event-winner">
+                    <label>
+                        <span>최종 종목 우승</span>
+                        <select
+                            value={winnerSummary.displayWinnerKey || ''}
+                            onChange={(e) => onEventWinnerChange(event, e.target.value || 'pending')}
+                        >
+                            <option value="">선택 안 함</option>
+                            {CAMPUS_OPTIONS.map((campusOption) => (
+                                <option key={campusOption.key} value={campusOption.key}>
+                                    {campusOption.name}
+                                </option>
+                            ))}
+                        </select>
+                    </label>
+                    {winnerSummary.isTie && <em className="da-tie-hint">동점: 최종 우승 캠퍼스 선택</em>}
                 </div>
             </header>
 
@@ -233,10 +294,11 @@ export default function AdminDashboardPage() {
         }, {});
     }, []);
 
-    const volleyballMatchIds = useMemo(() => {
-        const event = INITIAL_DASHBOARD_EVENTS.find((item) => item.id === 'volleyball');
-        return (event?.divisions || []).map(getRelayMatchId).filter(Boolean);
-    }, []);
+    const setMatchIds = useMemo(() => {
+        return INITIAL_DASHBOARD_EVENTS.flatMap(getEventDivisions)
+            .map(getRelayMatchId)
+            .filter((matchId) => isSetMatch(liveMatchMap[matchId]));
+    }, [liveMatchMap]);
 
     const counts = useMemo(() => {
         const divisions = events.flatMap(getEventDivisions);
@@ -282,13 +344,13 @@ export default function AdminDashboardPage() {
     }, [authed]);
 
     useEffect(() => {
-        if (!authed || volleyballMatchIds.length === 0) return undefined;
+        if (!authed || setMatchIds.length === 0) return undefined;
         let cancelled = false;
 
         const pull = async () => {
             try {
                 const entries = await Promise.all(
-                    volleyballMatchIds.map(async (matchId) => {
+                    setMatchIds.map(async (matchId) => {
                         const data = await fetchComments(matchId, 0);
                         return [matchId, data.comments || []];
                     })
@@ -305,7 +367,7 @@ export default function AdminDashboardPage() {
             cancelled = true;
             window.clearInterval(timer);
         };
-    }, [authed, volleyballMatchIds]);
+    }, [authed, setMatchIds]);
 
     // 실시간 경기 점수 폴링 (3초마다)
     useEffect(() => {
@@ -341,6 +403,45 @@ export default function AdminDashboardPage() {
         };
         try {
             await saveDivision(division.id, body, pin);
+            setSavedAt(
+                new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+            );
+            await reloadDashboard();
+        } catch (e) {
+            if (String(e.message).includes('401')) {
+                alert('PIN이 올바르지 않습니다. 다시 로그인해주세요.');
+                setStoredPin('');
+                setAuthed(false);
+            } else {
+                alert('저장 실패: ' + e.message);
+            }
+        }
+    };
+
+    const changeEventWinner = async (event, winnerKey) => {
+        const pin = getStoredPin();
+        const selectedWinnerKey = winnerKey || 'pending';
+        setEvents((prev) =>
+            prev.map((item) =>
+                item.id === event.id
+                    ? {
+                          ...item,
+                          manualWinnerKey: selectedWinnerKey === 'pending' ? null : selectedWinnerKey,
+                      }
+                    : item
+            )
+        );
+        try {
+            await saveDivision(
+                getEventWinnerDivisionId(event.id),
+                {
+                    winner_key: selectedWinnerKey,
+                    state: selectedWinnerKey === 'pending' ? 'ready' : 'done',
+                    note: '최종 종목 우승',
+                    is_manual: selectedWinnerKey !== 'pending' ? 1 : 0,
+                },
+                pin
+            );
             setSavedAt(
                 new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
             );
@@ -422,6 +523,7 @@ export default function AdminDashboardPage() {
                             relayCommentsMap={relayCommentsMap}
                             liveMatchMap={liveMatchMap}
                             onChange={changeDivision}
+                            onEventWinnerChange={changeEventWinner}
                         />
                     ))}
                 </section>

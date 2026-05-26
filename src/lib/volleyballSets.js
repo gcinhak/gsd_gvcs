@@ -8,7 +8,24 @@ export function isVolleyballEvent(event) {
     return event?.id === 'volleyball';
 }
 
-export function getVolleyballSetScores(comments = [], match, sets = [], state = {}) {
+export function isWinnerOnlySetMatch(match) {
+    return Boolean(match?.id?.startsWith('sat-chess') || match?.id?.startsWith('sat-tug'));
+}
+
+export function isSetMatch(match) {
+    return isVolleyballMatch(match) || isWinnerOnlySetMatch(match);
+}
+
+export function isSetEvent(event) {
+    return event?.id === 'volleyball' || event?.id === 'chess' || event?.id === 'tug-of-war';
+}
+
+export function getSetTargetWins(match) {
+    return isSetMatch(match) ? 2 : 0;
+}
+
+export function getSetScores(comments = [], match, sets = [], state = {}) {
+    const winnerOnly = isWinnerOnlySetMatch(match);
     const rows = sets.map((label) => ({
         label,
         home: 0,
@@ -23,14 +40,28 @@ export function getVolleyballSetScores(comments = [], match, sets = [], state = 
         if (!comment.quarter) continue;
         const row = rowMap.get(comment.quarter);
         if (!row) continue;
-        if (String(comment.content || '').includes(VOLLEYBALL_SET_END_TEXT)) row.isEnded = true;
-        if (!comment.scoreSide || !comment.scoreAmount) continue;
+
+        const isSetEnd = String(comment.content || '').includes(VOLLEYBALL_SET_END_TEXT);
+        if (isSetEnd) row.isEnded = true;
+
+        if (!comment.scoreSide) continue;
+
+        if (winnerOnly && isSetEnd) {
+            row.winnerSide = comment.scoreSide;
+            row.winnerTeam = comment.scoreSide === 'home' ? match?.teams?.home : match?.teams?.away;
+            if (comment.scoreSide === 'home') row.home = 1;
+            if (comment.scoreSide === 'away') row.away = 1;
+            continue;
+        }
+
+        if (!comment.scoreAmount) continue;
         if (comment.scoreSide === 'home') row.home += Number(comment.scoreAmount) || 0;
         if (comment.scoreSide === 'away') row.away += Number(comment.scoreAmount) || 0;
     }
 
     const currentIndex = rows.findIndex((row) => row.label === state.currentQuarter);
     for (const [index, row] of rows.entries()) {
+        if (row.winnerSide) continue;
         const hasScore = row.home !== row.away && (row.home > 0 || row.away > 0);
         const setIsClosed =
             row.isEnded ||
@@ -45,8 +76,8 @@ export function getVolleyballSetScores(comments = [], match, sets = [], state = 
     return rows;
 }
 
-export function getVolleyballSetSummary(comments = [], match, sets = [], state = {}) {
-    const rows = getVolleyballSetScores(comments, match, sets, state);
+export function getSetSummary(comments = [], match, sets = [], state = {}) {
+    const rows = getSetScores(comments, match, sets, state);
     return rows.reduce(
         (summary, row) => {
             if (row.winnerSide === 'home') summary.home += 1;
@@ -56,3 +87,6 @@ export function getVolleyballSetSummary(comments = [], match, sets = [], state =
         { home: 0, away: 0, rows }
     );
 }
+
+export const getVolleyballSetScores = getSetScores;
+export const getVolleyballSetSummary = getSetSummary;

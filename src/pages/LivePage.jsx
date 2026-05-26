@@ -2,9 +2,9 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import PageHeader from '../components/PageHeader';
 import CampusBadge from '../components/CampusBadge';
-import { LIVE_MATCHES, getQuarters } from '../data/data';
+import { RELAY_MATCHES, getQuarters } from '../data/data';
 import { fetchComments, fetchLiveStates } from '../lib/liveApi';
-import { getVolleyballSetSummary, isVolleyballMatch } from '../lib/volleyballSets';
+import { getSetSummary, isSetMatch } from '../lib/volleyballSets';
 
 const POLL_MS = 3000;
 
@@ -35,12 +35,11 @@ function MatchCard({ match, state, comments = [] }) {
     const isLive = status === 'live';
     const isFinished = status === 'finished';
     const showScore = !!state && (isLive || isFinished);
-    const volleyballSummary =
-        showScore && isVolleyballMatch(match)
-            ? getVolleyballSetSummary(comments, match, getQuarters(match.sport), state)
-            : null;
-    const homeScore = volleyballSummary ? volleyballSummary.home : state?.homeScore || 0;
-    const awayScore = volleyballSummary ? volleyballSummary.away : state?.awayScore || 0;
+    const setSummary =
+        showScore && isSetMatch(match) ? getSetSummary(comments, match, getQuarters(match.sport), state) : null;
+    const hasSetScore = setSummary && (setSummary.home > 0 || setSummary.away > 0);
+    const homeScore = hasSetScore ? setSummary.home : state?.homeScore || 0;
+    const awayScore = hasSetScore ? setSummary.away : state?.awayScore || 0;
 
     return (
         <Link to={`/live/${match.id}`} className={`mc status-${status}`}>
@@ -69,13 +68,23 @@ function MatchCard({ match, state, comments = [] }) {
             </div>
 
             <div className="mc-teams">
-                <div className="mc-team">
+                <div className="mc-team mc-team-home">
                     <CampusBadge campus={match.teams.home} size="md" />
-                    {showScore && <span className="mc-score">{homeScore}</span>}
                 </div>
-                <div className="mc-team">
+                {showScore ? (
+                    <div
+                        className="mc-scoreline"
+                        aria-label={`${match.teams.home} ${homeScore} 대 ${awayScore} ${match.teams.away}`}
+                    >
+                        <span className="mc-score">{homeScore}</span>
+                        <span className="mc-score-colon">:</span>
+                        <span className="mc-score">{awayScore}</span>
+                    </div>
+                ) : (
+                    <span className="mc-vs">VS</span>
+                )}
+                <div className="mc-team mc-team-away">
                     <CampusBadge campus={match.teams.away} size="md" />
-                    {showScore && <span className="mc-score">{awayScore}</span>}
                 </div>
             </div>
 
@@ -88,7 +97,7 @@ export default function LivePage() {
     const [statesMap, setStatesMap] = useState({});
     const [commentsMap, setCommentsMap] = useState({});
     const [serverState, setServerState] = useState('connecting');
-    const volleyballMatchIds = useMemo(() => LIVE_MATCHES.filter(isVolleyballMatch).map((match) => match.id), []);
+    const setMatchIds = useMemo(() => RELAY_MATCHES.filter(isSetMatch).map((match) => match.id), []);
 
     useEffect(() => {
         let cancelled = false;
@@ -116,16 +125,16 @@ export default function LivePage() {
         let cancelled = false;
         const pull = async () => {
             try {
-                const activeVolleyballMatches = volleyballMatchIds.filter((matchId) => {
+                const activeSetMatches = setMatchIds.filter((matchId) => {
                     const status = statesMap[matchId]?.status;
                     return status === 'live' || status === 'finished';
                 });
-                if (activeVolleyballMatches.length === 0) {
+                if (activeSetMatches.length === 0) {
                     if (!cancelled) setCommentsMap({});
                     return;
                 }
                 const entries = await Promise.all(
-                    activeVolleyballMatches.map(async (matchId) => {
+                    activeSetMatches.map(async (matchId) => {
                         const data = await fetchComments(matchId, 0);
                         return [matchId, data.comments || []];
                     })
@@ -141,7 +150,7 @@ export default function LivePage() {
             cancelled = true;
             clearInterval(timer);
         };
-    }, [statesMap, volleyballMatchIds]);
+    }, [statesMap, setMatchIds]);
 
     /* LIVE 가 맨 위, 그 다음 시간 순. 종료는 맨 아래. */
     const { live, scheduled, finished } = useMemo(() => {
@@ -155,7 +164,7 @@ export default function LivePage() {
         const liveArr = [];
         const upcomingArr = [];
         const finishedArr = [];
-        for (const m of LIVE_MATCHES) {
+        for (const m of RELAY_MATCHES) {
             const st = statesMap[m.id]?.status || 'upcoming';
             if (st === 'live') liveArr.push(m);
             else if (st === 'finished') finishedArr.push(m);

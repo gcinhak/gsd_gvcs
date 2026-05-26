@@ -1,4 +1,5 @@
 ﻿import { useEffect, useMemo, useState } from 'react';
+import LiveClock from '../components/LiveClock';
 import {
     CAMPUS_OPTIONS,
     CAMPUS,
@@ -11,7 +12,7 @@ import {
 import { fetchComments, fetchLiveStates } from '../lib/liveApi';
 import { LIVE_MATCHES, getQuarters } from '../data/data';
 import { getRelayMatchId, getScorePair } from '../lib/dashboardRelay';
-import { getVolleyballSetSummary, isVolleyballEvent, isVolleyballMatch } from '../lib/volleyballSets';
+import { getSetSummary, getSetTargetWins, isSetEvent, isSetMatch } from '../lib/volleyballSets';
 
 const STATUS_LABELS = {
     upcoming: '경기 전',
@@ -25,9 +26,11 @@ function formatRelayScore(state) {
 }
 
 function formatDashboardScore(event, division, state, comments = [], match) {
-    if (isVolleyballEvent(event)) {
-        const summary = getVolleyballSetSummary(comments, match, match ? getQuarters(match.sport) : [], state);
-        return `${summary.home}:${summary.away}`;
+    if (isSetEvent(event)) {
+        const summary = getSetSummary(comments, match, match ? getQuarters(match.sport) : [], state);
+        const relayScore = getScorePair(state);
+        const score = summary.home > 0 || summary.away > 0 ? summary : relayScore;
+        return `${score.home}:${score.away}`;
     }
     const { home, away } = getScorePair(state);
     return `${home}:${away}`;
@@ -83,20 +86,9 @@ function MatchupPills({ matchup }) {
     );
 }
 
-function formatDashboardDate(date) {
-    const pad = (value) => String(value).padStart(2, '0');
-    const weekday = ['일', '월', '화', '수', '목', '금', '토'][date.getDay()];
-    return `${date.getFullYear()}.${pad(date.getMonth() + 1)}.${pad(date.getDate())} (${weekday})`;
-}
-
-function formatDashboardTime(date) {
-    const pad = (value) => String(value).padStart(2, '0');
-    return `${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
-}
-
 function formatCommentTime(ts) {
     if (!ts) return '';
-    const date = new Date(ts);
+    const date = new Date(ts * 1000); // ← * 1000 추가
     if (Number.isNaN(date.getTime())) return '';
     return date.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
 }
@@ -124,9 +116,17 @@ function getRelayDisplayState(event, division, match, relayState, relayComments 
     };
     if (!relayState || !match) return base;
 
-    if (isVolleyballEvent(event)) {
-        const summary = getVolleyballSetSummary(relayComments, match, getQuarters(match.sport), relayState);
-        const winnerTeam = summary.home >= 2 ? match.teams.home : summary.away >= 2 ? match.teams.away : null;
+    if (isSetEvent(event)) {
+        const summary = getSetSummary(relayComments, match, getQuarters(match.sport), relayState);
+        const relayScore = getScorePair(relayState);
+        const score = summary.home > 0 || summary.away > 0 ? summary : relayScore;
+        const targetWins = getSetTargetWins(match);
+        const winnerTeam =
+            targetWins && score.home >= targetWins
+                ? match.teams.home
+                : targetWins && score.away >= targetWins
+                  ? match.teams.away
+                  : null;
         if (winnerTeam) {
             return {
                 state: 'done',
@@ -221,12 +221,46 @@ function TaekwondoGroups({ event, groups, liveMatchMap, relayStatesMap, onOpenDe
     );
 }
 
-function getEventContext(event) {
-    const divisions = getEventDivisions(event);
-    const isDone = divisions.length > 0 && divisions.every((d) => d.state === 'done');
+function getDerivedEventDivisions(event, relayStatesMap = {}, liveMatchMap = {}, relayCommentsMap = {}) {
+    return getEventDivisions(event).map((division) => {
+        const matchId = getRelayMatchId(division);
+        const match = matchId ? liveMatchMap[matchId] : null;
+        const relayState = matchId ? relayStatesMap[matchId] : null;
+        const relayComments = matchId ? relayCommentsMap[matchId] || [] : [];
+        return {
+            ...division,
+            ...getRelayDisplayState(event, division, match, relayState, relayComments),
+        };
+    });
+}
+
+function getEventStatusLabelFromContext(event, context) {
+    if (context.isDone) return '경기 종료';
+    if (context.isLive) return '진행 중';
+    return event.status;
+}
+
+function getEventContext(event, relayStatesMap = {}, liveMatchMap = {}, relayCommentsMap = {}) {
+    const divisions = getDerivedEventDivisions(event, relayStatesMap, liveMatchMap, relayCommentsMap);
+    const majorityWinnerKey = getMajorityCampusFromDivisions(divisions);
+    const allDone = divisions.length > 0 && divisions.every((d) => d.state === 'done');
+    const isDone = allDone || Boolean(event.manualWinnerKey || majorityWinnerKey);
     const isLive = divisions.some((d) => d.state === 'live');
-    const winnerKey = event.manualWinnerKey || getLeadingCampusFromDivisions(divisions);
+    const winnerKey =
+        event.manualWinnerKey || majorityWinnerKey || (allDone ? getLeadingCampusFromDivisions(divisions) : 'pending');
     return { divisions, isDone, isLive, winnerKey };
+}
+
+function getMajorityCampusFromDivisions(divisions) {
+    const scores = CAMPUS_OPTIONS.reduce((acc, campus) => ({ ...acc, [campus.key]: 0 }), {});
+    for (const div of divisions) {
+        if (div.state !== 'done') continue;
+        if (scores[div.winnerKey] === undefined) continue;
+        scores[div.winnerKey] += 1;
+    }
+    const sorted = Object.entries(scores).sort((a, b) => b[1] - a[1]);
+    if ((sorted[0]?.[1] || 0) <= divisions.length / 2) return null;
+    return sorted[0][0];
 }
 
 function getLeadingCampusFromDivisions(divisions) {
@@ -242,10 +276,9 @@ function getLeadingCampusFromDivisions(divisions) {
     return sorted[0][0];
 }
 
-function getCampusWinCounts(events) {
+function getCampusWinCountsFromContexts(contexts) {
     const counts = CAMPUS_OPTIONS.reduce((acc, campus) => ({ ...acc, [campus.key]: 0 }), {});
-    for (const event of events) {
-        const context = getEventContext(event);
+    for (const context of contexts) {
         if (!context.isDone) continue;
         if (counts[context.winnerKey] === undefined) continue;
         counts[context.winnerKey] += 1;
@@ -257,12 +290,10 @@ function ScoreDetailModal({ detail, relayState, comments, loading, onClose }) {
     if (!detail) return null;
 
     const { division, match } = detail;
-    const volleyballSummary = isVolleyballMatch(match)
-        ? getVolleyballSetSummary(comments, match, getQuarters(match.sport), relayState)
-        : null;
-    const score = volleyballSummary
-        ? `${volleyballSummary.home} : ${volleyballSummary.away}`
-        : formatRelayScore(relayState);
+    const setSummary = isSetMatch(match) ? getSetSummary(comments, match, getQuarters(match.sport), relayState) : null;
+    const relayScore = getScorePair(relayState);
+    const visibleSetScore = setSummary && (setSummary.home > 0 || setSummary.away > 0) ? setSummary : relayScore;
+    const score = setSummary ? `${visibleSetScore.home} : ${visibleSetScore.away}` : formatRelayScore(relayState);
     const status = relayState?.status || 'upcoming';
 
     return (
@@ -297,10 +328,10 @@ function ScoreDetailModal({ detail, relayState, comments, loading, onClose }) {
                     </div>
                 ) : null}
 
-                {volleyballSummary && (
+                {setSummary && (
                     <div className="db-detail-sets">
                         <div className="db-detail-sets-title">세트별 점수</div>
-                        {volleyballSummary.rows.map((set) => (
+                        {setSummary.rows.map((set) => (
                             <div key={set.label} className="db-detail-set-row">
                                 <span>{set.label}</span>
                                 <strong>
@@ -347,9 +378,8 @@ export default function DashboardPage() {
     const [events, setEvents] = useState(INITIAL_DASHBOARD_EVENTS);
     const [relayStatesMap, setRelayStatesMap] = useState({});
     const [relayCommentsMap, setRelayCommentsMap] = useState({});
-    const [volleyballCommentsMap, setVolleyballCommentsMap] = useState({});
+    const [setCommentsMap, setSetCommentsMap] = useState({});
     const [selectedDetail, setSelectedDetail] = useState(null);
-    const [now, setNow] = useState(() => new Date());
 
     const liveMatchMap = useMemo(() => {
         return LIVE_MATCHES.reduce((acc, match) => {
@@ -358,10 +388,11 @@ export default function DashboardPage() {
         }, {});
     }, []);
 
-    const volleyballMatchIds = useMemo(() => {
-        const event = INITIAL_DASHBOARD_EVENTS.find((item) => item.id === 'volleyball');
-        return (event?.divisions || []).map(getRelayMatchId).filter(Boolean);
-    }, []);
+    const setMatchIds = useMemo(() => {
+        return INITIAL_DASHBOARD_EVENTS.flatMap(getEventDivisions)
+            .map(getRelayMatchId)
+            .filter((matchId) => isSetMatch(liveMatchMap[matchId]));
+    }, [liveMatchMap]);
 
     // 서버에서 대시보드 결과 로드 (10초마다 폴링)
     useEffect(() => {
@@ -407,20 +438,20 @@ export default function DashboardPage() {
     }, []);
 
     useEffect(() => {
-        if (volleyballMatchIds.length === 0) return;
+        if (setMatchIds.length === 0) return;
         let cancelled = false;
 
         const pull = async () => {
             try {
                 const entries = await Promise.all(
-                    volleyballMatchIds.map(async (matchId) => {
+                    setMatchIds.map(async (matchId) => {
                         const data = await fetchComments(matchId, 0);
                         return [matchId, data.comments || []];
                     })
                 );
-                if (!cancelled) setVolleyballCommentsMap(Object.fromEntries(entries));
+                if (!cancelled) setSetCommentsMap(Object.fromEntries(entries));
             } catch {
-                /* volleyball comments unavailable */
+                /* set comments unavailable */
             }
         };
 
@@ -430,12 +461,7 @@ export default function DashboardPage() {
             cancelled = true;
             window.clearInterval(timer);
         };
-    }, [volleyballMatchIds]);
-
-    useEffect(() => {
-        const timer = window.setInterval(() => setNow(new Date()), 1000);
-        return () => window.clearInterval(timer);
-    }, []);
+    }, [setMatchIds]);
 
     useEffect(() => {
         if (!selectedDetail?.matchId) return;
@@ -455,15 +481,30 @@ export default function DashboardPage() {
         };
     }, [selectedDetail]);
 
+    const eventContexts = useMemo(() => {
+        return events.map((event) => ({
+            eventId: event.id,
+            context: getEventContext(event, relayStatesMap, liveMatchMap, setCommentsMap),
+        }));
+    }, [events, liveMatchMap, relayStatesMap, setCommentsMap]);
+
+    const eventContextMap = useMemo(() => {
+        return eventContexts.reduce((acc, item) => {
+            acc[item.eventId] = item.context;
+            return acc;
+        }, {});
+    }, [eventContexts]);
+
     const stats = useMemo(() => {
-        const allDivisions = events.flatMap(getEventDivisions);
+        const contexts = eventContexts.map((item) => item.context);
+        const allDivisions = contexts.flatMap((context) => context.divisions);
         return {
             total: allDivisions.length,
             done: allDivisions.filter((d) => d.state === 'done').length,
             live: allDivisions.filter((d) => d.state === 'live').length,
-            campusWins: getCampusWinCounts(events),
+            campusWins: getCampusWinCountsFromContexts(contexts),
         };
-    }, [events]);
+    }, [eventContexts]);
 
     return (
         <div className="page dashboard-page">
@@ -486,10 +527,7 @@ export default function DashboardPage() {
                 <div className="db-live-panel" aria-label="현재 진행 상태">
                     <span className="db-live-dot" />
                     <strong>LIVE</strong>
-                    <time className="db-live-clock" dateTime={now.toISOString()}>
-                        <span className="db-live-time">{formatDashboardTime(now)}</span>
-                        <span className="db-live-date">{formatDashboardDate(now)}</span>
-                    </time>
+                    <LiveClock />
                     <span className="db-live-summary">
                         {stats.done}/{stats.total} 완료 · {stats.live} 진행
                     </span>
@@ -499,9 +537,10 @@ export default function DashboardPage() {
             <section className="db-board" aria-label="종목별 결과 현황">
                 <div className="db-event-list">
                     {events.map((event) => {
-                        const context = getEventContext(event);
+                        const context = eventContextMap[event.id] || getEventContext(event);
                         const isChampion = context.isDone && context.winnerKey !== 'pending';
                         const eventCampus = isChampion ? getCampus(context.winnerKey) : getCampus('pending');
+                        const eventStatus = getEventStatusLabelFromContext(event, context);
 
                         return (
                             <article
@@ -511,7 +550,7 @@ export default function DashboardPage() {
                                 <div className="db-event-top">
                                     <div className="db-event-title-row">
                                         <h2>{event.sport}</h2>
-                                        <span className="db-event-status">{event.status}</span>
+                                        <span className="db-event-status">{eventStatus}</span>
                                     </div>
                                     {isChampion && (
                                         <div className="db-winner-box is-final">
@@ -540,7 +579,7 @@ export default function DashboardPage() {
                                                     key={division.id}
                                                     match={match}
                                                     relayState={matchId ? relayStatesMap[matchId] : null}
-                                                    relayComments={matchId ? volleyballCommentsMap[matchId] || [] : []}
+                                                    relayComments={matchId ? setCommentsMap[matchId] || [] : []}
                                                     onOpen={() =>
                                                         setSelectedDetail({ event, division, matchId, match })
                                                     }

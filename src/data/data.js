@@ -231,11 +231,40 @@ export const SCHEDULE = {
             },
             {
                 name: '조치원복합커뮤니티센터 · 중회의실',
-                subtitle: '체스 — 장소 3곳 운영',
-                kind: 'timeline',
-                items: [
-                    { start: '12:00', end: '13:00', round: '결선', label: '체스 중등부', meta: '45분' },
-                    { start: '13:00', end: '14:00', round: '결선', label: '체스 고등부', meta: '45분' },
+                subtitle: '체스 — 보드 3개 동시 진행',
+                kind: 'courts',
+                courtNames: ['보드 1', '보드 2', '보드 3'],
+                rows: [
+                    {
+                        num: '1라운드',
+                        start: '12:00',
+                        end: '12:40',
+                        courts: [
+                            { round: '결선', category: '7-8학년', match: '문경 VS 음성' },
+                            { round: '결선', category: '9-10학년', match: '세종 VS 문경' },
+                            { round: '결선', category: '11-12학년', match: '음성 VS 세종' },
+                        ],
+                    },
+                    {
+                        num: '2라운드',
+                        start: '12:40',
+                        end: '13:20',
+                        courts: [
+                            { round: '결선', category: '7-8학년', match: '음성 VS 세종' },
+                            { round: '결선', category: '9-10학년', match: '문경 VS 음성' },
+                            { round: '결선', category: '11-12학년', match: '세종 VS 문경' },
+                        ],
+                    },
+                    {
+                        num: '3라운드',
+                        start: '13:20',
+                        end: '14:00',
+                        courts: [
+                            { round: '결선', category: '7-8학년', match: '세종 VS 문경' },
+                            { round: '결선', category: '9-10학년', match: '음성 VS 세종' },
+                            { round: '결선', category: '11-12학년', match: '문경 VS 음성' },
+                        ],
+                    },
                 ],
             },
             {
@@ -384,7 +413,7 @@ export const GAME_VIDEOS = [
 export const CAMPUS_COLORS = {
     문경: { bg: '#1d4ed8', text: '#ffffff', soft: '#dbeafe' },
     음성: { bg: '#dc2626', text: '#ffffff', soft: '#fee2e2' },
-    세종: { bg: '#059669', text: '#ffffff', soft: '#d1fae5' },
+    세종: { bg: '#10b981', text: '#ffffff', soft: '#d1fae5' },
     '미국/세종': { bg: '#7c3aed', text: '#ffffff', soft: '#ede9fe' },
     미국: { bg: '#7c3aed', text: '#ffffff', soft: '#ede9fe' },
 };
@@ -925,7 +954,7 @@ export const QUARTERS_BY_SPORT = {
     축구: ['전반', '후반'],
     배구: ['1세트', '2세트', '3세트'],
     탁구: ['1세트', '2세트', '3세트'],
-    체스: ['1경기'],
+    체스: ['1세트', '2세트', '3세트'],
     태권도: ['1라운드', '2라운드', '3라운드'],
     중거리: ['전체'],
     중거리달리기: ['전체'],
@@ -944,6 +973,26 @@ export function getQuarters(sport) {
    - lineup 은 데이터 들어오면 home/away 배열에 { number, name, position } 형태로 채우면
      LiveMatchPage 가 자동으로 라인업 카드를 렌더링함.
 ────────────────────────────────────────────────────────── */
+/**
+ * 라이브·문자중계 대상 종목.
+ * 결과만 등록하는 종목(체스, 줄다리기, 이어달리기, 중거리, 태권체조, 품새)은 /live 와 admin/relay 에서 숨기고
+ * 결과는 현황판에서 관리한다. 태권도는 '겨루기'만 중계 대상.
+ */
+export const RELAY_SPORTS = new Set(['축구', '농구', '배구', '탁구']);
+
+export function isRelayableMatch(match) {
+    if (!match || !match.sport) return false;
+    if (match.mode === 'scoring') return false;
+    if (RELAY_SPORTS.has(match.sport)) return true;
+    if (match.sport === '태권도' && String(match.category || '').includes('겨루기')) return true;
+    return false;
+}
+
+/** 채점제 매치: 경기 끝나면 3 캠퍼스 점수를 한번에 입력하는 종목. */
+export function isScoringMatch(match) {
+    return match?.mode === 'scoring';
+}
+
 export const LIVE_MATCHES = [
     // ─── 5/28 (목) 농구 ───
     {
@@ -1126,7 +1175,105 @@ export const LIVE_MATCHES = [
         teams: { home: '문경', away: '음성' },
         lineup: { home: [], away: [] },
     },
+    // ─── 채점제 (결과등록) ───
+    {
+        id: 'sat-tk-demo',
+        day: '2026-05-30',
+        startTime: '10:30',
+        sport: '태권도',
+        round: '결선',
+        category: '태권체조',
+        venue: '보조실내체육관 1층',
+        teams: { home: '문경', away: '음성' },
+        mode: 'scoring',
+        lineup: { home: [], away: [] },
+    },
+    {
+        id: 'sat-tk-poomsae-mid',
+        day: '2026-05-30',
+        startTime: '11:00',
+        sport: '태권도',
+        round: '결선',
+        category: '품새 (중)',
+        venue: '보조실내체육관 1층',
+        teams: { home: '문경', away: '음성' },
+        mode: 'scoring',
+        lineup: { home: [], away: [] },
+    },
+    {
+        id: 'sat-tk-poomsae-high',
+        day: '2026-05-30',
+        startTime: '11:20',
+        sport: '태권도',
+        round: '결선',
+        category: '품새 (고)',
+        venue: '보조실내체육관 1층',
+        teams: { home: '문경', away: '음성' },
+        mode: 'scoring',
+        lineup: { home: [], away: [] },
+    },
+    {
+        id: 'sat-chess-1',
+        day: '2026-05-30',
+        startTime: '12:00',
+        sport: '체스',
+        round: '결선',
+        category: '7-8학년',
+        venue: '체스 경기장',
+        teams: { home: '문경', away: '음성' },
+        lineup: { home: [], away: [] },
+    },
+    {
+        id: 'sat-chess-2',
+        day: '2026-05-30',
+        startTime: '12:30',
+        sport: '체스',
+        round: '결선',
+        category: '9-10학년',
+        venue: '체스 경기장',
+        teams: { home: '문경', away: '음성' },
+        lineup: { home: [], away: [] },
+    },
+    {
+        id: 'sat-chess-3',
+        day: '2026-05-30',
+        startTime: '13:00',
+        sport: '체스',
+        round: '결선',
+        category: '11-12학년',
+        venue: '체스 경기장',
+        teams: { home: '문경', away: '음성' },
+        lineup: { home: [], away: [] },
+    },
+    {
+        id: 'sat-tug-1',
+        day: '2026-05-30',
+        startTime: '16:35',
+        sport: '줄다리기',
+        round: '결선',
+        category: '학생팀',
+        venue: '운동장',
+        teams: { home: '문경', away: '음성' },
+        lineup: { home: [], away: [] },
+    },
+    {
+        id: 'sat-tug-2',
+        day: '2026-05-30',
+        startTime: '16:10',
+        sport: '줄다리기',
+        round: '결선',
+        category: '성인팀',
+        venue: '운동장',
+        teams: { home: '문경', away: '음성' },
+        lineup: { home: [], away: [] },
+    },
 ];
+
+/** 라이브 중계 가능한 매치만 필터링한 배열 (UI에서 직접 사용). */
+export const RELAY_MATCHES = LIVE_MATCHES.filter(isRelayableMatch);
+
+/** 채점제 매치 목록. */
+export const SCORING_MATCHES = LIVE_MATCHES.filter(isScoringMatch);
 
 /* ──────────────────────────────────────────────────────────
    하이라이트 영상 (Popcat 페이지 등에서 사용)

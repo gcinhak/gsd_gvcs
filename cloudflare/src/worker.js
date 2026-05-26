@@ -115,7 +115,7 @@ export default {
             if (path === '/api/dashboard' && method === 'GET') return getDashboard(env);
             if (path.startsWith('/api/dashboard/division/') && method === 'PUT') {
                 if (!checkAdmin(req, env)) return json({ error: 'unauthorized' }, 401);
-                return saveDivision(path.split('/')[4], req, env);
+                return saveDivision(decodeURIComponent(path.split('/')[4] || ''), req, env);
             }
             if (path === '/api/dashboard/reset' && method === 'POST') {
                 if (!checkAdmin(req, env)) return json({ error: 'unauthorized' }, 401);
@@ -442,12 +442,24 @@ const RELAY_MAP = {
     'volleyball-high-men': 'fri-vb-6',
     'volleyball-mid-men': 'fri-vb-4',
     'volleyball-mix-women': 'fri-vb-5',
+    'chess-7-8': 'sat-chess-1',
+    'chess-9-10': 'sat-chess-2',
+    'chess-11-12': 'sat-chess-3',
+    'tug-students': 'sat-tug-1',
+    'tug-adults': 'sat-tug-2',
     'tk-sparring-mid': 'sat-tk-1',
     'tk-sparring-high': 'sat-tk-2',
 };
 
-function isVolleyballRelayMatch(matchId) {
-    return typeof matchId === 'string' && matchId.startsWith('fri-vb-');
+function isSetRelayMatch(matchId) {
+    return (
+        typeof matchId === 'string' &&
+        (matchId.startsWith('fri-vb-') || matchId.startsWith('sat-chess-') || matchId.startsWith('sat-tug-'))
+    );
+}
+
+function isWinnerOnlySetRelayMatch(matchId) {
+    return typeof matchId === 'string' && (matchId.startsWith('sat-chess-') || matchId.startsWith('sat-tug-'));
 }
 
 const VOLLEYBALL_SET_END_TEXT = '세트 종료';
@@ -458,8 +470,14 @@ function getSetWinsFromComments(comments = [], forceClosed = false) {
         if (!comment.quarter) continue;
         if (!setMap.has(comment.quarter)) setMap.set(comment.quarter, { home: 0, away: 0 });
         const row = setMap.get(comment.quarter);
-        if (String(comment.content || '').includes(VOLLEYBALL_SET_END_TEXT)) row.isEnded = true;
+        const isSetEnd = String(comment.content || '').includes(VOLLEYBALL_SET_END_TEXT);
+        if (isSetEnd) row.isEnded = true;
         if (!comment.score_side) continue;
+        if (isWinnerOnlySetRelayMatch(comment.match_id) && isSetEnd) {
+            if (comment.score_side === 'home') row.home = 1;
+            if (comment.score_side === 'away') row.away = 1;
+            continue;
+        }
         const amount = Number(comment.score_amount) || 0;
         if (amount <= 0) continue;
         if (comment.score_side === 'home') row.home += amount;
@@ -480,7 +498,7 @@ async function getDashboard(env) {
         env.DB.prepare('SELECT * FROM division_results').all(),
         env.DB.prepare('SELECT * FROM live_match_state').all(),
         env.DB.prepare(
-            "SELECT match_id, content, quarter, score_amount, score_side FROM live_comments WHERE match_id LIKE 'fri-vb-%'"
+            "SELECT match_id, content, quarter, score_amount, score_side FROM live_comments WHERE match_id LIKE 'fri-vb-%' OR match_id LIKE 'sat-chess-%' OR match_id LIKE 'sat-tug-%'"
         ).all(),
     ]);
     const divMap = Object.fromEntries((divRows.results || []).map((r) => [r.division_id, r]));
@@ -497,7 +515,7 @@ async function getDashboard(env) {
         const match = matchMap[relayMatchId];
 
         if (!div.is_manual) {
-            const setWins = isVolleyballRelayMatch(relayMatchId)
+            const setWins = isSetRelayMatch(relayMatchId)
                 ? getSetWinsFromComments(volleyballCommentsMap[relayMatchId] || [], match?.status === 'finished')
                 : null;
             const hasVolleyballWinner = setWins && (setWins.home >= 2 || setWins.away >= 2);

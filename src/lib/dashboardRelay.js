@@ -11,6 +11,11 @@ export const DIVISION_RELAY_MATCHES = {
     'volleyball-high-men': 'fri-vb-6',
     'volleyball-mid-men': 'fri-vb-4',
     'volleyball-mix-women': 'fri-vb-5',
+    'chess-7-8': 'sat-chess-1',
+    'chess-9-10': 'sat-chess-2',
+    'chess-11-12': 'sat-chess-3',
+    'tug-students': 'sat-tug-1',
+    'tug-adults': 'sat-tug-2',
     'tk-sparring-mid': 'sat-tk-1',
     'tk-sparring-high': 'sat-tk-2',
 };
