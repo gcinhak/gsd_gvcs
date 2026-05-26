@@ -668,7 +668,20 @@ function StatusPicker({ matchId, currentStatus, onUpdate }) {
 const PLACEMENT_POINTS = [20, 15, 10, 7, 5]; // 1등~5등
 const FINISHER_POINT = 2; // 완주한 그 외 선수
 
-function PlacementScoringCard({ match, state, comments = [], onAddComment, onUpdate }) {
+/** 재저장 시 기존 점수 코멘트 모두 삭제. 누적 방지. */
+async function wipeScoreComments(onDeleteComment, matchId, comments = []) {
+    if (!onDeleteComment) return;
+    const toDelete = comments.filter((c) => c?.id != null && (c?.scoreTeam || c?.type === 'score'));
+    for (const c of toDelete) {
+        try {
+            await onDeleteComment(matchId, c.id);
+        } catch {
+            /* 한 개 실패해도 계속 */
+        }
+    }
+}
+
+function PlacementScoringCard({ match, state, comments = [], onAddComment, onUpdate, onDeleteComment }) {
     const [participants, setParticipants] = useState({ 문경: '', 음성: '', 세종: '' });
     const [placements, setPlacements] = useState(['', '', '', '', '']);
     const [saving, setSaving] = useState(false);
@@ -738,6 +751,7 @@ function PlacementScoringCard({ match, state, comments = [], onAddComment, onUpd
             .join(', ');
         setSaving(true);
         try {
+            await wipeScoreComments(onDeleteComment, match.id, comments);
             for (const { campus, score } of entries) {
                 await onAddComment(match.id, {
                     type: 'score',
@@ -874,8 +888,8 @@ function PlacementScoringCard({ match, state, comments = [], onAddComment, onUpd
     );
 }
 
-function ScoringMatchCard({ match, state, comments = [], onAddComment, onUpdate }) {
-    const props = { match, state, comments, onAddComment, onUpdate };
+function ScoringMatchCard({ match, state, comments = [], onAddComment, onUpdate, onDeleteComment }) {
+    const props = { match, state, comments, onAddComment, onUpdate, onDeleteComment };
     if (match.scoringType === 'placements') return <PlacementScoringCard {...props} />;
     if (match.scoringType === 'firstPlace') return <FirstPlaceScoringCard {...props} />;
     if (match.scoringType === 'sets') return <SetsScoringCard {...props} />;
@@ -885,7 +899,7 @@ function ScoringMatchCard({ match, state, comments = [], onAddComment, onUpdate 
 }
 
 /* 탁구: 세트별 캠퍼스 점수 입력 (11점 3세트) */
-function TableTennisScoringCard({ match, state, comments = [], onAddComment, onUpdate }) {
+function TableTennisScoringCard({ match, state, comments = [], onAddComment, onUpdate, onDeleteComment }) {
     const setCount = match.setCount || 3;
     const maxScore = match.setMaxScore || 11;
 
@@ -957,6 +971,7 @@ function TableTennisScoringCard({ match, state, comments = [], onAddComment, onU
         }
         setSaving(true);
         try {
+            await wipeScoreComments(onDeleteComment, match.id, comments);
             for (let i = 0; i < setCount; i++) {
                 for (const c of ALL_CAMPUSES) {
                     const n = Number(sets[i][c]);
@@ -1060,7 +1075,7 @@ function TableTennisScoringCard({ match, state, comments = [], onAddComment, onU
 }
 
 /* 체스: 승점제 (승 1, 무 0.5, 패 0). 캠퍼스별 승/무/패 횟수 → 합계 자동 계산 */
-function ChessScoringCard({ match, state, comments = [], onAddComment, onUpdate }) {
+function ChessScoringCard({ match, state, comments = [], onAddComment, onUpdate, onDeleteComment }) {
     // 저장된 데이터 복원: quarter='문경 W/D/L' 같은 형식으로 인코딩
     const saved = { 문경: { W: '', D: '', L: '' }, 음성: { W: '', D: '', L: '' }, 세종: { W: '', D: '', L: '' } };
     for (const c of comments) {
@@ -1111,6 +1126,7 @@ function ChessScoringCard({ match, state, comments = [], onAddComment, onUpdate 
         }
         setSaving(true);
         try {
+            await wipeScoreComments(onDeleteComment, match.id, comments);
             for (const c of ALL_CAMPUSES) {
                 for (const k of ['W', 'D', 'L']) {
                     const n = Number(stats[c][k]);
@@ -1217,7 +1233,7 @@ function ChessScoringCard({ match, state, comments = [], onAddComment, onUpdate 
 }
 
 /* 이어달리기: 1등 캠퍼스 한 번만 픽 */
-function FirstPlaceScoringCard({ match, state, comments = [], onAddComment, onUpdate }) {
+function FirstPlaceScoringCard({ match, state, comments = [], onAddComment, onUpdate, onDeleteComment }) {
     const savedWinner = comments.find((c) => c?.scoreTeam)?.scoreTeam || '';
     const [winner, setWinner] = useState(savedWinner);
     const [saving, setSaving] = useState(false);
@@ -1237,6 +1253,7 @@ function FirstPlaceScoringCard({ match, state, comments = [], onAddComment, onUp
         }
         setSaving(true);
         try {
+            await wipeScoreComments(onDeleteComment, match.id, comments);
             await onAddComment(match.id, {
                 type: 'score',
                 content: `1등 ${winner}`,
@@ -1310,7 +1327,7 @@ function FirstPlaceScoringCard({ match, state, comments = [], onAddComment, onUp
 }
 
 /* 줄다리기: 3판 2선승, 세트별 승리 캠퍼스 픽 */
-function SetsScoringCard({ match, state, comments = [], onAddComment, onUpdate }) {
+function SetsScoringCard({ match, state, comments = [], onAddComment, onUpdate, onDeleteComment }) {
     const setCount = match.setCount || 3;
 
     // 기존 저장값 복원: '1세트', '2세트' 같은 quarter로 저장된 코멘트의 scoreTeam을 인덱스로 매핑
@@ -1360,6 +1377,7 @@ function SetsScoringCard({ match, state, comments = [], onAddComment, onUpdate }
         }
         setSaving(true);
         try {
+            await wipeScoreComments(onDeleteComment, match.id, comments);
             for (let i = 0; i < setWinners.length; i++) {
                 const w = setWinners[i];
                 if (!w) continue;
@@ -1447,7 +1465,7 @@ function SetsScoringCard({ match, state, comments = [], onAddComment, onUpdate }
     );
 }
 
-function SimpleScoringCard({ match, state, comments = [], onAddComment, onUpdate }) {
+function SimpleScoringCard({ match, state, comments = [], onAddComment, onUpdate, onDeleteComment }) {
     // 이미 저장된 score 코멘트에서 캠퍼스별 점수 추출
     const existingScores = {};
     for (const c of comments) {
@@ -1494,6 +1512,7 @@ function SimpleScoringCard({ match, state, comments = [], onAddComment, onUpdate
         }
         setSaving(true);
         try {
+            await wipeScoreComments(onDeleteComment, match.id, comments);
             for (const { campus, score } of entries) {
                 await onAddComment(match.id, {
                     type: 'score',
@@ -1576,7 +1595,7 @@ function SimpleScoringCard({ match, state, comments = [], onAddComment, onUpdate
     );
 }
 
-function ScoringPanel({ matches, statesMap, commentsMap, onAddComment, onUpdate }) {
+function ScoringPanel({ matches, statesMap, commentsMap, onAddComment, onUpdate, onDeleteComment }) {
     if (matches.length === 0) {
         return <div className="empty-state"><p>채점제 종목이 없습니다.</p></div>;
     }
@@ -1590,6 +1609,7 @@ function ScoringPanel({ matches, statesMap, commentsMap, onAddComment, onUpdate 
                     comments={commentsMap[m.id] || []}
                     onAddComment={onAddComment}
                     onUpdate={onUpdate}
+                    onDeleteComment={onDeleteComment}
                 />
             ))}
         </div>
@@ -1757,6 +1777,7 @@ export default function AdminRelayPage() {
                         commentsMap={commentsMap}
                         onAddComment={onAddComment}
                         onUpdate={onUpdate}
+                        onDeleteComment={onDeleteComment}
                     />
                 ) : !selectedMatch ? (
                     <MatchListView matches={RELAY_MATCHES} statesMap={statesMap} onSelect={setSelectedMatchId} />

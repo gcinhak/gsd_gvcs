@@ -55,6 +55,8 @@ function formatMatchup(match) {
 }
 
 function getPendingMatchup(event, division, match) {
+    // 채점제 매치는 teams 가 플레이스홀더라 3 캠퍼스로 표시
+    if (match?.mode === 'scoring') return '문경 VS 음성 VS 세종';
     const relayMatchup = formatMatchup(match);
     if (relayMatchup) return relayMatchup;
     if (event.id === 'middle-distance' || event.id === 'relay') return '문경 VS 음성 VS 세종';
@@ -285,9 +287,7 @@ function ResultCell({ event, division, match, relayState, relayComments = [], on
                 <span className="db-final-score-box">{finalScore}</span>
             ) : null}
 
-            {isActive ? (
-                hasWinner && <CampusBadge campus={campus} size="sm" />
-            ) : hasWinner ? (
+            {hasWinner ? (
                 <CampusBadge campus={campus} size="sm" />
             ) : (
                 <MatchupPills matchup={matchup} />
@@ -296,7 +296,7 @@ function ResultCell({ event, division, match, relayState, relayComments = [], on
     );
 }
 
-function TaekwondoGroups({ event, groups, liveMatchMap, relayStatesMap, onOpenDetail }) {
+function TaekwondoGroups({ event, groups, liveMatchMap, relayStatesMap, relayCommentsMap = {}, onOpenDetail }) {
     const divisions = groups.flatMap((group) => group.divisions);
 
     return (
@@ -312,6 +312,7 @@ function TaekwondoGroups({ event, groups, liveMatchMap, relayStatesMap, onOpenDe
                         key={division.id}
                         match={match}
                         relayState={matchId ? relayStatesMap[matchId] : null}
+                        relayComments={matchId ? relayCommentsMap[matchId] || [] : []}
                         onOpen={() => onOpenDetail({ division, matchId, match })}
                     />
                 );
@@ -720,6 +721,7 @@ export default function DashboardPage() {
                                         groups={event.groups}
                                         liveMatchMap={liveMatchMap}
                                         relayStatesMap={relayStatesMap}
+                                        relayCommentsMap={setCommentsMap}
                                         onOpenDetail={(detail) => setSelectedDetail({ ...detail, event })}
                                     />
                                 ) : (
