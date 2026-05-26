@@ -9,14 +9,14 @@ const SHOW_DEV_TABS = import.meta.env.DEV;
 
 const NAV_ITEMS = [
     { to: '/', label: '홈', end: true },
-    ...(SHOW_DEV_TABS ? [{ to: '/dashboard', label: '현황판' }] : []),
-    ...(SHOW_DEV_TABS ? [{ to: '/live', label: 'LIVE', live: true }] : []),
+    { to: '/dashboard', label: '현황판' },
+    { to: '/live', label: 'LIVE', live: true },
     { to: '/schedule', label: '경기 일정' },
-    ...(SHOW_DEV_TABS ? [{ to: '/lineup', label: '라인업' }] : []),
+    { to: '/lineup', label: '라인업' },
     { to: '/cheers', label: '응원전' },
-    //{ to: '/games', label: '경기 영상' },
+    ...(SHOW_DEV_TABS ? [{ to: '/games', label: '경기 영상' }] : []),
     { to: '/history', label: '역대 전적' },
-    ...(SHOW_DEV_TABS ? [{ to: '/cheer', label: '🏰 점령전' }] : []),
+    { to: '/cheer', label: '🏰 점령전' },
     { to: '/about', label: 'About' },
 ];
 
