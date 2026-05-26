@@ -5009,6 +5009,17 @@ img {
     cursor: not-allowed;
     opacity: 0.85;
 }
+.terr-vis-btn.is-animating {
+    cursor: not-allowed;
+    pointer-events: none;
+}
+/* 애니메이션 중 오버레이 완전히 숨김 — 페인트볼만 보이도록 */
+.terr-vis-btn.is-animating .terr-vis-overlay,
+.terr-vis-btn.is-animating:hover .terr-vis-overlay,
+.terr-vis-btn.is-animating.is-ready:hover .terr-vis-overlay {
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
 
 .terr-vis-overlay {
     position: absolute;
@@ -5052,15 +5063,44 @@ img {
     gap: 1px;
     width: 100%;
     aspect-ratio: 75 / 30;
-    background: #d1d5db;
+    background: #0f172a;
     border-radius: 12px;
     overflow: hidden;
     padding: 2px;
-    box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.35), inset 0 0 0 1px rgba(255,255,255,0.06);
 }
+/* 글자 밖 셀 — 완전 투명, 배경(어둠)만 보임 */
 .terr-cell {
-    background: #e5e7eb;
+    background: transparent;
+    transition: background 0.15s;
+}
+.terr-cell-void {
+    background: transparent !important;
+}
+/* 글자 안, 미점령 — 흰색 */
+.terr-cell.is-letter-empty {
+    background: rgba(255, 255, 255, 0.82);
     transition: background 0.2s;
+}
+/* 글자 안, 점령됨 — 캠퍼스 컬러 */
+.terr-cell.is-claimed {
+    background: var(--cell-color);
+    transition: background 0.15s;
+}
+
+/* ── 페인트볼 스플랫 애니메이션 ── */
+@keyframes paintball-splat {
+    0%   { transform: scale(0.15); filter: brightness(2.2) saturate(1.8); opacity: 0.7; }
+    30%  { transform: scale(1.7);  filter: brightness(1.6) saturate(1.4); opacity: 1; }
+    55%  { transform: scale(0.9);  filter: brightness(1.1); }
+    75%  { transform: scale(1.08); }
+    100% { transform: scale(1);    filter: brightness(1) saturate(1); }
+}
+.terr-cell.is-splat {
+    animation: paintball-splat 0.6s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+    position: relative;
+    z-index: 2;
+    border-radius: 50%;
 }
 .terr-cell.is-empty {
     background: repeating-linear-gradient(45deg, #e5e7eb 0 4px, #f3f4f6 4px 8px);
@@ -7754,6 +7794,7 @@ img {
     font-weight: 900;
     line-height: 1;
     white-space: nowrap;
+
 }
 /* -------------------------------------------
    한 줄(콤팩트) 형태의 중계 컨테이너 
@@ -7860,3 +7901,4 @@ img {
     font-weight: 600; /* 득점 텍스트 굵게 */
     color: var(--text);
 }
+

@@ -413,7 +413,7 @@ export const GAME_VIDEOS = [
 export const CAMPUS_COLORS = {
     문경: { bg: '#1d4ed8', text: '#ffffff', soft: '#dbeafe' },
     음성: { bg: '#dc2626', text: '#ffffff', soft: '#fee2e2' },
-    세종: { bg: '#059669', text: '#ffffff', soft: '#d1fae5' },
+    세종: { bg: '#10b981', text: '#ffffff', soft: '#d1fae5' },
     '미국/세종': { bg: '#7c3aed', text: '#ffffff', soft: '#ede9fe' },
     미국: { bg: '#7c3aed', text: '#ffffff', soft: '#ede9fe' },
 };
