@@ -604,9 +604,802 @@ function MatchAdminCard({ match, state, comments, onUpdate, onAddComment, onDele
 }
 
 /* ────────────────────────────────────────────────────────────
-   채점제(태권체조·품새) — 경기 끝나면 3 캠퍼스 점수 한번에 입력
+   채점제(태권체조·품새 / 중거리 등) — 경기 끝나면 점수 한번에 입력
 ──────────────────────────────────────────────────────────── */
+
+const PLACEMENT_POINTS = [20, 15, 10, 7, 5]; // 1등~5등
+const FINISHER_POINT = 2; // 완주한 그 외 선수
+
+function PlacementScoringCard({ match, state, comments = [], onAddComment, onUpdate }) {
+    const [participants, setParticipants] = useState({ 문경: '', 음성: '', 세종: '' });
+    const [placements, setPlacements] = useState(['', '', '', '', '']);
+    const [saving, setSaving] = useState(false);
+    const [saved, setSaved] = useState(false);
+    const [open, setOpen] = useState(false);
+    const isFinished = state?.status === 'finished';
+
+    // 이미 저장된 점수가 있으면 collapsed 칩으로 보여주기 위해 추출
+    const savedTotals = {};
+    for (const c of comments) {
+        if (c?.scoreTeam && c?.scoreAmount != null) {
+            savedTotals[c.scoreTeam] = Number(c.scoreAmount);
+        }
+    }
+
+    const totals = ALL_CAMPUSES.reduce((acc, c) => {
+        let pts = 0;
+        let placedCount = 0;
+        placements.forEach((pickedCampus, idx) => {
+            if (pickedCampus === c) {
+                pts += PLACEMENT_POINTS[idx] ?? 0;
+                placedCount += 1;
+            }
+        });
+        const totalParticipants = Number(participants[c]) || 0;
+        const others = Math.max(0, totalParticipants - placedCount);
+        pts += others * FINISHER_POINT;
+        acc[c] = pts;
+        return acc;
+    }, {});
+
+    const winnerCampus = (() => {
+        let win = null;
+        let max = -Infinity;
+        for (const c of ALL_CAMPUSES) {
+            if (totals[c] > max && totals[c] > 0) {
+                max = totals[c];
+                win = c;
+            }
+        }
+        return win;
+    })();
+
+    const setPart = (c, v) => {
+        setSaved(false);
+        setParticipants((s) => ({ ...s, [c]: v }));
+    };
+    const setRank = (idx, c) => {
+        setSaved(false);
+        setPlacements((arr) => {
+            const next = [...arr];
+            next[idx] = next[idx] === c ? '' : c;
+            return next;
+        });
+    };
+
+    const submit = async () => {
+        const entries = ALL_CAMPUSES.map((c) => ({ campus: c, score: totals[c] }))
+            .filter((e) => e.score > 0);
+        if (entries.length === 0) {
+            alert('점수가 0점입니다. 출전 인원이나 순위를 먼저 입력해주세요.');
+            return;
+        }
+        const rankSummary = placements
+            .map((c, i) => (c ? `${i + 1}등 ${c}` : null))
+            .filter(Boolean)
+            .join(', ');
+        setSaving(true);
+        try {
+            for (const { campus, score } of entries) {
+                await onAddComment(match.id, {
+                    type: 'score',
+                    content: `${campus} 합계 ${score}점${rankSummary ? ` · ${rankSummary}` : ''}`,
+                    scoreTeam: campus,
+                    scoreAmount: score,
+                });
+            }
+            await onUpdate(match.id, { status: 'finished' });
+            setSaved(true);
+        } catch (err) {
+            alert('저장 실패: ' + err.message);
+        }
+        setSaving(false);
+    };
+
+    return (
+        <article className={`scoring-card placement-card ${isFinished ? 'is-finished' : ''} ${open ? 'is-open' : 'is-collapsed'}`}>
+            <button
+                type="button"
+                className="scoring-head-btn"
+                onClick={() => setOpen((v) => !v)}
+                aria-expanded={open}
+            >
+                <div className="scoring-meta">
+                    <span className="scoring-day">{match.day.slice(5)}</span>
+                    {match.startTime && <span className="scoring-time">{match.startTime}</span>}
+                    <span className="scoring-cat">{match.sport} · {match.category}</span>
+                </div>
+                <div className="scoring-head-right">
+                    {!open && isFinished && Object.keys(savedTotals).length > 0 && (
+                        <span className="scoring-mini-totals">
+                            {ALL_CAMPUSES.map((c) => (
+                                <span key={c} className="scoring-mini-total" style={{ '--c': CAMPUS_COLORS[c]?.bg }}>
+                                    {c} {savedTotals[c] ?? 0}
+                                </span>
+                            ))}
+                        </span>
+                    )}
+                    <span className={`scoring-status ${isFinished ? 'is-finished' : ''}`}>
+                        {isFinished ? '완료' : '대기'}
+                    </span>
+                    <span className={`scoring-chevron ${open ? 'is-open' : ''}`} aria-hidden>▾</span>
+                </div>
+            </button>
+
+            {open && <>
+            <div className="pl-rule">
+                1등 20 · 2등 15 · 3등 10 · 4등 7 · 5등 5 · 그 외 완주 2점
+            </div>
+
+            <div className="pl-participants">
+                <div className="pl-section-title">캠퍼스별 출전 인원</div>
+                <div className="pl-participants-row">
+                    {ALL_CAMPUSES.map((c) => {
+                        const cc = CAMPUS_COLORS[c] || {};
+                        return (
+                            <label key={c} className="pl-participants-cell" style={{ '--c': cc.bg, '--c-soft': cc.soft }}>
+                                <span className="pl-pc-label">{c}</span>
+                                <input
+                                    type="number"
+                                    min="0"
+                                    value={participants[c]}
+                                    onChange={(e) => setPart(c, e.target.value)}
+                                    placeholder="0"
+                                    disabled={saving}
+                                />
+                            </label>
+                        );
+                    })}
+                </div>
+            </div>
+
+            <div className="pl-ranks">
+                <div className="pl-section-title">순위 (1~5등)</div>
+                {placements.map((picked, idx) => (
+                    <div key={idx} className="pl-rank-row">
+                        <span className="pl-rank-label">
+                            <strong>{idx + 1}등</strong>
+                            <span className="pl-rank-pts">+{PLACEMENT_POINTS[idx]}</span>
+                        </span>
+                        <div className="pl-rank-pills">
+                            {ALL_CAMPUSES.map((c) => {
+                                const cc = CAMPUS_COLORS[c] || {};
+                                const active = picked === c;
+                                const style = active
+                                    ? { background: cc.bg, color: '#fff', borderColor: cc.bg }
+                                    : { background: cc.soft, color: cc.bg, borderColor: cc.bg };
+                                return (
+                                    <button
+                                        key={c}
+                                        type="button"
+                                        className={`pl-rank-pill ${active ? 'active' : ''}`}
+                                        style={style}
+                                        onClick={() => setRank(idx, c)}
+                                        disabled={saving}
+                                    >
+                                        {c}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+                ))}
+            </div>
+
+            <div className="pl-totals">
+                <div className="pl-section-title">합계</div>
+                <div className="pl-totals-row">
+                    {ALL_CAMPUSES.map((c) => {
+                        const cc = CAMPUS_COLORS[c] || {};
+                        const isWinner = winnerCampus === c;
+                        return (
+                            <div
+                                key={c}
+                                className={`pl-total-cell ${isWinner ? 'is-winner' : ''}`}
+                                style={{ '--c': cc.bg, '--c-soft': cc.soft }}
+                            >
+                                <span className="pl-total-camp">{c}</span>
+                                <span className="pl-total-num">{totals[c]}</span>
+                                {isWinner && <span className="scoring-trophy">🏆</span>}
+                            </div>
+                        );
+                    })}
+                </div>
+            </div>
+
+            <div className="scoring-foot">
+                {saved && <span className="scoring-saved">✓ 저장됨</span>}
+                <button type="button" className="scoring-save" onClick={submit} disabled={saving}>
+                    {saving ? '저장중…' : isFinished ? '재저장' : '저장 (결과 확정)'}
+                </button>
+            </div>
+            </>}
+        </article>
+    );
+}
+
 function ScoringMatchCard({ match, state, comments = [], onAddComment, onUpdate }) {
+    const props = { match, state, comments, onAddComment, onUpdate };
+    if (match.scoringType === 'placements') return <PlacementScoringCard {...props} />;
+    if (match.scoringType === 'firstPlace') return <FirstPlaceScoringCard {...props} />;
+    if (match.scoringType === 'sets') return <SetsScoringCard {...props} />;
+    if (match.scoringType === 'tableTennis') return <TableTennisScoringCard {...props} />;
+    if (match.scoringType === 'chess') return <ChessScoringCard {...props} />;
+    return <SimpleScoringCard {...props} />;
+}
+
+/* 탁구: 세트별 캠퍼스 점수 입력 (11점 3세트) */
+function TableTennisScoringCard({ match, state, comments = [], onAddComment, onUpdate }) {
+    const setCount = match.setCount || 3;
+    const maxScore = match.setMaxScore || 11;
+
+    // 저장된 데이터 복원: quarter='1세트', scoreTeam, scoreAmount
+    const savedSets = Array.from({ length: setCount }, () => ({ 문경: '', 음성: '', 세종: '' }));
+    for (const c of comments) {
+        if (!c?.quarter || !c?.scoreTeam) continue;
+        const m = String(c.quarter).match(/^(\d+)세트$/);
+        if (!m) continue;
+        const i = Number(m[1]) - 1;
+        if (i < 0 || i >= setCount) continue;
+        if (ALL_CAMPUSES.includes(c.scoreTeam)) {
+            savedSets[i][c.scoreTeam] = Number(c.scoreAmount) || 0;
+        }
+    }
+
+    const [sets, setSets] = useState(savedSets);
+    const [saving, setSaving] = useState(false);
+    const [saved, setSaved] = useState(false);
+    const [open, setOpen] = useState(false);
+    const isFinished = state?.status === 'finished';
+
+    const updateScore = (setIdx, campus, val) => {
+        setSaved(false);
+        setSets((arr) => {
+            const next = arr.map((s) => ({ ...s }));
+            next[setIdx][campus] = val;
+            return next;
+        });
+    };
+
+    // 세트별 승자 + 매치 승자 계산
+    const setWinners = sets.map((s) => {
+        let win = null;
+        let max = -1;
+        let count = 0;
+        for (const c of ALL_CAMPUSES) {
+            const n = Number(s[c]);
+            if (!Number.isFinite(n) || n <= 0) continue;
+            if (n > max) {
+                max = n;
+                win = c;
+                count = 1;
+            } else if (n === max) {
+                count += 1;
+            }
+        }
+        return count === 1 ? win : null;
+    });
+
+    const setWinsByCampus = {};
+    for (const w of setWinners) {
+        if (!w) continue;
+        setWinsByCampus[w] = (setWinsByCampus[w] || 0) + 1;
+    }
+    const matchWinner = (() => {
+        const targetWins = Math.ceil(setCount / 2);
+        for (const c of ALL_CAMPUSES) {
+            if ((setWinsByCampus[c] || 0) >= targetWins) return c;
+        }
+        return null;
+    })();
+
+    const submit = async () => {
+        const anyEntered = sets.some((s) => ALL_CAMPUSES.some((c) => Number(s[c]) > 0));
+        if (!anyEntered) {
+            alert('세트 점수를 1개 이상 입력해주세요.');
+            return;
+        }
+        setSaving(true);
+        try {
+            for (let i = 0; i < setCount; i++) {
+                for (const c of ALL_CAMPUSES) {
+                    const n = Number(sets[i][c]);
+                    if (!Number.isFinite(n) || n <= 0) continue;
+                    await onAddComment(match.id, {
+                        type: 'score',
+                        content: `${i + 1}세트 ${c} ${n}점`,
+                        quarter: `${i + 1}세트`,
+                        scoreTeam: c,
+                        scoreAmount: n,
+                    });
+                }
+            }
+            await onUpdate(match.id, { status: 'finished' });
+            setSaved(true);
+        } catch (err) {
+            alert('저장 실패: ' + err.message);
+        }
+        setSaving(false);
+    };
+
+    return (
+        <article className={`scoring-card placement-card ${isFinished ? 'is-finished' : ''} ${open ? 'is-open' : 'is-collapsed'}`}>
+            <button type="button" className="scoring-head-btn" onClick={() => setOpen((v) => !v)} aria-expanded={open}>
+                <div className="scoring-meta">
+                    <span className="scoring-day">{match.day.slice(5)}</span>
+                    {match.startTime && <span className="scoring-time">{match.startTime}</span>}
+                    <span className="scoring-cat">{match.sport} · {match.category}</span>
+                </div>
+                <div className="scoring-head-right">
+                    {!open && isFinished && matchWinner && (
+                        <span className="scoring-mini-totals">
+                            <span className="scoring-mini-total" style={{ '--c': CAMPUS_COLORS[matchWinner]?.bg }}>
+                                🏆 {matchWinner} ({setWinsByCampus[matchWinner] || 0}세트)
+                            </span>
+                        </span>
+                    )}
+                    <span className={`scoring-status ${isFinished ? 'is-finished' : ''}`}>
+                        {isFinished ? '완료' : '대기'}
+                    </span>
+                    <span className={`scoring-chevron ${open ? 'is-open' : ''}`} aria-hidden>▾</span>
+                </div>
+            </button>
+            {open && <>
+                <div className="pl-rule">{maxScore}점 {setCount}세트 — 출전하지 않은 캠퍼스는 0으로 비워두세요</div>
+                <div className="tt-table">
+                    <div className="tt-row tt-row-head">
+                        <span className="tt-cell tt-cell-label" />
+                        {ALL_CAMPUSES.map((c) => (
+                            <span key={c} className="tt-cell tt-cell-head" style={{ color: CAMPUS_COLORS[c]?.bg }}>
+                                {c}
+                            </span>
+                        ))}
+                        <span className="tt-cell tt-cell-winner">세트 승</span>
+                    </div>
+                    {sets.map((s, idx) => (
+                        <div key={idx} className="tt-row">
+                            <span className="tt-cell tt-cell-label">
+                                <strong>{idx + 1}세트</strong>
+                            </span>
+                            {ALL_CAMPUSES.map((c) => {
+                                const isWinner = setWinners[idx] === c;
+                                return (
+                                    <span key={c} className={`tt-cell ${isWinner ? 'is-winner' : ''}`}
+                                          style={{ '--c': CAMPUS_COLORS[c]?.bg, '--c-soft': CAMPUS_COLORS[c]?.soft }}>
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            max={maxScore}
+                                            value={s[c]}
+                                            onChange={(e) => updateScore(idx, c, e.target.value)}
+                                            placeholder="0"
+                                            disabled={saving}
+                                        />
+                                    </span>
+                                );
+                            })}
+                            <span className="tt-cell tt-cell-winner">
+                                {setWinners[idx] ? (
+                                    <span style={{ color: CAMPUS_COLORS[setWinners[idx]]?.bg, fontWeight: 700 }}>
+                                        {setWinners[idx]}
+                                    </span>
+                                ) : '—'}
+                            </span>
+                        </div>
+                    ))}
+                </div>
+                {matchWinner && (
+                    <div className="sets-winner-line">
+                        매치 승리: <strong style={{ color: CAMPUS_COLORS[matchWinner]?.bg }}>🏆 {matchWinner}</strong>
+                        {' '} ({setWinsByCampus[matchWinner]}세트 선취)
+                    </div>
+                )}
+                <div className="scoring-foot">
+                    {saved && <span className="scoring-saved">✓ 저장됨</span>}
+                    <button type="button" className="scoring-save" onClick={submit} disabled={saving}>
+                        {saving ? '저장중…' : isFinished ? '재저장' : '저장 (결과 확정)'}
+                    </button>
+                </div>
+            </>}
+        </article>
+    );
+}
+
+/* 체스: 승점제 (승 1, 무 0.5, 패 0). 캠퍼스별 승/무/패 횟수 → 합계 자동 계산 */
+function ChessScoringCard({ match, state, comments = [], onAddComment, onUpdate }) {
+    // 저장된 데이터 복원: quarter='문경 W/D/L' 같은 형식으로 인코딩
+    const saved = { 문경: { W: '', D: '', L: '' }, 음성: { W: '', D: '', L: '' }, 세종: { W: '', D: '', L: '' } };
+    for (const c of comments) {
+        if (!c?.quarter || !c?.scoreTeam) continue;
+        const m = String(c.quarter).match(/^(W|D|L)$/);
+        if (!m) continue;
+        if (ALL_CAMPUSES.includes(c.scoreTeam)) {
+            saved[c.scoreTeam][m[1]] = Number(c.scoreAmount) || 0;
+        }
+    }
+
+    const [stats, setStats] = useState(saved);
+    const [saving, setSaving] = useState(false);
+    const [savedFlag, setSavedFlag] = useState(false);
+    const [open, setOpen] = useState(false);
+    const isFinished = state?.status === 'finished';
+
+    const update = (campus, key, val) => {
+        setSavedFlag(false);
+        setStats((s) => ({ ...s, [campus]: { ...s[campus], [key]: val } }));
+    };
+
+    const totals = ALL_CAMPUSES.reduce((acc, c) => {
+        const w = Number(stats[c].W) || 0;
+        const d = Number(stats[c].D) || 0;
+        acc[c] = w + d * 0.5;
+        return acc;
+    }, {});
+    const winnerCampus = (() => {
+        let win = null;
+        let max = -Infinity;
+        for (const c of ALL_CAMPUSES) {
+            if (totals[c] > max && totals[c] > 0) {
+                max = totals[c];
+                win = c;
+            }
+        }
+        return win;
+    })();
+
+    const submit = async () => {
+        const hasInput = ALL_CAMPUSES.some((c) =>
+            ['W', 'D', 'L'].some((k) => Number(stats[c][k]) > 0)
+        );
+        if (!hasInput) {
+            alert('승/무/패 횟수를 입력해주세요.');
+            return;
+        }
+        setSaving(true);
+        try {
+            for (const c of ALL_CAMPUSES) {
+                for (const k of ['W', 'D', 'L']) {
+                    const n = Number(stats[c][k]);
+                    if (!Number.isFinite(n) || n <= 0) continue;
+                    const ko = k === 'W' ? '승' : k === 'D' ? '무' : '패';
+                    await onAddComment(match.id, {
+                        type: 'score',
+                        content: `${c} ${ko} ${n}`,
+                        quarter: k,
+                        scoreTeam: c,
+                        scoreAmount: n,
+                    });
+                }
+            }
+            // 총점도 따로 저장 (대시보드용)
+            for (const c of ALL_CAMPUSES) {
+                if (totals[c] > 0) {
+                    await onAddComment(match.id, {
+                        type: 'score',
+                        content: `${c} 합계 ${totals[c]}점`,
+                        scoreTeam: c,
+                        scoreAmount: totals[c],
+                    });
+                }
+            }
+            await onUpdate(match.id, { status: 'finished' });
+            setSavedFlag(true);
+        } catch (err) {
+            alert('저장 실패: ' + err.message);
+        }
+        setSaving(false);
+    };
+
+    return (
+        <article className={`scoring-card placement-card ${isFinished ? 'is-finished' : ''} ${open ? 'is-open' : 'is-collapsed'}`}>
+            <button type="button" className="scoring-head-btn" onClick={() => setOpen((v) => !v)} aria-expanded={open}>
+                <div className="scoring-meta">
+                    <span className="scoring-day">{match.day.slice(5)}</span>
+                    {match.startTime && <span className="scoring-time">{match.startTime}</span>}
+                    <span className="scoring-cat">{match.sport} · {match.category}</span>
+                </div>
+                <div className="scoring-head-right">
+                    {!open && isFinished && winnerCampus && (
+                        <span className="scoring-mini-totals">
+                            {ALL_CAMPUSES.map((c) => (
+                                <span key={c} className="scoring-mini-total" style={{ '--c': CAMPUS_COLORS[c]?.bg }}>
+                                    {c} {totals[c]}
+                                </span>
+                            ))}
+                        </span>
+                    )}
+                    <span className={`scoring-status ${isFinished ? 'is-finished' : ''}`}>
+                        {isFinished ? '완료' : '대기'}
+                    </span>
+                    <span className={`scoring-chevron ${open ? 'is-open' : ''}`} aria-hidden>▾</span>
+                </div>
+            </button>
+            {open && <>
+                <div className="pl-rule">승 1점 · 무 0.5점 · 패 0점 (1인당 2경기)</div>
+                <div className="chess-table">
+                    <div className="chess-row chess-row-head">
+                        <span className="chess-cell chess-cell-label" />
+                        <span className="chess-cell chess-cell-h">승</span>
+                        <span className="chess-cell chess-cell-h">무</span>
+                        <span className="chess-cell chess-cell-h">패</span>
+                        <span className="chess-cell chess-cell-h chess-total-h">총점</span>
+                    </div>
+                    {ALL_CAMPUSES.map((c) => {
+                        const cc = CAMPUS_COLORS[c] || {};
+                        const isWinner = winnerCampus === c;
+                        return (
+                            <div key={c} className={`chess-row ${isWinner ? 'is-winner' : ''}`}
+                                 style={{ '--c': cc.bg, '--c-soft': cc.soft }}>
+                                <span className="chess-cell chess-cell-label" style={{ color: cc.bg }}>
+                                    {isWinner && <span>🏆 </span>}
+                                    <strong>{c}</strong>
+                                </span>
+                                {['W', 'D', 'L'].map((k) => (
+                                    <span key={k} className="chess-cell">
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            value={stats[c][k]}
+                                            onChange={(e) => update(c, k, e.target.value)}
+                                            placeholder="0"
+                                            disabled={saving}
+                                        />
+                                    </span>
+                                ))}
+                                <span className="chess-cell chess-total">
+                                    {totals[c]}
+                                </span>
+                            </div>
+                        );
+                    })}
+                </div>
+                <div className="scoring-foot">
+                    {savedFlag && <span className="scoring-saved">✓ 저장됨</span>}
+                    <button type="button" className="scoring-save" onClick={submit} disabled={saving}>
+                        {saving ? '저장중…' : isFinished ? '재저장' : '저장 (결과 확정)'}
+                    </button>
+                </div>
+            </>}
+        </article>
+    );
+}
+
+/* 이어달리기: 1등 캠퍼스 한 번만 픽 */
+function FirstPlaceScoringCard({ match, state, comments = [], onAddComment, onUpdate }) {
+    const savedWinner = comments.find((c) => c?.scoreTeam)?.scoreTeam || '';
+    const [winner, setWinner] = useState(savedWinner);
+    const [saving, setSaving] = useState(false);
+    const [saved, setSaved] = useState(false);
+    const [open, setOpen] = useState(false);
+    const isFinished = state?.status === 'finished';
+
+    const pick = (c) => {
+        setSaved(false);
+        setWinner((prev) => (prev === c ? '' : c));
+    };
+
+    const submit = async () => {
+        if (!winner) {
+            alert('1등 캠퍼스를 먼저 선택해주세요.');
+            return;
+        }
+        setSaving(true);
+        try {
+            await onAddComment(match.id, {
+                type: 'score',
+                content: `1등 ${winner}`,
+                scoreTeam: winner,
+                scoreAmount: 1,
+            });
+            await onUpdate(match.id, { status: 'finished' });
+            setSaved(true);
+        } catch (err) {
+            alert('저장 실패: ' + err.message);
+        }
+        setSaving(false);
+    };
+
+    return (
+        <article className={`scoring-card ${isFinished ? 'is-finished' : ''} ${open ? 'is-open' : 'is-collapsed'}`}>
+            <button type="button" className="scoring-head-btn" onClick={() => setOpen((v) => !v)} aria-expanded={open}>
+                <div className="scoring-meta">
+                    <span className="scoring-day">{match.day.slice(5)}</span>
+                    {match.startTime && <span className="scoring-time">{match.startTime}</span>}
+                    <span className="scoring-cat">{match.sport} · {match.category}</span>
+                </div>
+                <div className="scoring-head-right">
+                    {!open && isFinished && savedWinner && (
+                        <span className="scoring-mini-totals">
+                            <span className="scoring-mini-total" style={{ '--c': CAMPUS_COLORS[savedWinner]?.bg }}>
+                                🏆 {savedWinner}
+                            </span>
+                        </span>
+                    )}
+                    <span className={`scoring-status ${isFinished ? 'is-finished' : ''}`}>
+                        {isFinished ? '완료' : '대기'}
+                    </span>
+                    <span className={`scoring-chevron ${open ? 'is-open' : ''}`} aria-hidden>▾</span>
+                </div>
+            </button>
+            {open && <>
+                <div className="pl-rule">1등으로 들어온 캠퍼스가 승리합니다</div>
+                <div className="fp-pick">
+                    <div className="pl-section-title">1등 캠퍼스</div>
+                    <div className="fp-pills">
+                        {ALL_CAMPUSES.map((c) => {
+                            const cc = CAMPUS_COLORS[c] || {};
+                            const active = winner === c;
+                            const style = active
+                                ? { background: cc.bg, color: '#fff', borderColor: cc.bg }
+                                : { background: cc.soft, color: cc.bg, borderColor: cc.bg };
+                            return (
+                                <button
+                                    key={c}
+                                    type="button"
+                                    className={`fp-pill ${active ? 'active' : ''}`}
+                                    style={style}
+                                    onClick={() => pick(c)}
+                                    disabled={saving}
+                                >
+                                    {active && <span aria-hidden>🏆 </span>}
+                                    {c}
+                                </button>
+                            );
+                        })}
+                    </div>
+                </div>
+                <div className="scoring-foot">
+                    {saved && <span className="scoring-saved">✓ 저장됨</span>}
+                    <button type="button" className="scoring-save" onClick={submit} disabled={saving}>
+                        {saving ? '저장중…' : isFinished ? '재저장' : '저장 (결과 확정)'}
+                    </button>
+                </div>
+            </>}
+        </article>
+    );
+}
+
+/* 줄다리기: 3판 2선승, 세트별 승리 캠퍼스 픽 */
+function SetsScoringCard({ match, state, comments = [], onAddComment, onUpdate }) {
+    const setCount = match.setCount || 3;
+
+    // 기존 저장값 복원: '1세트', '2세트' 같은 quarter로 저장된 코멘트의 scoreTeam을 인덱스로 매핑
+    const savedSets = Array(setCount).fill('');
+    for (const c of comments) {
+        if (!c?.quarter || !c?.scoreTeam) continue;
+        const m = String(c.quarter).match(/^(\d+)세트$/);
+        if (!m) continue;
+        const i = Number(m[1]) - 1;
+        if (i >= 0 && i < setCount) savedSets[i] = c.scoreTeam;
+    }
+
+    const [setWinners, setSetWinners] = useState(savedSets);
+    const [saving, setSaving] = useState(false);
+    const [saved, setSaved] = useState(false);
+    const [open, setOpen] = useState(false);
+    const isFinished = state?.status === 'finished';
+
+    const setWin = (idx, c) => {
+        setSaved(false);
+        setSetWinners((arr) => {
+            const next = [...arr];
+            next[idx] = next[idx] === c ? '' : c;
+            return next;
+        });
+    };
+
+    // 누가 이번 매치를 이겼는지 계산
+    const matchWinner = (() => {
+        const counts = {};
+        for (const w of setWinners) {
+            if (!w) continue;
+            counts[w] = (counts[w] || 0) + 1;
+        }
+        const targetWins = Math.ceil(setCount / 2); // 3판 → 2선승
+        for (const c of ALL_CAMPUSES) {
+            if ((counts[c] || 0) >= targetWins) return c;
+        }
+        return null;
+    })();
+
+    const submit = async () => {
+        const filled = setWinners.filter(Boolean);
+        if (filled.length === 0) {
+            alert('세트 승리 캠퍼스를 하나 이상 선택해주세요.');
+            return;
+        }
+        setSaving(true);
+        try {
+            for (let i = 0; i < setWinners.length; i++) {
+                const w = setWinners[i];
+                if (!w) continue;
+                await onAddComment(match.id, {
+                    type: 'score',
+                    content: `${i + 1}세트 ${w} 승`,
+                    quarter: `${i + 1}세트`,
+                    scoreTeam: w,
+                    scoreAmount: 1,
+                });
+            }
+            await onUpdate(match.id, { status: 'finished' });
+            setSaved(true);
+        } catch (err) {
+            alert('저장 실패: ' + err.message);
+        }
+        setSaving(false);
+    };
+
+    return (
+        <article className={`scoring-card ${isFinished ? 'is-finished' : ''} ${open ? 'is-open' : 'is-collapsed'}`}>
+            <button type="button" className="scoring-head-btn" onClick={() => setOpen((v) => !v)} aria-expanded={open}>
+                <div className="scoring-meta">
+                    <span className="scoring-day">{match.day.slice(5)}</span>
+                    {match.startTime && <span className="scoring-time">{match.startTime}</span>}
+                    <span className="scoring-cat">{match.sport} · {match.category}</span>
+                </div>
+                <div className="scoring-head-right">
+                    {!open && isFinished && matchWinner && (
+                        <span className="scoring-mini-totals">
+                            <span className="scoring-mini-total" style={{ '--c': CAMPUS_COLORS[matchWinner]?.bg }}>
+                                🏆 {matchWinner}
+                            </span>
+                        </span>
+                    )}
+                    <span className={`scoring-status ${isFinished ? 'is-finished' : ''}`}>
+                        {isFinished ? '완료' : '대기'}
+                    </span>
+                    <span className={`scoring-chevron ${open ? 'is-open' : ''}`} aria-hidden>▾</span>
+                </div>
+            </button>
+            {open && <>
+                <div className="pl-rule">{setCount}판 {Math.ceil(setCount / 2)}선승 — 세트별 승리 캠퍼스를 선택하세요</div>
+                <div className="sets-list">
+                    {setWinners.map((w, idx) => (
+                        <div key={idx} className="pl-rank-row">
+                            <span className="pl-rank-label">
+                                <strong>{idx + 1}세트</strong>
+                            </span>
+                            <div className="pl-rank-pills">
+                                {ALL_CAMPUSES.map((c) => {
+                                    const cc = CAMPUS_COLORS[c] || {};
+                                    const active = w === c;
+                                    const style = active
+                                        ? { background: cc.bg, color: '#fff', borderColor: cc.bg }
+                                        : { background: cc.soft, color: cc.bg, borderColor: cc.bg };
+                                    return (
+                                        <button
+                                            key={c}
+                                            type="button"
+                                            className={`pl-rank-pill ${active ? 'active' : ''}`}
+                                            style={style}
+                                            onClick={() => setWin(idx, c)}
+                                            disabled={saving}
+                                        >
+                                            {c}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+                {matchWinner && (
+                    <div className="sets-winner-line">
+                        매치 승리: <strong style={{ color: CAMPUS_COLORS[matchWinner]?.bg }}>🏆 {matchWinner}</strong>
+                    </div>
+                )}
+                <div className="scoring-foot">
+                    {saved && <span className="scoring-saved">✓ 저장됨</span>}
+                    <button type="button" className="scoring-save" onClick={submit} disabled={saving}>
+                        {saving ? '저장중…' : isFinished ? '재저장' : '저장 (결과 확정)'}
+                    </button>
+                </div>
+            </>}
+        </article>
+    );
+}
+
+function SimpleScoringCard({ match, state, comments = [], onAddComment, onUpdate }) {
     // 이미 저장된 score 코멘트에서 캠퍼스별 점수 추출
     const existingScores = {};
     for (const c of comments) {
@@ -622,6 +1415,7 @@ function ScoringMatchCard({ match, state, comments = [], onAddComment, onUpdate 
     }));
     const [saving, setSaving] = useState(false);
     const [saved, setSaved] = useState(false);
+    const [open, setOpen] = useState(false);
     const isFinished = state?.status === 'finished';
 
     const setOne = (campus, val) => {
@@ -669,17 +1463,35 @@ function ScoringMatchCard({ match, state, comments = [], onAddComment, onUpdate 
     };
 
     return (
-        <article className={`scoring-card ${isFinished ? 'is-finished' : ''}`}>
-            <header className="scoring-head">
+        <article className={`scoring-card ${isFinished ? 'is-finished' : ''} ${open ? 'is-open' : 'is-collapsed'}`}>
+            <button
+                type="button"
+                className="scoring-head-btn"
+                onClick={() => setOpen((v) => !v)}
+                aria-expanded={open}
+            >
                 <div className="scoring-meta">
                     <span className="scoring-day">{match.day.slice(5)}</span>
                     {match.startTime && <span className="scoring-time">{match.startTime}</span>}
                     <span className="scoring-cat">{match.sport} · {match.category}</span>
                 </div>
-                <span className={`scoring-status ${isFinished ? 'is-finished' : ''}`}>
-                    {isFinished ? '완료' : '대기'}
-                </span>
-            </header>
+                <div className="scoring-head-right">
+                    {!open && isFinished && Object.keys(existingScores).length > 0 && (
+                        <span className="scoring-mini-totals">
+                            {ALL_CAMPUSES.map((c) => (
+                                <span key={c} className="scoring-mini-total" style={{ '--c': CAMPUS_COLORS[c]?.bg }}>
+                                    {c} {existingScores[c] ?? 0}
+                                </span>
+                            ))}
+                        </span>
+                    )}
+                    <span className={`scoring-status ${isFinished ? 'is-finished' : ''}`}>
+                        {isFinished ? '완료' : '대기'}
+                    </span>
+                    <span className={`scoring-chevron ${open ? 'is-open' : ''}`} aria-hidden>▾</span>
+                </div>
+            </button>
+            {open && <>
             <div className="scoring-inputs">
                 {ALL_CAMPUSES.map((c) => {
                     const cc = CAMPUS_COLORS[c] || {};
@@ -713,6 +1525,7 @@ function ScoringMatchCard({ match, state, comments = [], onAddComment, onUpdate 
                     {saving ? '저장중…' : isFinished ? '재저장' : '저장 (결과 확정)'}
                 </button>
             </div>
+            </>}
         </article>
     );
 }

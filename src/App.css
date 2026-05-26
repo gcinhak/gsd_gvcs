@@ -3736,6 +3736,52 @@ img {
     gap: 0.5rem;
     margin-bottom: 0.85rem;
 }
+.scoring-head-btn {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.7rem;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    text-align: left;
+    font: inherit;
+    color: inherit;
+}
+.scoring-card.is-open .scoring-head-btn {
+    margin-bottom: 0.85rem;
+}
+.scoring-head-right {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+.scoring-chevron {
+    font-size: 0.85rem;
+    color: var(--muted);
+    transition: transform 0.15s;
+    line-height: 1;
+}
+.scoring-chevron.is-open { transform: rotate(180deg); }
+.scoring-mini-totals {
+    display: inline-flex;
+    gap: 0.3rem;
+    flex-wrap: wrap;
+}
+.scoring-mini-total {
+    padding: 0.15rem 0.55rem;
+    background: color-mix(in srgb, var(--c, var(--primary)) 12%, transparent);
+    color: var(--c, var(--primary));
+    border: 1px solid var(--c, var(--primary));
+    border-radius: 12px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
 .scoring-meta {
     display: flex;
     align-items: center;
@@ -3841,6 +3887,272 @@ img {
     opacity: 0.6;
     cursor: not-allowed;
 }
+
+/* 승점제(중거리) 입력 카드 */
+.placement-card { grid-column: 1 / -1; }
+.pl-rule {
+    padding: 0.55rem 0.75rem;
+    background: var(--bg-soft);
+    border-radius: 8px;
+    font-size: 0.84rem;
+    color: var(--text-3);
+    margin-bottom: 0.85rem;
+    text-align: center;
+}
+.pl-section-title {
+    font-size: 0.78rem;
+    color: var(--muted);
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    margin-bottom: 0.4rem;
+    text-transform: uppercase;
+}
+.pl-participants { margin-bottom: 0.9rem; }
+.pl-participants-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 0.5rem;
+}
+.pl-participants-cell {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.45rem 0.55rem;
+    background: var(--c-soft, var(--bg-soft));
+    border: 1.5px solid transparent;
+    border-radius: 8px;
+}
+.pl-pc-label {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--c, var(--text));
+}
+.pl-participants-cell input {
+    flex: 1;
+    min-width: 0;
+    padding: 0.35rem 0.45rem;
+    background: #fff;
+    border: 1.5px solid var(--border);
+    border-radius: 6px;
+    text-align: center;
+    font-size: 1rem;
+    font-weight: 700;
+}
+.pl-participants-cell input:focus {
+    outline: none;
+    border-color: var(--c, var(--primary));
+}
+
+.pl-ranks { margin-bottom: 0.9rem; }
+.pl-rank-row {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.4rem 0;
+    border-bottom: 1px dashed var(--border);
+}
+.pl-rank-row:last-child { border-bottom: none; }
+.pl-rank-label {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.35rem;
+    min-width: 70px;
+}
+.pl-rank-label strong {
+    font-family: 'Black Han Sans', sans-serif;
+    font-size: 1.05rem;
+    color: var(--text);
+}
+.pl-rank-pts {
+    font-size: 0.75rem;
+    color: var(--primary-dark);
+    font-weight: 700;
+    background: var(--primary-soft);
+    padding: 0.1rem 0.45rem;
+    border-radius: 8px;
+}
+.pl-rank-pills {
+    display: flex;
+    gap: 0.35rem;
+    flex-wrap: wrap;
+}
+.pl-rank-pill {
+    padding: 0.35rem 0.85rem;
+    border: 1.5px solid;
+    border-radius: 18px;
+    font-size: 0.88rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.08s, box-shadow 0.1s;
+}
+.pl-rank-pill:hover:not(:disabled) { transform: translateY(-1px); }
+.pl-rank-pill.active { box-shadow: 0 4px 12px rgba(0,0,0,0.18); }
+
+.pl-totals { margin-bottom: 0.6rem; }
+.pl-totals-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 0.5rem;
+}
+.pl-total-cell {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.75rem 0.4rem;
+    background: var(--c-soft, var(--bg-soft));
+    border: 2px solid transparent;
+    border-radius: 10px;
+    transition: border-color 0.12s, box-shadow 0.12s;
+}
+.pl-total-cell.is-winner {
+    border-color: var(--c, var(--primary));
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--c, var(--primary)) 25%, transparent);
+}
+.pl-total-camp {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--c, var(--text));
+}
+.pl-total-num {
+    font-family: 'Black Han Sans', sans-serif;
+    font-size: 2rem;
+    line-height: 1;
+    color: var(--text);
+    letter-spacing: 0.02em;
+}
+
+/* 이어달리기 / 줄다리기 채점제 */
+.fp-pick { margin-bottom: 0.9rem; }
+.fp-pills {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+.fp-pill {
+    padding: 0.75rem 1.5rem;
+    border: 2px solid;
+    border-radius: 24px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.08s, box-shadow 0.1s;
+}
+.fp-pill:hover:not(:disabled) { transform: translateY(-1px); }
+.fp-pill.active { box-shadow: 0 6px 14px rgba(0,0,0,0.2); }
+
+.sets-list { margin-bottom: 0.6rem; }
+.sets-winner-line {
+    padding: 0.55rem 0.7rem;
+    background: var(--bg-soft);
+    border-radius: 8px;
+    text-align: center;
+    margin-bottom: 0.6rem;
+    font-size: 0.95rem;
+}
+
+/* 탁구 세트별 점수 테이블 */
+.tt-table {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    margin-bottom: 0.7rem;
+}
+.tt-row {
+    display: grid;
+    grid-template-columns: 70px 1fr 1fr 1fr 80px;
+    align-items: center;
+    gap: 0.4rem;
+}
+.tt-row-head {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+.tt-cell { text-align: center; }
+.tt-cell-label { text-align: left; padding-left: 0.3rem; font-size: 0.95rem; color: var(--text); }
+.tt-cell-head { color: var(--text); }
+.tt-cell input {
+    width: 100%;
+    padding: 0.45rem 0.4rem;
+    background: var(--c-soft, var(--bg-soft));
+    border: 1.5px solid transparent;
+    border-radius: 8px;
+    text-align: center;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text);
+    transition: border-color 0.1s, box-shadow 0.1s;
+}
+.tt-cell input:focus {
+    outline: none;
+    border-color: var(--c, var(--primary));
+    background: #fff;
+}
+.tt-cell.is-winner input {
+    border-color: var(--c);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--c) 25%, transparent);
+    background: #fff;
+}
+.tt-cell-winner { font-size: 0.9rem; color: var(--muted); }
+
+/* 체스 승점 테이블 */
+.chess-table {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    margin-bottom: 0.7rem;
+}
+.chess-row {
+    display: grid;
+    grid-template-columns: 80px 1fr 1fr 1fr 80px;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.35rem 0.5rem;
+    background: var(--c-soft, transparent);
+    border: 2px solid transparent;
+    border-radius: 10px;
+    transition: border-color 0.12s, box-shadow 0.12s;
+}
+.chess-row.is-winner {
+    border-color: var(--c);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--c) 22%, transparent);
+}
+.chess-row-head {
+    background: transparent;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0 0.5rem;
+}
+.chess-cell { text-align: center; }
+.chess-cell-label { text-align: left; }
+.chess-cell input {
+    width: 100%;
+    padding: 0.4rem 0.35rem;
+    background: #fff;
+    border: 1.5px solid var(--border);
+    border-radius: 7px;
+    text-align: center;
+    font-size: 1rem;
+    font-weight: 700;
+}
+.chess-cell input:focus {
+    outline: none;
+    border-color: var(--c, var(--primary));
+}
+.chess-total {
+    font-family: 'Black Han Sans', sans-serif;
+    font-size: 1.3rem;
+    color: var(--text);
+}
+.chess-total-h { font-family: inherit; font-size: inherit; }
 .ar-eyebrow {
     font-size: 0.72rem;
     color: var(--primary);
