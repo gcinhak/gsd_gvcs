@@ -320,6 +320,35 @@ export const LINEUP = {
         */
     },
     음성: {
+        농구: {
+            남중: [
+                { no: 1, grade: 0, name: '권성현' },
+                { no: 2, grade: 0, name: '이유준' },
+                { no: 3, grade: 0, name: '구주찬' },
+                { no: 4, grade: 0, name: '김우영' },
+                { no: 5, grade: 0, name: '이준' },
+                { no: 6, grade: 0, name: '김예준' },
+                { no: 7, grade: 0, name: '이도훈' },
+            ],
+            여연합: [
+                { no: 1, grade: 0, name: '모리아' },
+                { no: 2, grade: 0, name: '이여랑' },
+                { no: 3, grade: 0, name: '박시현' },
+                { no: 4, grade: 0, name: '김유나' },
+                { no: 5, grade: 0, name: '박예하' },
+                { no: 6, grade: 0, name: '황인영' },
+                { no: 7, grade: 0, name: '양승은' },
+            ],
+            남고: [
+                { no: 1, grade: 0, name: '홍주원' },
+                { no: 2, grade: 0, name: '김민찬' },
+                { no: 3, grade: 0, name: '임준희' },
+                { no: 4, grade: 0, name: '김래율' },
+                { no: 5, grade: 0, name: '정우성' },
+                { no: 6, grade: 0, name: '김시훈' },
+                { no: 7, grade: 0, name: '김의국' },
+            ],
+        },
         배구: {
             남중: [
                 { no: 1, grade: 9, name: '구준표' },
