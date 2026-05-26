@@ -18,7 +18,7 @@ const NAV_ITEMS = [
     { to: '/history', label: '역대 전적' },
     { to: '/popcat', label: '팝캣', disabled: true },
     ...(SHOW_DEV_TABS ? [{ to: '/cheer', label: '응원' }] : []),
-    { to: '/upcoming', label: '예정 기능' },
+    { to: '/about', label: 'About' },
 ];
 
 export default function Layout() {
