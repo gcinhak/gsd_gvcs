@@ -119,10 +119,10 @@ export const LINEUP = {
                 { no: 4, grade: 8, name: '석지훈' },
                 { no: 5, grade: 8, name: '이선율' },
                 { no: 6, grade: 8, name: '이지호' },
-                { no: 7, grade: 9, name: '최은도'},
+                { no: 7, grade: 9, name: '최은도' },
                 { no: 8, grade: 9, name: '이주혁' },
-                { no: 9, grade: 8, name: '신기창'},
-                { no: 10, grade: 8, name: '임주왕'},
+                { no: 9, grade: 8, name: '신기창' },
+                { no: 10, grade: 8, name: '임주왕' },
             ],
             남고: [
                 { no: 1, grade: 12, name: '이건희' },
@@ -131,9 +131,9 @@ export const LINEUP = {
                 { no: 4, grade: 12, name: '정은수' },
                 { no: 5, grade: 12, name: '송민호' },
                 { no: 6, grade: 10, name: '정진수' },
-                { no: 7, grade: 10, name: '홍승현'},
-                { no: 8, grade: 11, name: '코헨'},
-                { no: 9, grade: 12, name: '정소망'},
+                { no: 7, grade: 10, name: '홍승현' },
+                { no: 8, grade: 11, name: '코헨' },
+                { no: 9, grade: 12, name: '정소망' },
             ],
             여연합: [
                 { no: 1, grade: 12, name: '백서진' },
@@ -143,9 +143,9 @@ export const LINEUP = {
                 { no: 5, grade: 9, name: '조시온' },
                 { no: 6, grade: 9, name: '이주원' },
                 { no: 7, grade: 11, name: '강예빈' },
-                { no: 8, grade: 10, name: '윤가람'},
-                { no: 9, grade: 10, name: '김서우'},
-                { no: 10, grade: 9, name: '최서윤'},
+                { no: 8, grade: 10, name: '윤가람' },
+                { no: 9, grade: 10, name: '김서우' },
+                { no: 10, grade: 9, name: '최서윤' },
             ],
         },
         /* 탁구부터 줄다리기까지 나머지 데이터 주석 처리
@@ -392,6 +392,17 @@ export const LINEUP = {
                 { no: 9, grade: 10, name: '김시온' },
                 { no: 10, grade: 10, name: '미국캠1' },
             ],
+            여연합: [
+                { no: 1, grade: 11, name: '김하진' },
+                { no: 2, grade: 11, name: '석지혜' },
+                { no: 3, grade: 10, name: '신지오' },
+                { no: 4, grade: 9, name: '이수아' },
+                { no: 5, grade: 8, name: '강라엘' },
+                { no: 6, grade: 7, name: '박향유' },
+                { no: 7, grade: 9, name: '김영진' },
+                { no: 8, grade: 0, name: '미국캠1' },
+                { no: 9, grade: 0, name: '미국캠2' },
+            ],
         },
     },
 };
@@ -490,4 +501,3 @@ export function getLineupForMatch(campus, sport, category) {
     }
     return [];
 }
-
