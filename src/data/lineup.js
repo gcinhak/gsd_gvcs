@@ -123,7 +123,7 @@ export const LINEUP = {
                 { no: 5, grade: 12, name: '송민호' },
                 { no: 6, grade: 10, name: '정진수' },
                 { no: 7, grade: 10, name: '홍승현' },
-                { no: 8, grade: 11, name: '코헨' },
+                { no: 8, grade: 11, name: 'Prasetya, Kohen Adit' },
                 { no: 9, grade: 12, name: '정소망' },
             ],
             여연합: [
@@ -368,8 +368,8 @@ export const LINEUP = {
                 { no: 6, grade: 9, name: '박지완' },
                 { no: 7, grade: 8, name: '문단우' },
                 { no: 8, grade: 8, name: '박노엘' },
-                { no: 9, grade: 8, name: '미국캠1' },
-                { no: 10, grade: 9, name: '미국캠2' },
+                { no: 9, grade: 8, name: '미국캠2' },
+                { no: 10, grade: 9, name: '미국캠1' },
             ],
             남고: [
                 { no: 1, grade: 12, name: '김형민' },
