@@ -908,16 +908,6 @@ export default function TerritoryPage() {
                     onAnimationEnd={() => setIsAnimating(false)}
                 />
                 <TerritoryLegend state={state} />
-                <p
-                    style={{
-                        fontSize: '11px',
-                        color: 'var(--color-text-tertiary)',
-                        margin: '0.3rem 0 0',
-                        textAlign: 'center',
-                    }}
-                >
-                    실제 점수와 보이는 시각적 비율이 상이할 수 있음에 주의하세요
-                </p>
                 <span className={`terr-vis-overlay mode-${mode}`}>
                     <span className="terr-vis-cta">
                         {!myCampus
