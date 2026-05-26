@@ -289,8 +289,28 @@ function getCampusWinCountsFromContexts(contexts) {
 function ScoreDetailModal({ detail, relayState, comments, loading, onClose }) {
     if (!detail) return null;
 
+    const detailKey = `${detail.matchId || 'match'}-${detail.division?.id || 'division'}`;
+
+    return (
+        <ScoreDetailModalContent
+            key={detailKey}
+            detail={detail}
+            relayState={relayState}
+            comments={comments}
+            loading={loading}
+            onClose={onClose}
+        />
+    );
+}
+
+function ScoreDetailModalContent({ detail, relayState, comments, loading, onClose }) {
+    const [selectedSet, setSelectedSet] = useState('all');
+
     const { division, match } = detail;
     const setSummary = isSetMatch(match) ? getSetSummary(comments, match, getQuarters(match.sport), relayState) : null;
+    const setFilterOptions = setSummary?.rows || [];
+    const filteredComments =
+        selectedSet === 'all' ? comments : comments.filter((comment) => comment.quarter === selectedSet);
     const relayScore = getScorePair(relayState);
     const visibleSetScore = setSummary && (setSummary.home > 0 || setSummary.away > 0) ? setSummary : relayScore;
     const score = setSummary ? `${visibleSetScore.home} : ${visibleSetScore.away}` : formatRelayScore(relayState);
@@ -348,11 +368,38 @@ function ScoreDetailModal({ detail, relayState, comments, loading, onClose }) {
                 )}
 
                 <div className="db-detail-feed">
-                    <div className="db-detail-feed-title">점수 상세 내역</div>
+                    <div className="db-detail-feed-head">
+                        <div className="db-detail-feed-title">점수 상세 내역</div>
+                        {setFilterOptions.length > 0 && (
+                            <div className="db-detail-set-tabs" role="tablist" aria-label="세트별 상세 내역 보기">
+                                <button
+                                    type="button"
+                                    className={selectedSet === 'all' ? 'active' : ''}
+                                    onClick={() => setSelectedSet('all')}
+                                    role="tab"
+                                    aria-selected={selectedSet === 'all'}
+                                >
+                                    전체
+                                </button>
+                                {setFilterOptions.map((set) => (
+                                    <button
+                                        type="button"
+                                        className={selectedSet === set.label ? 'active' : ''}
+                                        onClick={() => setSelectedSet(set.label)}
+                                        role="tab"
+                                        aria-selected={selectedSet === set.label}
+                                        key={set.label}
+                                    >
+                                        {set.label}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                    </div>
                     {loading ? (
                         <div className="db-detail-empty">중계 기록을 불러오는 중입니다.</div>
-                    ) : comments.length > 0 ? (
-                        comments
+                    ) : filteredComments.length > 0 ? (
+                        filteredComments
                             .slice()
                             .reverse()
                             .map((comment) => (
@@ -366,7 +413,11 @@ function ScoreDetailModal({ detail, relayState, comments, loading, onClose }) {
                                 </article>
                             ))
                     ) : (
-                        <div className="db-detail-empty">아직 등록된 상세 기록이 없습니다.</div>
+                        <div className="db-detail-empty">
+                            {selectedSet === 'all'
+                                ? '아직 등록된 상세 기록이 없습니다.'
+                                : `${selectedSet} 상세 기록이 없습니다.`}
+                        </div>
                     )}
                 </div>
             </section>
