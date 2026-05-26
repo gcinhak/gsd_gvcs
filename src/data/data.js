@@ -238,7 +238,7 @@ export const SCHEDULE = {
                     {
                         num: '1라운드',
                         start: '12:00',
-                        end: '12:30',
+                        end: '12:40',
                         courts: [
                             { round: '결선', category: '7-8학년', match: '문경 VS 음성' },
                             { round: '결선', category: '9-10학년', match: '세종 VS 문경' },
@@ -248,7 +248,7 @@ export const SCHEDULE = {
                     {
                         num: '2라운드',
                         start: '12:40',
-                        end: '13:10',
+                        end: '13:20',
                         courts: [
                             { round: '결선', category: '7-8학년', match: '음성 VS 세종' },
                             { round: '결선', category: '9-10학년', match: '문경 VS 음성' },
@@ -258,7 +258,7 @@ export const SCHEDULE = {
                     {
                         num: '3라운드',
                         start: '13:20',
-                        end: '13:50',
+                        end: '14:00',
                         courts: [
                             { round: '결선', category: '7-8학년', match: '세종 VS 문경' },
                             { round: '결선', category: '9-10학년', match: '음성 VS 세종' },
