@@ -2,19 +2,20 @@
  * 2026 글로벌 체육 축제 — 캠퍼스별 라인업
  *
  * 구조: LINEUP[campus][sport][category] = Player[]
- *   Player = { no?, grade?, name, bench?, alt?, role? }
- *     no    : 등번호 또는 순번
- *     grade : 학년 (없으면 미입력)
- *     name  : 선수 이름
- *     bench : true 면 후보
- *     alt   : 대체/주의 정보 (예: 다른 종목 출전 표시, 학부모 관계 등)
- *     role  : 학부모 / 교직원 / 동문 / 인기모 — 인성인 카테고리에서 사용
+ * Player = { no?, grade?, name, bench?, alt?, role? }
+ * no    : 등번호 또는 순번
+ * grade : 학년 (없으면 미입력)
+ * name  : 선수 이름
+ * bench : true 면 후보
+ * alt   : 대체/주의 정보 (예: 다른 종목 출전 표시, 학부모 관계 등)
+ * role  : 학부모 / 교직원 / 동문 / 인기모 — 인성인 카테고리에서 사용
  *
  * 음성/세종은 데이터 들어오면 같은 구조로 추가하면 자동 노출.
  */
 
 export const LINEUP = {
     문경: {
+        /* 축구 주석 처리
         축구: {
             남중: [
                 { no: 1, grade: 7, name: '김서준'},
@@ -71,6 +72,7 @@ export const LINEUP = {
                 { no: 16, grade: 7, name: '주혜원' },
             ],
         },
+        */
         농구: {
             남중: [
                 { no: 1, grade: 9, name: '강지우' },
@@ -146,6 +148,7 @@ export const LINEUP = {
                 { no: 10, grade: 9, name: '최서윤'},
             ],
         },
+        /* 탁구부터 줄다리기까지 나머지 데이터 주석 처리
         탁구: {
             중등부: [
                 { no: 1, grade: 9, name: '변채영' },
@@ -323,6 +326,7 @@ export const LINEUP = {
                 { no: 30, name: '김예원', role: '교직원' },
             ],
         },
+        */
     },
     음성: {},
     세종: {},
