@@ -814,10 +814,10 @@ export default function TerritoryPage() {
     return (
         <div className="territory-page">
             <header className="terr-head">
-                <div className="terr-head-left">
+                {/* <div className="terr-head-left">
                     <h2 className="terr-title">🏰 점령전</h2>
                     <p className="terr-sub">퀴즈와 미니게임을 클리어해서 캠퍼스 영토를 차지하세요!</p>
-                </div>
+                </div> */}
                 <div className="terr-campus-pick">
                     {CAMPUSES.map((c) => {
                         const cc = CAMPUS_COLORS[c] || {};

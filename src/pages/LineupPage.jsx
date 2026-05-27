@@ -38,9 +38,7 @@ function CampusCategoryCard({ campus, sport, category, multiCol }) {
         <article className={`lp-card ${isEmpty ? 'is-empty' : ''}`} style={cardStyle}>
             <header className="lp-card-head">
                 <CampusBadge campus={campus} size="md" />
-                <span className="lp-card-count">
-                    {isEmpty ? '미입력' : `${allPlayers.length}명`}
-                </span>
+                <span className="lp-card-count">{isEmpty ? '미입력' : `${allPlayers.length}명`}</span>
             </header>
             {isEmpty ? (
                 <div className="lp-empty">선수 데이터 입력 대기중</div>
@@ -72,11 +70,7 @@ export default function LineupPage() {
     return (
         <div className="page lineup-page">
             <div className="lineup-inner">
-                <PageHeader
-                    eyebrow="GLOBAL SPORTS FESTIVAL"
-                    title="라인업"
-                    description="종목 → 카테고리 순으로 선택하고, 원하는 캠퍼스만 골라 보세요."
-                />
+                <PageHeader eyebrow="GLOBAL SPORTS FESTIVAL" title="라인업" />
 
                 {/* 종목 탭 */}
                 <div className="lp-sport-tabs">
@@ -95,7 +89,6 @@ export default function LineupPage() {
                         </button>
                     ))}
                 </div>
-
 
                 {/* 카테고리 칩 */}
                 {categories.length > 0 && (
@@ -144,7 +137,6 @@ export default function LineupPage() {
                         })}
                     </div>
                 </div>
-
 
                 {/* 캠퍼스 카드: 단일 vs 그리드 — 완전 다른 래퍼로 분기 */}
                 {activeCategory ? (

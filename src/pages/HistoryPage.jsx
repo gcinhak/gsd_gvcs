@@ -207,11 +207,7 @@ export default function HistoryPage() {
     return (
         <div className="page history-page">
             <div className="history-inner">
-                <PageHeader
-                    eyebrow="GLOBAL SPORTS FESTIVAL"
-                    title="역대 전적"
-                    description="연도를 선택해 종합 우승, 응원전, 종목별 결과를 확인하세요."
-                />
+                <PageHeader eyebrow="GLOBAL SPORTS FESTIVAL" title="역대 전적" />
 
                 <div className="year-pills">
                     {HISTORY.map((h) => (

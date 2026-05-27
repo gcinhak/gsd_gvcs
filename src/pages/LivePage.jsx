@@ -187,7 +187,6 @@ export default function LivePage() {
                         </span>
                     }
                     title="실시간 중계"
-                    description="진행 중인 경기와 다음 경기를 한눈에 확인하세요."
                 />
 
                 {serverState === 'error' && (

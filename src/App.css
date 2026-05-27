@@ -338,7 +338,7 @@ img {
     justify-content: space-between;
     gap: 1rem;
     flex-wrap: wrap;
-    margin-bottom: 1.5rem;
+    /* margin-bottom: 1.5rem; */
     padding-bottom: 1rem;
     border-bottom: 1px solid var(--border);
 }
@@ -1589,7 +1589,7 @@ img {
     padding: 2rem 0 4rem;
 }
 .history-inner {
-    max-width: 1180px;
+    max-width: 1080px;
     margin: 0 auto;
     padding: 0 clamp(1rem, 3vw, 1.5rem);
     display: flex;
@@ -2431,7 +2431,7 @@ img {
     padding: 2rem 0 4rem;
 }
 .upcoming-inner {
-    max-width: 1100px;
+    max-width: 1080px;
     margin: 0 auto;
     padding: 0 clamp(1rem, 3vw, 1.5rem);
     display: flex;
@@ -2562,7 +2562,7 @@ img {
     --credits-label-col: 6.75rem;
     width: min(980px, calc(100% - 2rem));
     margin: 0 auto;
-    padding: clamp(2.2rem, 5.4vw, 4rem) 0 clamp(3.2rem, 9vw, 5.5rem);
+    padding: clamp(1rem, 2vw, 1.5rem) 0 clamp(3.2rem, 9vw, 5.5rem);
     text-align: left;
 }
 .credits-page .page-header {
@@ -2574,7 +2574,7 @@ img {
 .credits-story {
     display: grid;
     gap: 0.7rem;
-    padding: clamp(1.7rem, 5vw, 2.65rem) 0;
+    padding: clamp(1rem, 3vw, 1.5rem) 0;
     border-bottom: 1px solid #dbe3ef;
 }
 .credits-story section {
@@ -2990,7 +2990,7 @@ img {
     padding: 2rem 0 4rem;
 }
 .live-inner {
-    max-width: 1180px;
+    max-width: 1080px;
     margin: 0 auto;
     padding: 0 clamp(1rem, 3vw, 1.5rem);
     display: flex;
@@ -3049,6 +3049,10 @@ img {
 }
 .lb-pill.is-live {
     background: #dc2626;
+}
+.lb-pill.is-live .mc-live-dot {
+    background: #ffffff;
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.6);
 }
 .lb-pill.is-finished {
     background: var(--muted-2);
@@ -5288,7 +5292,7 @@ img {
     padding: 2rem 0 4rem;
 }
 .lineup-inner {
-    max-width: 1240px;
+    max-width: 1080px;
     margin: 0 auto;
     padding: 0 clamp(1rem, 3vw, 1.5rem);
     display: flex;

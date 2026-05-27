@@ -1,16 +1,10 @@
 import PageHeader from '../components/PageHeader';
 
-const DEVELOPERS = ['이다인', '정다희', '송민호', '김윤지', '조인택', '이하은', '정강우', '한수정', '홍성흔'];
-
 export default function UpcomingPage() {
     return (
         <div className="page credits-page">
             <section className="credits-roll" aria-labelledby="credits-title">
-                <PageHeader
-                    eyebrow="GLOBAL SPORTS FESTIVAL"
-                    title="GVCS 문경캠퍼스 코딩동아리 Sync"
-                    description="gsd.gvcs.kr은 Global Sports Festival의 순간을 더 빠르고 생생하게 공유하기 위해 Sync가 제작한 디지털 축제 플랫폼입니다."
-                />
+                <PageHeader eyebrow="GLOBAL SPORTS FESTIVAL" title="GVCS 문경캠퍼스 코딩동아리 Sync" />
 
                 <div className="credits-story">
                     <section>

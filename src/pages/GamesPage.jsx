@@ -30,11 +30,7 @@ export default function GamesPage() {
     return (
         <div className="page games-page">
             <div className="games-inner">
-                <PageHeader
-                    eyebrow="GLOBAL SPORTS FESTIVAL"
-                    title="종목별 경기 영상"
-                    description="연도 · 종목 · 예선/본선 별로 경기 영상을 모아봤습니다."
-                />
+                <PageHeader eyebrow="GLOBAL SPORTS FESTIVAL" title="종목별 경기 영상" />
 
                 <div className="filter-bar">
                     <div className="filter-group">

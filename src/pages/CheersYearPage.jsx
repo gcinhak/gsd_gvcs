@@ -8,11 +8,7 @@ export default function CheersYearPage() {
         <div className="page year-page">
             <div className="year-bg" />
             <div className="year-inner">
-                <PageHeader
-                    eyebrow="GLOBAL SPORTS FESTIVAL"
-                    title="역대 응원전"
-                    description="연도별 · 캠퍼스별 응원전 영상을 모아봤습니다."
-                />
+                <PageHeader eyebrow="GLOBAL SPORTS FESTIVAL" title="역대 응원전" />
 
                 <div className="year-grid">
                     {YEARS.map((y, i) => (

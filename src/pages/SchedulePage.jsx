@@ -227,11 +227,7 @@ export default function SchedulePage() {
     return (
         <div className="page schedule-page">
             <div className="schedule-inner">
-                <PageHeader
-                    eyebrow="GLOBAL SPORTS FESTIVAL"
-                    title="경기 일정"
-                    description="2026년 5월 28일 ~ 30일 — 일자를 선택해 세부 일정을 확인하세요."
-                />
+                <PageHeader eyebrow="GLOBAL SPORTS FESTIVAL" title="경기 일정" />
 
                 <div className="day-tabs">
                     {DAY_ORDER.map((key) => {
@@ -254,13 +250,13 @@ export default function SchedulePage() {
                     })}
                 </div>
 
-                <div className="day-hero">
+                {/* <div className="day-hero">
                     <div className="day-hero-emoji">{day.emoji}</div>
                     <div>
                         <div className="day-hero-title">{day.title}</div>
                         <div className="day-hero-date">{day.date}</div>
                     </div>
-                </div>
+                </div> */}
 
                 {day.matches && <MatchTable matches={day.matches} />}
 
