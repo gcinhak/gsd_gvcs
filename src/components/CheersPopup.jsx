@@ -152,10 +152,10 @@ export default function CheersPopup() {
                         color: 'var(--muted)',
                     }}
                 >
-                    <span>탭을 눌러 다른 캠퍼스 영상을 볼 수 있어요</span>
                     <button
                         onClick={closeDontShow}
                         style={{
+                            marginLeft: 'auto',
                             background: 'none',
                             border: '1px solid var(--border)',
                             borderRadius: '6px',

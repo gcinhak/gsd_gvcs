@@ -123,7 +123,10 @@ function getScoringWinner(match, comments = []) {
         let winner = null;
         let max = -Infinity;
         for (const [c, n] of Object.entries(obj)) {
-            if (n > max) { max = n; winner = c; }
+            if (n > max) {
+                max = n;
+                winner = c;
+            }
         }
         return max > -Infinity ? winner : null;
     };
@@ -159,8 +162,11 @@ function getScoringWinner(match, comments = []) {
             let bestN = -1;
             let tie = false;
             for (const [c, n] of Object.entries(scores)) {
-                if (n > bestN) { bestN = n; bestC = c; tie = false; }
-                else if (n === bestN) tie = true;
+                if (n > bestN) {
+                    bestN = n;
+                    bestC = c;
+                    tie = false;
+                } else if (n === bestN) tie = true;
             }
             if (!tie && bestC) setWins[bestC] = (setWins[bestC] || 0) + 1;
         }
@@ -287,11 +293,7 @@ function ResultCell({ event, division, match, relayState, relayComments = [], on
                 <span className="db-final-score-box">{finalScore}</span>
             ) : null}
 
-            {hasWinner ? (
-                <CampusBadge campus={campus} size="sm" />
-            ) : (
-                <MatchupPills matchup={matchup} />
-            )}
+            {hasWinner ? <CampusBadge campus={campus} size="sm" /> : <MatchupPills matchup={matchup} />}
         </button>
     );
 }
@@ -417,7 +419,7 @@ function ScoreDetailModalContent({ detail, relayState, comments, loading, onClos
     const status = relayState?.status || 'upcoming';
 
     return (
-        <div className="db-detail-backdrop" onMouseDown={onClose}>
+        <div className="db-detail-backdrop db-detail-backdrop--sheet" onMouseDown={onClose}>
             <section
                 className="db-detail-modal"
                 role="dialog"
