@@ -106,7 +106,7 @@ export const LINEUP = {
             남중: [
                 { no: 1, grade: 9, name: '송하율' },
                 { no: 2, grade: 9, name: '김유건' },
-                { no: 3, grade: 9, name: '홍아일' },
+                { no: 3, grade: 9, name: '홍하일' },
                 { no: 4, grade: 8, name: '석지훈' },
                 { no: 5, grade: 8, name: '이선율' },
                 { no: 6, grade: 8, name: '이지호' },
@@ -345,8 +345,7 @@ export const LINEUP = {
                 { no: 3, grade: 0, name: '임준희' },
                 { no: 4, grade: 0, name: '김래율' },
                 { no: 5, grade: 0, name: '정우성' },
-                { no: 6, grade: 0, name: '김시훈' },
-                { no: 7, grade: 0, name: '김의국' },
+                { no: 6, grade: 0, name: '김의국' },
             ],
         },
         배구: {
