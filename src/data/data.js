@@ -36,6 +36,15 @@ export const THEMES = {
 ────────────────────────────────────────────────────────── */
 export const YEARS = [
     {
+        year: 2026,
+        color: '#4f46e5', // Indigo
+        soft: '#e0e7ff',
+        videos: [
+            { id: 'jLfEZegQnH8', campus: '문경', label: '문경 출정식' },
+            { id: 'CXlrC2vP0YI', campus: '음성', label: '음성 출정식' },
+        ],
+    },
+    {
         year: 2025,
         color: '#e11d48', // Rose
         soft: '#ffe4e6',

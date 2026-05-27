@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import useCountdown from '../hooks/useCountdown';
+import CheersPopup from '../components/CheersPopup'; // 추가
 import syncHeroImg from '../assets/sync_hero.png';
 
 function Digit({ value, label }) {
@@ -23,6 +24,7 @@ export default function HomePage() {
 
     return (
         <div className={`page hero-page ${ready ? 'ready' : ''}`}>
+            <CheersPopup />
             <section className="hero-bg">
                 <div className="hero-inner-top">
                     <span className="hero-badge anim-1">GLOBAL SPORTS FESTIVAL</span>
@@ -31,9 +33,27 @@ export default function HomePage() {
                         <span className="ht-main">글로벌 체육 축제</span>
                     </h1>
                     <p className="hero-date anim-3">2026년 5월 30일 (토) 09:00</p>
+                    <div className="anim-5" style={{ textAlign: 'center', marginTop: '1rem' }}>
+                        <a
+                            href="/cheers/2026"
+                            style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '0.5rem',
+                                padding: '0.5rem 1.25rem',
+                                background: 'rgba(255,255,255,0.08)',
+                                border: '1px solid rgba(255,255,255,0.2)',
+                                borderRadius: '999px',
+                                color: '#fff',
+                                textDecoration: 'none',
+                                fontSize: '0.85rem',
+                            }}
+                        >
+                            2026 출정식 영상 보러가기 →
+                        </a>
+                    </div>
                 </div>
             </section>
-
             <div className="countdown anim-4">
                 <Digit value={days} label="DAYS" />
                 <span className="cd-sep">:</span>
@@ -43,7 +63,6 @@ export default function HomePage() {
                 <span className="cd-sep">:</span>
                 <Digit value={seconds} label="SEC" />
             </div>
-
             <div className="hero-sync anim-5">
                 <img src={syncHeroImg} alt="Sync" />
             </div>
