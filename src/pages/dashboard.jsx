@@ -1,4 +1,5 @@
 ﻿import { useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import LiveClock from '../components/LiveClock';
 import {
     CAMPUS_OPTIONS,
@@ -393,7 +394,7 @@ function ScoreDetailModal({ detail, relayState, comments, loading, onClose }) {
 
     const detailKey = `${detail.matchId || 'match'}-${detail.division?.id || 'division'}`;
 
-    return (
+    return createPortal(
         <ScoreDetailModalContent
             key={detailKey}
             detail={detail}
@@ -401,7 +402,8 @@ function ScoreDetailModal({ detail, relayState, comments, loading, onClose }) {
             comments={comments}
             loading={loading}
             onClose={onClose}
-        />
+        />,
+        document.body
     );
 }
 
