@@ -98,7 +98,7 @@ export const LINEUP = {
                 { no: 3, grade: 9, name: '김민정' },
                 { no: 4, grade: 9, name: '이래윤' },
                 { no: 5, grade: 9, name: '방채라' },
-                { no: 6, grade: 9, name: '김예린' },
+                { no: 6, grade: 10, name: '김예린' },
                 { no: 7, grade: 9, name: '조수현' },
             ],
         },
