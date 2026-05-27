@@ -5733,9 +5733,23 @@ img {
 
 .terr-campus-pick {
     display: flex;
-    gap: 0.5rem;
-    flex-wrap: wrap;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-top: 0rem;
 }
+.terr-pick-label {
+    font-size: 0.85rem;
+    color: var(--muted);
+    font-weight: 500;
+}
+.terr-campus-pills {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: nowrap;
+}
+
 .terr-team-pill {
     padding: 0.45rem 1rem;
     background: var(--surface);

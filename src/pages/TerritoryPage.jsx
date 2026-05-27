@@ -813,12 +813,10 @@ export default function TerritoryPage() {
 
     return (
         <div className="territory-page">
-            <header className="terr-head">
-                {/* <div className="terr-head-left">
-                    <h2 className="terr-title">🏰 점령전</h2>
-                    <p className="terr-sub">퀴즈와 미니게임을 클리어해서 캠퍼스 영토를 차지하세요!</p>
-                </div> */}
-                <div className="terr-campus-pick">
+            {/* 캠퍼스 선택 → 바로 게임 시작 */}
+            <div className="terr-campus-pick">
+                <p className="terr-sub">캠퍼스를 선택하면 게임이 시작됩니다</p>
+                <div className="terr-campus-pills">
                     {CAMPUSES.map((c) => {
                         const cc = CAMPUS_COLORS[c] || {};
                         const active = myCampus === c;
@@ -831,27 +829,23 @@ export default function TerritoryPage() {
                                 type="button"
                                 className={`terr-team-pill ${active ? 'active' : ''}`}
                                 style={style}
-                                onClick={() => selectCampus(c)}
-                                title={`${c} 캠퍼스로 플레이`}
+                                disabled={isAnimating}
+                                onClick={() => {
+                                    selectCampus(c);
+                                    setGameType(pickRandomGame());
+                                    setModalOpen(true);
+                                }}
+                                title={`${c} 캠퍼스로 게임 시작`}
                             >
                                 {c}
                             </button>
                         );
                     })}
                 </div>
-            </header>
+            </div>
 
-            <button
-                type="button"
-                className={`terr-vis terr-vis-btn ${myCampus ? 'is-ready' : 'is-locked'} ${isAnimating ? 'is-animating' : ''}`}
-                disabled={isAnimating}
-                onClick={() => {
-                    if (isAnimating) return;
-                    if (!myCampus) return; // 오버레이의 "👆 캠퍼스 선택 후 클릭" 안내로 충분
-                    startGame();
-                }}
-                aria-label="게임 시작"
-            >
+            {/* GVCS 지도 — 시각화 전용, 클릭 없음 */}
+            <div className={`terr-vis ${isAnimating ? 'is-animating' : ''}`}>
                 {state ? (
                     <>
                         <TerritoryMap
@@ -864,15 +858,6 @@ export default function TerritoryPage() {
                             }}
                         />
                         <TerritoryLegend state={state} />
-                        <span className={`terr-vis-overlay mode-${mode}`}>
-                            <span className="terr-vis-cta">
-                                {!myCampus
-                                    ? '👆 캠퍼스 선택 후 클릭'
-                                    : mode === 'claim'
-                                      ? '🟦 클릭하여 빈 땅 차지 (+0.01%)'
-                                      : '⚔️ 클릭하여 상대 땅 강탈 (+0.005%)'}
-                            </span>
-                        </span>
                     </>
                 ) : (
                     <div
@@ -891,7 +876,7 @@ export default function TerritoryPage() {
                         영토 데이터 불러오는 중…
                     </div>
                 )}
-            </button>
+            </div>
 
             {modalOpen && gameType && <GameModal gameType={gameType} onResolve={onGameResolved} onClose={cancelGame} />}
         </div>
