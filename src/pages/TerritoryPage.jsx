@@ -13,7 +13,7 @@ import { fetchTerritory, playTerritory } from '../lib/territoryApi';
 
 const CAMPUSES = ['문경', '음성', '세종'];
 const MY_CAMPUS_KEY = 'gsd-territory-mycampus';
-const POLL_MS = 3000;
+const POLL_MS = 10000;
 const GAME_TYPES = ['quiz', 'reaction', 'gauge', 'flappy', 'sequence', 'falling', 'shoot', 'whack'];
 
 const GAME_INFO = {
@@ -305,7 +305,7 @@ function calcSplatCount(delta, total, letterPixelCount) {
     return Math.round((fraction * letterPixelCount) / 20);
 }
 
-function TerritoryMap({ state, onStatsUpdate, onAnimationStart, onAnimationEnd }) {
+function TerritoryMap({ state, onAnimationStart, onAnimationEnd, isLocalUpdate }) {
     const canvasRef = useRef(null);
     const letterCRef = useRef(null);
     const splatCRef = useRef(null);
@@ -315,13 +315,14 @@ function TerritoryMap({ state, onStatsUpdate, onAnimationStart, onAnimationEnd }
     const rngRef = useRef(null); // 시드 기반 난수
     const overlayCRef = useRef(null); // 임팩트 이펙트 오버레이
     const impactsRef = useRef([]); // 활성 임팩트 목록 { x, y, clr, startTime, duration }
+    const hasAnimatedInitialRef = useRef(false);
 
     /* 마운트 시 1회 — 오프스크린 캔버스 + 글자 마스크 초기화 */
     useEffect(() => {
         const lc = document.createElement('canvas');
         lc.width = CANVAS_W;
         lc.height = CANVAS_H;
-        const lCtx = lc.getContext('2d');
+        const lCtx = lc.getContext('2d', { willReadFrequently: true });
         lCtx.fillStyle = 'white';
         lCtx.textAlign = 'center';
         lCtx.textBaseline = 'middle';
@@ -344,6 +345,7 @@ function TerritoryMap({ state, onStatsUpdate, onAnimationStart, onAnimationEnd }
         const sc = document.createElement('canvas');
         sc.width = CANVAS_W;
         sc.height = CANVAS_H;
+        sc.getContext('2d', { willReadFrequently: true }); // getImageData 빈번 → readback 비용 절감
         splatCRef.current = sc;
 
         const tc = document.createElement('canvas');
@@ -356,58 +358,15 @@ function TerritoryMap({ state, onStatsUpdate, onAnimationStart, onAnimationEnd }
         oc.height = CANVAS_H;
         overlayCRef.current = oc;
 
-        // localStorage에서 이전 캔버스 복원 시도
-        try {
-            const saved = localStorage.getItem('gvcs-territory-canvas');
-            if (saved) {
-                const { seed: savedSeed, dataUrl } = JSON.parse(saved);
-                // seed는 나중에 state 로드 후 검증 — 일단 dataUrl 저장
-                splatCRef.current._savedSeed = savedSeed;
-                splatCRef.current._savedDataUrl = dataUrl;
-            }
-        } catch {}
-
         render();
+
+        return () => {
+            hasAnimatedInitialRef.current = false;
+            prevStateRef.current = null;
+        };
     }, []);
 
-    function calcCanvasStats() {
-        const lp = letterPixelsRef.current;
-        const sc = splatCRef.current;
-        if (!lp || !sc || !onStatsUpdate) return;
-        const sCtx = sc.getContext('2d');
-        const id = sCtx.getImageData(0, 0, CANVAS_W, CANVAS_H);
-        const campusRgb = Object.fromEntries(CAMPUSES.map((c) => [c, hexToRgb(CAMPUS_COLORS[c]?.bg || '#888')]));
-        const counts = Object.fromEntries(CAMPUSES.map((c) => [c, 0]));
-        let empty = 0;
-        const step = 3; // 샘플 간격 (정확도↑)
-        let total = 0;
-        for (let i = 0; i < lp.length; i += step) {
-            const [px, py] = lp[i];
-            const idx = (py * CANVAS_W + px) * 4;
-            total++;
-            if (id.data[idx + 3] < 20) {
-                empty++;
-                continue;
-            }
-            const rv = id.data[idx],
-                gv = id.data[idx + 1],
-                bv = id.data[idx + 2];
-            let best = null,
-                bestD = 120;
-            for (const [campus, [cr, cg, cb]] of Object.entries(campusRgb)) {
-                const d = Math.abs(rv - cr) + Math.abs(gv - cg) + Math.abs(bv - cb);
-                if (d < bestD) {
-                    bestD = d;
-                    best = campus;
-                }
-            }
-            if (best) counts[best]++;
-            else empty++;
-        }
-        onStatsUpdate({ counts, empty, total });
-    }
-
-    function render(updateStats = false) {
+    function render() {
         const canvas = canvasRef.current;
         if (!canvas || !letterCRef.current || !splatCRef.current) return;
         const dCtx = canvas.getContext('2d');
@@ -429,8 +388,6 @@ function TerritoryMap({ state, onStatsUpdate, onAnimationStart, onAnimationEnd }
 
         // 임팩트 이펙트 항상 최상단에 합성
         compositeImpacts(dCtx);
-
-        if (updateStats) calcCanvasStats();
     }
 
     /* 파티클 폭발 임팩트 — overlay에 그리고 display에 합성 */
@@ -540,13 +497,14 @@ function TerritoryMap({ state, onStatsUpdate, onAnimationStart, onAnimationEnd }
     useEffect(() => {
         if (!letterPixelsRef.current || !splatCRef.current) return;
 
+        let cancelled = false;
+
         const sc = splatCRef.current;
         const sCtx = sc.getContext('2d');
         const lp = letterPixelsRef.current;
         const total = state.total || 200000;
 
         const prev = prevStateRef.current;
-        prevStateRef.current = state;
 
         // 시드 초기화: 첫 로드면 state 기반 고정 시드, 이후엔 delta 포함
         const seed = stateToSeed(state);
@@ -563,27 +521,16 @@ function TerritoryMap({ state, onStatsUpdate, onAnimationStart, onAnimationEnd }
         }
         if (Object.keys(gained).length === 0) return;
 
+        prevStateRef.current = state;
+
         // 강탈 여부: 빈 땅이 줄지 않고 상대 캠퍼스가 줄었으면 steal
         const isSteal = Object.keys(lost).length > 0;
 
         // ── 첫 서버 로드 (prev가 없거나 모두 0) → 빠른 애니메이션으로 채우기 ──
-        const isFirstLoad = !prev || CAMPUSES.every((c) => (prev.campuses[c] || 0) === 0);
+        const isFirstLoad = !hasAnimatedInitialRef.current;
 
         if (isFirstLoad) {
-            // localStorage 복원: 저장된 seed와 현재 seed가 일치하면 즉시 복원
-            const currentSeed = stateToSeed(state);
-            const savedSeed = sc._savedSeed;
-            const savedDataUrl = sc._savedDataUrl;
-            if (savedSeed === currentSeed && savedDataUrl) {
-                const img = new Image();
-                img.onload = () => {
-                    sCtx.clearRect(0, 0, CANVAS_W, CANVAS_H);
-                    sCtx.drawImage(img, 0, 0);
-                    render(true);
-                };
-                img.src = savedDataUrl;
-                return;
-            }
+            hasAnimatedInitialRef.current = true;
             // 모든 캠퍼스 스플랫을 하나의 큐로 섞어서 동시다발로 날아오는 느낌
             const queue = [];
             for (const [campus, delta] of Object.entries(gained)) {
@@ -606,19 +553,9 @@ function TerritoryMap({ state, onStatsUpdate, onAnimationStart, onAnimationEnd }
             let snapCounter = 0;
 
             function fireInitial() {
+                if (cancelled) return;
                 if (qi >= queue.length) {
-                    render(true);
-                    // 완료 후 캔버스 상태 저장
-                    try {
-                        const dataUrl = sc.toDataURL('image/png');
-                        localStorage.setItem(
-                            'gvcs-territory-canvas',
-                            JSON.stringify({
-                                seed: stateToSeed(state),
-                                dataUrl,
-                            })
-                        );
-                    } catch {}
+                    render();
                     return;
                 }
                 // 프레임당 perFrame발씩 동기 처리
@@ -642,13 +579,14 @@ function TerritoryMap({ state, onStatsUpdate, onAnimationStart, onAnimationEnd }
         }
 
         // ── 일반 점령 / 강탈: 순차 애니메이션 ──
-        if (onAnimationStart) onAnimationStart();
+        if (onAnimationStart && isLocalUpdate?.current) onAnimationStart();
         const entries = Object.entries(gained);
         let entryIdx = 0;
 
         function fireNext() {
+            if (cancelled) return;
             if (entryIdx >= entries.length) {
-                if (onAnimationEnd) onAnimationEnd();
+                if (onAnimationEnd && isLocalUpdate?.current) onAnimationEnd();
                 return;
             }
             const [campus, delta] = entries[entryIdx++];
@@ -663,8 +601,9 @@ function TerritoryMap({ state, onStatsUpdate, onAnimationStart, onAnimationEnd }
             const enemyRgb = enemyCampus ? hexToRgb(CAMPUS_COLORS[enemyCampus]?.bg || '#888') : null;
 
             function nextSplat() {
+                if (cancelled) return;
                 if (n >= count) {
-                    render(true);
+                    render();
                     fireNext();
                     return;
                 }
@@ -688,6 +627,10 @@ function TerritoryMap({ state, onStatsUpdate, onAnimationStart, onAnimationEnd }
             nextSplat();
         }
         fireNext();
+
+        return () => {
+            cancelled = true;
+        };
     }, [state]);
 
     return (
@@ -774,36 +717,57 @@ function GameModal({ gameType, onResolve, onClose }) {
 }
 
 export default function TerritoryPage() {
-    const [state, setState] = useState({
-        campuses: { 문경: 0, 음성: 0, 세종: 0 },
-        total: 200000,
-        empty: 200000,
-    });
+    const [state, setState] = useState(null);
     const [myCampus, setMyCampus] = useState(() => {
         if (typeof window === 'undefined') return '';
         return window.localStorage.getItem(MY_CAMPUS_KEY) || '';
     });
     const [gameType, setGameType] = useState(null);
     const [modalOpen, setModalOpen] = useState(false);
-    const [resultMsg, setResultMsg] = useState('');
-    const [canvasStats, setCanvasStats] = useState(null);
     const [isAnimating, setIsAnimating] = useState(false);
+    const isLocalSubmitRef = useRef(false); // 내가 직접 제출한 경우에만 true
+    const modalOpenRef = useRef(false); // 폴링 closure에서 최신 modalOpen 참조용
+
+    // 모달 상태를 ref에 동기화 (폴링 closure가 항상 최신값을 보도록)
+    useEffect(() => {
+        modalOpenRef.current = modalOpen;
+    }, [modalOpen]);
 
     useEffect(() => {
         let cancelled = false;
         const pull = async () => {
+            // 탭이 숨겨졌거나 게임 플레이 중이면 폴링 스킵 (네트워크·배터리 절약, 플레이 방해 방지)
+            if (document.hidden || modalOpenRef.current) return;
             try {
                 const data = await fetchTerritory();
-                if (!cancelled) setState(data);
+                if (cancelled) return;
+                setState((prev) => {
+                    // 값이 동일하면 같은 참조 반환 → 불필요한 리렌더/effect 방지
+                    if (
+                        prev &&
+                        prev.empty === data.empty &&
+                        prev.total === data.total &&
+                        CAMPUSES.every((c) => prev.campuses[c] === data.campuses[c])
+                    ) {
+                        return prev;
+                    }
+                    return data;
+                });
             } catch {
                 /* ignore */
             }
         };
         pull();
         const timer = setInterval(pull, POLL_MS);
+        // 탭 복귀 시 즉시 갱신
+        const onVisible = () => {
+            if (!document.hidden) pull();
+        };
+        document.addEventListener('visibilitychange', onVisible);
         return () => {
             cancelled = true;
             clearInterval(timer);
+            document.removeEventListener('visibilitychange', onVisible);
         };
     }, []);
 
@@ -814,7 +778,6 @@ export default function TerritoryPage() {
 
     const startGame = () => {
         if (!myCampus) return;
-        setResultMsg('');
         setGameType((prev) => prev ?? pickRandomGame());
         setModalOpen(true);
     };
@@ -832,29 +795,20 @@ export default function TerritoryPage() {
             return;
         }
         if (!won) {
-            setResultMsg('❌ 실패 — 다시 도전해보세요');
             finishGame();
             return;
         }
         try {
+            isLocalSubmitRef.current = true;
             const result = await playTerritory(myCampus);
             setState({ campuses: result.campuses, total: result.total, empty: result.empty });
-            if (result.mode === 'claim') {
-                setResultMsg(`✅ ${myCampus} +0.01% 영토 차지!`);
-            } else if (result.mode === 'steal') {
-                setResultMsg(`⚔️ ${result.stolenFrom} 에게서 0.005% 빼앗았어요!`);
-            }
-        } catch (err) {
-            if (String(err.message).includes('fully conquered')) {
-                setResultMsg('🏆 이미 모든 땅을 본인 캠퍼스가 점령했습니다!');
-            } else {
-                setResultMsg('서버 오류: ' + err.message);
-            }
+        } catch {
+            /* 결과 메시지는 표시하지 않으므로 무시 */
         }
         finishGame();
     };
 
-    const emptyExists = state.empty > 0;
+    const emptyExists = state ? state.empty > 0 : true;
     const mode = emptyExists ? 'claim' : 'steal';
 
     return (
@@ -893,33 +847,61 @@ export default function TerritoryPage() {
                 disabled={isAnimating}
                 onClick={() => {
                     if (isAnimating) return;
-                    if (!myCampus) {
-                        setResultMsg('⚠️ 우측 상단에서 캠퍼스를 먼저 선택하세요');
-                        return;
-                    }
+                    if (!myCampus) return; // 오버레이의 "👆 캠퍼스 선택 후 클릭" 안내로 충분
                     startGame();
                 }}
                 aria-label="게임 시작"
             >
-                <TerritoryMap
-                    state={state}
-                    onStatsUpdate={setCanvasStats}
-                    onAnimationStart={() => setIsAnimating(true)}
-                    onAnimationEnd={() => setIsAnimating(false)}
-                />
-                <TerritoryLegend state={state} />
-                <span className={`terr-vis-overlay mode-${mode}`}>
-                    <span className="terr-vis-cta">
-                        {!myCampus
-                            ? '👆 캠퍼스 선택 후 클릭'
-                            : mode === 'claim'
-                              ? '🟦 클릭하여 빈 땅 차지 (+0.01%)'
-                              : '⚔️ 클릭하여 상대 땅 강탈 (+0.005%)'}
-                    </span>
-                </span>
+                {state ? (
+                    <>
+                        <TerritoryMap
+                            state={state}
+                            isLocalUpdate={isLocalSubmitRef}
+                            onAnimationStart={() => setIsAnimating(true)}
+                            onAnimationEnd={() => {
+                                isLocalSubmitRef.current = false;
+                                setIsAnimating(false);
+                            }}
+                        />
+                        <TerritoryLegend state={state} />
+                        <p
+                            style={{
+                                fontSize: '11px',
+                                color: 'var(--color-text-tertiary)',
+                                margin: '0.3rem 0 0',
+                                textAlign: 'center',
+                            }}
+                        >
+                            실제 점수와 보이는 시각적 비율이 상이할 수 있음에 주의하세요
+                        </p>
+                        <span className={`terr-vis-overlay mode-${mode}`}>
+                            <span className="terr-vis-cta">
+                                {!myCampus
+                                    ? '👆 캠퍼스 선택 후 클릭'
+                                    : mode === 'claim'
+                                      ? '🟦 클릭하여 빈 땅 차지 (+0.01%)'
+                                      : '⚔️ 클릭하여 상대 땅 강탈 (+0.005%)'}
+                            </span>
+                        </span>
+                    </>
+                ) : (
+                    <div
+                        style={{
+                            width: '100%',
+                            aspectRatio: '1050 / 420',
+                            background: '#0f172a',
+                            borderRadius: '12px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: '#64748b',
+                            fontSize: '14px',
+                        }}
+                    >
+                        영토 데이터 불러오는 중…
+                    </div>
+                )}
             </button>
-
-            {/* resultMsg 비활성화 */}
 
             {modalOpen && gameType && <GameModal gameType={gameType} onResolve={onGameResolved} onClose={cancelGame} />}
         </div>

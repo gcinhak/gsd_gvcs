@@ -139,6 +139,36 @@ export const LINEUP = {
                 { no: 10, grade: 9, name: '최서윤' },
             ],
         },
+        태권도: {
+            태권체조: [
+                { no: 1, grade: 12, name: '심예은' },
+                { no: 2, grade: 10, name: '임환희' },
+                { no: 3, grade: 11, name: '엄세영' },
+                { no: 4, grade: 11, name: '운유송' },
+                { no: 5, grade: 10, name: '신예은' },
+                { no: 6, grade: 11, name: '송효원' },
+            ],
+            '품새(중)': [
+                { no: 1, grade: 8, name: '조민수' },
+                { no: 2, grade: 9, name: '이정우' },
+            ],
+            '품새(고)': [
+                { no: 1, grade: 12, name: '심예진' },
+                { no: 2, grade: 11, name: '이지율' },
+            ],
+            '겨루기(남)': [
+                { no: 1, grade: 11, name: '운유송' },
+                { no: 2, grade: 12, name: '최종민' },
+                { no: 3, grade: 12, name: '이건희' },
+                { no: 4, grade: 12, name: '조승운' },
+            ],
+            '겨루기(여)': [
+                { no: 1, grade: 12, name: '안규리' },
+                { no: 2, grade: 12, name: '이채민' },
+                { no: 3, grade: 12, name: '김가현' },
+                { no: 4, grade: 11, name: '한수진' },
+            ],
+        },
         /* 탁구부터 줄다리기까지 나머지 데이터 주석 처리
         탁구: {
             중등부: [
@@ -159,42 +189,16 @@ export const LINEUP = {
                 {  no: 3, name: '홍성택' },
                 {  no: 4, name: '이성화'},
             ],
-            교직원: [{ no: 1, name: '이경민' }, {  no: 2, name: '남정하' }, { no: 3, name: '김경식' }, {no: 4,name: '신찬영' }],
+            교직원: [{ no: 1, name: '이경민' },
+            {  no: 2, name: '남정하' },
+              { no: 3, name: '김경식' },
+               {no: 4,name: '신찬영' }
+               ],
         },
         체스: {
             '7-8학년': [{ no: 1, grade: 8, name: '박주원' }, { no: 2, grade: 8,name: '임온찬' }],
             '9-10학년': [{ no: 1, grade: 9, name: '변지원' }, { no: 2, grade: 9,name: '윤종한' }],
             '11-12학년': [{ no: 1, grade: 11, name: '윤주호' }, { no: 2, grade: 12, name: '정소망' }],
-        },
-        태권도: {
-            태권체조: [
-                { no: 1, grade: 12, name: '심예은' },
-                { no: 2, grade: 10, name: '임환희' },
-                { no: 3, grade: 11, name: '엄세영' },
-                { no: 4, grade: 11, name: '운유송' },
-                { no: 5, grade: 10, name: '신예은' },
-                { no: 6, grade: 11, name: '송효원' },
-            ],
-            '품새 중등': [
-                { no: 1, grade: 8, name: '조민수' },
-                { no: 2, grade: 9, name: '이정우' },
-            ],
-            '품새 고등': [
-                { no: 1, grade: 12, name: '심예진' },
-                { no: 2, grade: 11, name: '이지율' },
-            ],
-            '겨루기 남자': [
-                { no: 1, grade: 11, name: '운유송' },
-                { no: 2, grade: 12, name: '최종민' },
-                { no: 3, grade: 12, name: '이건희' },
-                { no: 4, grade: 12, name: '조승운' },
-            ],
-            '겨루기 여자': [
-                { no: 1, grade: 12, name: '안규리' },
-                { no: 2, grade: 12, name: '이채민' },
-                { no: 3, grade: 12, name: '김가현' },
-                { no: 4, grade: 11, name: '한수진' },
-            ],
         },
         중거리: {
             통합: [
@@ -385,6 +389,35 @@ export const LINEUP = {
                 { no: 10, grade: 10, name: '유수호' },
             ],
         },
+        태권도: {
+            태권체조: [
+                { no: 1, grade: 9, name: '박지인' },
+                { no: 2, grade: 9, name: '손유향' },
+                { no: 3, grade: 10, name: '허강일' },
+                { no: 4, grade: 10, name: '이신해' },
+                { no: 5, grade: 10, name: '김유민' },
+                { no: 6, grade: 10, name: '김세아' },
+                { no: 7, grade: 12, name: '박시현' },
+            ],
+            '품새(중)': [
+                { no: 1, grade: 9, name: '박지인' },
+                { no: 2, grade: 9, name: '성제훈' },
+            ],
+            '품새(고)': [
+                { no: 1, grade: 11, name: '권예빈' },
+                { no: 2, grade: 11, name: '조한' },
+            ],
+            '겨루기(남)': [
+                { no: 1, grade: 12, name: '이승재' },
+                { no: 2, grade: 10, name: '정민준' },
+                { no: 3, grade: 7, name: '이태율' },
+            ],
+            '겨루기(여)': [
+                { no: 1, grade: 12, name: '김예림' },
+                { no: 2, grade: 12, name: '이아영' },
+                { no: 3, grade: 10, name: '권예빈' },
+            ],
+        },
     },
     세종: {
         농구: {
@@ -442,6 +475,25 @@ export const LINEUP = {
                 { no: 7, grade: 9, name: '김영진' },
                 { no: 8, grade: 0, name: '미국캠1' },
                 { no: 9, grade: 0, name: '미국캠2' },
+            ],
+        },
+        태권도: {
+            태권체조: [
+                { no: 1, grade: 12, name: '김형민' },
+                { no: 2, grade: 12, name: '손주환' },
+                { no: 3, grade: 11, name: '김하진' },
+                { no: 4, grade: 11, name: '박환상' },
+                { no: 5, grade: 11, name: '석지혜' },
+                { no: 6, grade: 10, name: '김민후' },
+                { no: 7, grade: 9, name: '임희수' },
+            ],
+            '품새(중)': [
+                { no: 1, grade: 9, name: '임희수' },
+                { no: 2, grade: 9, name: '김영진' },
+            ],
+            '품새(고)': [
+                { no: 1, grade: 11, name: '박환상' },
+                { no: 2, grade: 11, name: '김하진' },
             ],
         },
     },
