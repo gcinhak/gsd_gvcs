@@ -387,6 +387,26 @@ export const LINEUP = {
         },
     },
     세종: {
+        농구: {
+            남중: [
+                { no: 1, grade: 8, name: 'Lachlan McClure' },
+                { no: 2, grade: 8, name: 'Mason Snyder' },
+                { no: 3, grade: 9, name: 'Michael Snyder' },
+                { no: 4, grade: 9, name: 'Easton Socks' },
+                { no: 5, grade: 9, name: 'Lucas Greivell' },
+                { no: 6, grade: 7, name: '정은수' },
+                { no: 7, grade: 7, name: '이지호' },
+            ],
+            남고: [
+                { no: 1, grade: 12, name: '손주환' },
+                { no: 2, grade: 10, name: '김민후' },
+                { no: 3, grade: 10, name: '강한성' },
+                { no: 4, grade: 10, name: 'Isaac Derr' },
+                { no: 5, grade: 10, name: 'Zachary Yanick' },
+                { no: 6, grade: 10, name: '정현수' },
+                { no: 7, grade: 10, name: '최사무엘' },
+            ],
+        },
         배구: {
             남중: [
                 { no: 1, grade: 9, name: '임희수' },
