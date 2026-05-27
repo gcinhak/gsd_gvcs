@@ -157,7 +157,15 @@ async function getLiveState(env, req, ctx) {
     const cache = caches.default;
     const cacheKey = new Request(req.url, { method: 'GET' });
     const cached = await cache.match(cacheKey);
-    if (cached) return cached;
+
+    if (cached) {
+        // 마찬가지로 캐시 적중 시 현재 요청의 오리진에 맞게 헤더 변환
+        const res = new Response(cached.body, cached);
+        const cors = getCorsHeaders(req);
+        res.headers.set('Access-Control-Allow-Origin', cors['Access-Control-Allow-Origin']);
+        return res;
+    }
+
     const { results } = await env.DB.prepare(
         'SELECT match_id, status, youtube_id, home_score, away_score, current_quarter, updated_at FROM live_match_state'
     ).all();
@@ -360,7 +368,16 @@ async function getTerritory(env, req, ctx) {
     const cache = caches.default;
     const cacheKey = new Request(req.url, { method: 'GET' });
     const cached = await cache.match(cacheKey);
-    if (cached) return cached;
+
+    if (cached) {
+        // 캐시된 응답을 기반으로 새 응답 객체를 만들어 헤더를 가변(Mutable) 상태로 바꿉니다.
+        const res = new Response(cached.body, cached);
+        // 현재 요청(req)에 맞는 올바른 CORS 오리진 주소로 덮어씌웁니다.
+        const cors = getCorsHeaders(req);
+        res.headers.set('Access-Control-Allow-Origin', cors['Access-Control-Allow-Origin']);
+        return res;
+    }
+
     const state = await fetchTerritoryRow(env);
     const res = new Response(JSON.stringify({ campuses: state.campuses, total: state.total, empty: state.empty }), {
         status: 200,
