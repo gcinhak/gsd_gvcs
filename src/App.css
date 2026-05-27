@@ -1111,7 +1111,7 @@ img {
 .match-table {
     width: 100%;
     border-collapse: collapse;
-    min-width: 540px;
+    min-width: 0;
 }
 .match-table thead {
     background: var(--bg-soft);
@@ -1149,7 +1149,7 @@ img {
 .mt-category {
     color: var(--text-3);
     font-weight: 500;
-    white-space: nowrap;
+    white-space: normal;
 }
 .mt-match {
     font-weight: 500;
