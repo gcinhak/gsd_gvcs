@@ -1113,7 +1113,7 @@ export const LIVE_MATCHES = [
         round: '결선',
         category: '여연합',
         venue: '체육관',
-        teams: { home: '문경', away: '세종' },
+        teams: { home: '문경', away: '예선 승리 팀' },
         lineup: { home: [], away: [] },
     },
     {
