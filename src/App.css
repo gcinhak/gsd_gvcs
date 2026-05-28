@@ -8304,7 +8304,6 @@ img {
     .dashboard-page .db-event-card.event-taekwondo,
     .dashboard-page .db-event-card.event-middle-distance {
         grid-column: auto;
-        order: initial;
         border-right: none;
         border-bottom: 1px solid var(--border);
         padding: 0.75rem;
