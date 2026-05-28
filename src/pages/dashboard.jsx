@@ -338,7 +338,7 @@ function getDerivedEventDivisions(event, relayStatesMap = {}, liveMatchMap = {},
 }
 
 function getEventStatusLabelFromContext(event, context) {
-    if (context.isDone) return '경기 종료';
+    if (context.isDone) return '완료';
     if (context.isLive) return '진행 중';
     return event.status;
 }
