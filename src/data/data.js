@@ -1056,7 +1056,7 @@ export const LIVE_MATCHES = [
         round: '결선',
         category: '남자 고등',
         venue: '체육관',
-        teams: { home: '세종', away: '예선 승리 팀' },
+        teams: { home: '세종', away: '문경' },
         lineup: { home: [], away: [] },
     },
 
