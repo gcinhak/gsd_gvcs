@@ -9,7 +9,7 @@ export function isVolleyballEvent(event) {
 }
 
 export function isWinnerOnlySetMatch(match) {
-    return Boolean(match?.id?.startsWith('sat-chess') || match?.id?.startsWith('sat-tug'));
+    return Boolean(match?.id?.startsWith('sat-chess'));
 }
 
 export function isSetMatch(match) {

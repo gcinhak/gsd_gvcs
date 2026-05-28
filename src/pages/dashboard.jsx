@@ -9,6 +9,7 @@ import {
     getEventDivisions,
     fetchDashboard,
     applyDivisionsToEvents,
+    getTugOfWarPoints,
 } from '../lib/dashboardStore';
 import { fetchComments, fetchLiveStates } from '../lib/liveApi';
 import { LIVE_MATCHES, getQuarters } from '../data/data';
@@ -38,13 +39,7 @@ function formatDashboardScore(event, division, state, comments = [], match) {
 }
 
 function shouldShowDashboardScore(event, division) {
-    if (
-        event.id === 'middle-distance' ||
-        event.id === 'relay' ||
-        event.id === 'table-tennis' ||
-        event.id === 'chess' ||
-        event.id === 'tug-of-war'
-    )
+    if (event.id === 'relay' || event.id === 'table-tennis' || event.id === 'chess' || event.id === 'tug-of-war')
         return false;
     if (event.id === 'taekwondo' && !division.id.includes('sparring')) return false;
     return true;
@@ -299,6 +294,93 @@ function ResultCell({ event, division, match, relayState, relayComments = [], on
     );
 }
 
+function TugTeamRow({ label, points, onClick }) {
+    return (
+        <button type="button" className="db-result-cell" onClick={onClick} aria-label={`${label} 점수 상세 보기`}>
+            <span className="db-division-label">{label}</span>
+            <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', justifyContent: 'center' }}>
+                {CAMPUS_OPTIONS.map((campus) => (
+                    <span key={campus.key} className={`db-campus-badge size-sm ${campus.className}`}>
+                        {campus.name} {points[campus.key]}점
+                    </span>
+                ))}
+            </div>
+        </button>
+    );
+}
+
+function TugOfWarCard({ divisions, onOpenDetail }) {
+    const studentDivs = divisions.filter((d) => d.id.startsWith('tug-s-'));
+    const adultDivs = divisions.filter((d) => d.id.startsWith('tug-a-'));
+    return (
+        <div className="db-result-grid">
+            <TugTeamRow
+                label="학생팀"
+                points={getTugOfWarPoints(studentDivs)}
+                onClick={() => onOpenDetail({ label: '학생팀', divisions: studentDivs })}
+            />
+            <TugTeamRow
+                label="성인팀"
+                points={getTugOfWarPoints(adultDivs)}
+                onClick={() => onOpenDetail({ label: '성인팀', divisions: adultDivs })}
+            />
+        </div>
+    );
+}
+
+/** 중거리 division 한 종목의 comments에서 캠퍼스별 점수 추출 */
+function getMiddleDistancePoints(comments = []) {
+    const pts = { mungyeong: 0, eumseong: 0, sejong: 0 };
+    for (const c of comments) {
+        if (!c?.scoreTeam || c?.scoreAmount == null || c.quarter) continue;
+        const n = Number(c.scoreAmount);
+        if (!Number.isFinite(n)) continue;
+        const key = campusKeyFromTeamName(c.scoreTeam);
+        if (pts[key] !== undefined) pts[key] = Math.max(pts[key], n);
+    }
+    return pts;
+}
+
+/** comment content에서 "1등 문경, 2등 음성, ..." 순위 파싱
+ *  반환: { 1: '문경', 2: '음성', 3: '세종', ... } */
+function parseRankSummary(comments = []) {
+    for (const c of comments) {
+        if (!c?.content) continue;
+        const parts = c.content.split(' · ');
+        if (parts.length < 2) continue;
+        const rankPart = parts[1]; // "1등 문경, 2등 음성, ..."
+        const ranks = {};
+        for (const item of rankPart.split(', ')) {
+            const m = item.match(/(\d+)등\s+(.+)/);
+            if (m) ranks[Number(m[1])] = m[2].trim();
+        }
+        if (Object.keys(ranks).length > 0) return ranks;
+    }
+    return {};
+}
+
+/** 중거리 카드: 4개 종목 각각 캠퍼스별 점수 표시 */
+function MiddleDistanceCard({ divisions, liveMatchMap, commentsMap, onOpenDetail }) {
+    return (
+        <div className="db-result-grid">
+            {divisions.map((div) => {
+                const matchId = getRelayMatchId(div);
+                const match = matchId ? liveMatchMap[matchId] : null;
+                const comments = matchId ? commentsMap[matchId] || [] : [];
+                const points = getMiddleDistancePoints(comments);
+                return (
+                    <TugTeamRow
+                        key={div.id}
+                        label={div.label}
+                        points={points}
+                        onClick={() => onOpenDetail({ division: div, matchId, match, comments })}
+                    />
+                );
+            })}
+        </div>
+    );
+}
+
 function TaekwondoGroups({ event, groups, liveMatchMap, relayStatesMap, relayCommentsMap = {}, onOpenDetail }) {
     const divisions = groups.flatMap((group) => group.divisions);
 
@@ -349,6 +431,40 @@ function getEventContext(event, relayStatesMap = {}, liveMatchMap = {}, relayCom
     const allDone = divisions.length > 0 && divisions.every((d) => d.state === 'done');
     const isDone = allDone || Boolean(event.manualWinnerKey || majorityWinnerKey);
     const isLive = divisions.some((d) => d.state === 'live');
+
+    // 줄다리기: 6경기 승점 합산으로 종목 승자 결정
+    if (event.id === 'tug-of-war') {
+        const pts = getTugOfWarPoints(divisions);
+        const sorted = Object.entries(pts).sort((a, b) => b[1] - a[1]);
+        const [[firstKey, firstPts], [, secondPts]] = sorted;
+        const calcWinner = firstPts > 0 && firstPts > secondPts ? firstKey : 'pending';
+        const winnerKey = event.manualWinnerKey || calcWinner;
+        const isDone = allDone || Boolean(event.manualWinnerKey);
+        return { divisions, isDone, isLive, winnerKey };
+    }
+
+    // 중거리: 4종목 점수 총합산으로 종목 승자 결정
+    if (event.id === 'middle-distance') {
+        const totals = { mungyeong: 0, eumseong: 0, sejong: 0 };
+        for (const div of divisions) {
+            const matchId = getRelayMatchId(div);
+            const comments = matchId ? relayCommentsMap[matchId] || [] : [];
+            for (const c of comments) {
+                if (!c?.scoreTeam || c?.scoreAmount == null || c.quarter) continue;
+                const n = Number(c.scoreAmount);
+                if (!Number.isFinite(n)) continue;
+                const campusKey = campusKeyFromTeamName(c.scoreTeam);
+                if (totals[campusKey] !== undefined) totals[campusKey] += n;
+            }
+        }
+        const sorted = Object.entries(totals).sort((a, b) => b[1] - a[1]);
+        const [[firstKey, firstPts], [, secondPts]] = sorted;
+        const calcWinner = firstPts > 0 && firstPts > secondPts ? firstKey : 'pending';
+        const winnerKey = event.manualWinnerKey || calcWinner;
+        const isDone = allDone || Boolean(event.manualWinnerKey);
+        return { divisions, isDone, isLive, winnerKey };
+    }
+
     const winnerKey =
         event.manualWinnerKey || majorityWinnerKey || (allDone ? getLeadingCampusFromDivisions(divisions) : 'pending');
     return { divisions, isDone, isLive, winnerKey };
@@ -404,6 +520,162 @@ function ScoreDetailModal({ detail, relayState, comments, loading, onClose }) {
             onClose={onClose}
         />,
         document.body
+    );
+}
+
+function TugDetailModal({ detail, liveMatchMap, onClose }) {
+    if (!detail) return null;
+    return createPortal(
+        <TugDetailModalContent detail={detail} liveMatchMap={liveMatchMap} onClose={onClose} />,
+        document.body
+    );
+}
+
+function MiddleDistanceDetailModal({ detail, onClose }) {
+    if (!detail) return null;
+    return createPortal(<MiddleDistanceDetailContent detail={detail} onClose={onClose} />, document.body);
+}
+
+function MiddleDistanceDetailContent({ detail, onClose }) {
+    const { division, comments } = detail;
+    const points = getMiddleDistancePoints(comments);
+    const ranks = parseRankSummary(comments);
+    const hasRanks = Object.keys(ranks).length > 0;
+
+    return (
+        <div className="db-detail-backdrop db-detail-backdrop--sheet" onMouseDown={onClose}>
+            <section
+                className="db-detail-modal"
+                role="dialog"
+                aria-modal="true"
+                onMouseDown={(e) => e.stopPropagation()}
+            >
+                <header className="db-detail-head">
+                    <div>
+                        <span className="db-detail-status status-upcoming">중거리</span>
+                        <h2>{division.label}</h2>
+                        <p>1등 20점, 2등 15점, 3등 10점, 4등 7점, 5등 5점, 완주 2점</p>
+                    </div>
+                    <button type="button" className="db-detail-close" onClick={onClose} aria-label="닫기">
+                        ×
+                    </button>
+                </header>
+
+                <div style={{ display: 'flex', gap: '8px', padding: '12px 16px' }}>
+                    {CAMPUS_OPTIONS.map((campus) => (
+                        <span
+                            key={campus.key}
+                            className={`db-campus-badge ${campus.className}`}
+                            style={{ flex: 1, justifyContent: 'center' }}
+                        >
+                            {campus.name} {points[campus.key]}점
+                        </span>
+                    ))}
+                </div>
+
+                <div className="db-detail-feed">
+                    <div className="db-detail-feed-head">
+                        <div className="db-detail-feed-title">순위별 결과</div>
+                    </div>
+                    {hasRanks ? (
+                        [1, 2, 3, 4, 5].map((rank) => {
+                            const campusName = ranks[rank];
+                            const campus = campusName ? getCampus(campusKeyFromTeamName(campusName)) : null;
+                            return (
+                                <article
+                                    key={rank}
+                                    className="db-detail-comment type-score"
+                                    style={{ display: 'flex', alignItems: 'center', gap: '12px' }}
+                                >
+                                    <span className="db-detail-comment-meta" style={{ minWidth: '32px' }}>
+                                        {rank}등
+                                    </span>
+                                    {campus && campusName ? (
+                                        <CampusBadge campus={campus} size="sm" />
+                                    ) : (
+                                        <span style={{ color: 'var(--muted)', fontSize: '0.82rem' }}>미입력</span>
+                                    )}
+                                </article>
+                            );
+                        })
+                    ) : (
+                        <div className="db-detail-empty">아직 등록된 순위 정보가 없습니다.</div>
+                    )}
+                </div>
+            </section>
+        </div>
+    );
+}
+
+function TugDetailModalContent({ detail, liveMatchMap, onClose }) {
+    const { label, divisions } = detail;
+    const points = getTugOfWarPoints(divisions);
+
+    return (
+        <div className="db-detail-backdrop db-detail-backdrop--sheet" onMouseDown={onClose}>
+            <section
+                className="db-detail-modal"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="db-tug-detail-title"
+                onMouseDown={(e) => e.stopPropagation()}
+            >
+                <header className="db-detail-head">
+                    <div>
+                        <span className="db-detail-status status-upcoming">줄다리기</span>
+                        <h2 id="db-tug-detail-title">{label}</h2>
+                        <p>승점제 · 승 2점 · 패 0점</p>
+                    </div>
+                    <button type="button" className="db-detail-close" onClick={onClose} aria-label="닫기">
+                        ×
+                    </button>
+                </header>
+
+                {/* 승점 합계 */}
+                <div style={{ display: 'flex', gap: '8px', padding: '12px 16px' }}>
+                    {CAMPUS_OPTIONS.map((campus) => (
+                        <span
+                            key={campus.key}
+                            className={`db-campus-badge ${campus.className}`}
+                            style={{ flex: 1, justifyContent: 'center' }}
+                        >
+                            {campus.name} {points[campus.key]}점
+                        </span>
+                    ))}
+                </div>
+
+                {/* 경기별 결과 */}
+                <div className="db-detail-feed">
+                    <div className="db-detail-feed-head">
+                        <div className="db-detail-feed-title">경기별 결과</div>
+                    </div>
+                    {divisions.map((div) => {
+                        const matchId = getRelayMatchId(div);
+                        const match = matchId ? liveMatchMap[matchId] : null;
+                        const winnerCampus = div.winnerKey !== 'pending' ? getCampus(div.winnerKey) : null;
+                        const stateLabel = div.state === 'done' ? '완료' : div.state === 'live' ? '진행중' : '경기 전';
+
+                        return (
+                            <article key={div.id} className="db-detail-comment type-score">
+                                <div className="db-detail-comment-meta">
+                                    <span>{match ? `${match.teams.home} vs ${match.teams.away}` : div.label}</span>
+                                    <span>{stateLabel}</span>
+                                </div>
+                                <p>
+                                    {winnerCampus ? (
+                                        <>
+                                            <CampusBadge campus={winnerCampus} size="sm" /> 승리 · +2점
+                                        </>
+                                    ) : (
+                                        '결과 대기중'
+                                    )}
+                                </p>
+                            </article>
+                        );
+                    })}
+                </div>
+            </section>
+        </div>
     );
 }
 
@@ -535,6 +807,8 @@ export default function DashboardPage() {
     const [relayCommentsMap, setRelayCommentsMap] = useState({});
     const [setCommentsMap, setSetCommentsMap] = useState({});
     const [selectedDetail, setSelectedDetail] = useState(null);
+    const [selectedTugDetail, setSelectedTugDetail] = useState(null);
+    const [selectedMidDetail, setSelectedMidDetail] = useState(null);
 
     const liveMatchMap = useMemo(() => {
         return LIVE_MATCHES.reduce((acc, match) => {
@@ -719,7 +993,19 @@ export default function DashboardPage() {
                                     )}
                                 </div>
 
-                                {event.groups ? (
+                                {event.id === 'middle-distance' ? (
+                                    <MiddleDistanceCard
+                                        divisions={context.divisions}
+                                        liveMatchMap={liveMatchMap}
+                                        commentsMap={setCommentsMap}
+                                        onOpenDetail={(detail) => setSelectedMidDetail(detail)}
+                                    />
+                                ) : event.id === 'tug-of-war' ? (
+                                    <TugOfWarCard
+                                        divisions={context.divisions}
+                                        onOpenDetail={(detail) => setSelectedTugDetail(detail)}
+                                    />
+                                ) : event.groups ? (
                                     <TaekwondoGroups
                                         event={event}
                                         groups={event.groups}
@@ -764,6 +1050,12 @@ export default function DashboardPage() {
                 )}
                 onClose={() => setSelectedDetail(null)}
             />
+            <TugDetailModal
+                detail={selectedTugDetail}
+                liveMatchMap={liveMatchMap}
+                onClose={() => setSelectedTugDetail(null)}
+            />
+            <MiddleDistanceDetailModal detail={selectedMidDetail} onClose={() => setSelectedMidDetail(null)} />
         </div>
     );
 }

@@ -114,7 +114,7 @@ export const INITIAL_DASHBOARD_EVENTS = [
     {
         id: 'middle-distance',
         sport: '중거리',
-        rule: '타임 레이스',
+        rule: '총점제 (4종목 합산)',
         status: '경기 전',
         winnerKey: 'pending',
         divisions: [
@@ -135,10 +135,17 @@ export const INITIAL_DASHBOARD_EVENTS = [
     {
         id: 'tug-of-war',
         sport: '줄다리기',
-        rule: '3판 2선승',
+        rule: '승점제 (승2점·패0점)',
         status: '경기 전',
         winnerKey: 'pending',
-        divisions: [division('tug-students', '학생팀'), division('tug-adults', '성인팀')],
+        divisions: [
+            division('tug-s-mung-eum', '학생 문경vs음성'),
+            division('tug-s-mung-sej', '학생 문경vs세종'),
+            division('tug-s-eum-sej', '학생 음성vs세종'),
+            division('tug-a-mung-eum', '성인 문경vs음성'),
+            division('tug-a-mung-sej', '성인 문경vs세종'),
+            division('tug-a-eum-sej', '성인 음성vs세종'),
+        ],
     },
 ];
 
@@ -205,6 +212,39 @@ function getLeadingCampusKey(event) {
     return sorted[0][0];
 }
 
+/** 줄다리기 승점(승2점·패0점) 집계 → 승자 캠퍼스 key 반환 */
+function getTugOfWarWinnerKey(event) {
+    const points = { mungyeong: 0, eumseong: 0, sejong: 0 };
+
+    for (const div of getEventDivisions(event)) {
+        if (div.state !== 'done') continue;
+        if (points[div.winnerKey] === undefined) continue;
+        points[div.winnerKey] += 2; // 이긴 캠퍼스에 승점 2점
+    }
+
+    const sorted = Object.entries(points).sort((a, b) => b[1] - a[1]);
+    const [[firstKey, firstPts], [, secondPts]] = sorted;
+
+    // 아직 한 경기도 끝나지 않았으면 대기
+    if (firstPts === 0) return 'pending';
+
+    // 1위가 단독 선두 → 이벤트 승자 확정
+    if (firstPts > secondPts) return firstKey;
+
+    // 동점(2팀 or 3팀) → 단판/재경기 결과를 admin이 직접 입력할 때까지 대기
+    return 'pending';
+}
+
+/** 줄다리기 승점 현황을 UI에 표시하기 위한 helper (dashboard.jsx에서 import해서 사용) */
+export function getTugOfWarPoints(divisions) {
+    const points = { mungyeong: 0, eumseong: 0, sejong: 0 };
+    for (const div of divisions) {
+        if (div.state !== 'done') continue;
+        if (points[div.winnerKey] === undefined) continue;
+        points[div.winnerKey] += 2;
+    }
+    return points;
+}
 function getEventStatus(event) {
     const items = getEventDivisions(event);
     const hasLive = items.some((item) => item.state === 'live');
@@ -231,7 +271,9 @@ export function updateDivision(events, eventId, divisionId, patch) {
         }
 
         nextEvent.status = getEventStatus(nextEvent);
-        nextEvent.winnerKey = nextEvent.manualWinnerKey || getLeadingCampusKey(nextEvent);
+        nextEvent.winnerKey =
+            nextEvent.manualWinnerKey ||
+            (nextEvent.id === 'tug-of-war' ? getTugOfWarWinnerKey(nextEvent) : getLeadingCampusKey(nextEvent));
         return nextEvent;
     });
 }
@@ -243,7 +285,9 @@ export function updateEventWinner(events, eventId, winnerKey) {
         return {
             ...event,
             manualWinnerKey,
-            winnerKey: manualWinnerKey || getLeadingCampusKey(event),
+            winnerKey:
+                manualWinnerKey ||
+                (event.id === 'tug-of-war' ? getTugOfWarWinnerKey(event) : getLeadingCampusKey(event)),
         };
     });
 }
@@ -280,8 +324,7 @@ export function resetDashboardEvents() {
 // ── API 함수 (D1 기반) ────────────────────────────────────────────────────────
 
 const DASHBOARD_API = (
-    import.meta.env.VITE_POPCAT_API_URL ||
-    (import.meta.env.DEV ? '' : 'https://gsd-gvcs-popcat.gcinhak.workers.dev')
+    import.meta.env.VITE_POPCAT_API_URL || (import.meta.env.DEV ? '' : 'https://gsd-gvcs-popcat.gcinhak.workers.dev')
 ).replace(/\/$/, '');
 
 export async function fetchDashboard() {
@@ -328,12 +371,12 @@ export function applyDivisionsToEvents(events, divisionsFromServer) {
 
         const nextEvent = event.groups
             ? {
-                ...event,
-                groups: event.groups.map((g) => ({
-                    ...g,
-                    divisions: g.divisions.map(applyDiv),
-                })),
-            }
+                  ...event,
+                  groups: event.groups.map((g) => ({
+                      ...g,
+                      divisions: g.divisions.map(applyDiv),
+                  })),
+              }
             : { ...event, divisions: event.divisions.map(applyDiv) };
         const eventWinner = divisionsFromServer[getEventWinnerDivisionId(event.id)];
         const manualWinnerKey =
@@ -341,7 +384,9 @@ export function applyDivisionsToEvents(events, divisionsFromServer) {
         return {
             ...nextEvent,
             manualWinnerKey,
-            winnerKey: manualWinnerKey || getLeadingCampusKey(nextEvent),
+            winnerKey:
+                manualWinnerKey ||
+                (event.id === 'tug-of-war' ? getTugOfWarWinnerKey(nextEvent) : getLeadingCampusKey(nextEvent)),
         };
     });
 }
