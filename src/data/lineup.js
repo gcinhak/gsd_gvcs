@@ -165,6 +165,28 @@ export const LINEUP = {
                 { no: 4, grade: 11, name: '한수진' },
             ],
         },
+        중거리: {
+            남중_1600M: [
+                { no: 1, grade: 7, name: '서예준' },
+                { no: 2, grade: 8, name: '이지호' },
+                { no: 3, grade: 9, name: '우도현' },
+            ],
+            여중_800M: [
+                { no: 1, grade: 7, name: '이승주' },
+                { no: 2, grade: 8, name: '송의진' },
+                { no: 3, grade: 9, name: 'Kim Joyce Seoyon' },
+            ],
+            남고_2400M: [
+                { no: 1, grade: 10, name: '전준호' },
+                { no: 2, grade: 12, name: '하지훈' },
+                { no: 3, grade: 12, name: '박예준' },
+            ],
+            여고_1600M: [
+                { no: 1, grade: 10, name: '김시윤' },
+                { no: 2, grade: 11, name: '우은혜' },
+                { no: 3, grade: 12, name: '이한비' },
+            ],
+        },
         /* 탁구부터 줄다리기까지 나머지 데이터 주석 처리
         탁구: {
             중등부: [
@@ -195,21 +217,6 @@ export const LINEUP = {
             '7-8학년': [{ no: 1, grade: 8, name: '박주원' }, { no: 2, grade: 8,name: '임온찬' }],
             '9-10학년': [{ no: 1, grade: 9, name: '변지원' }, { no: 2, grade: 9,name: '윤종한' }],
             '11-12학년': [{ no: 1, grade: 11, name: '윤주호' }, { no: 2, grade: 12, name: '정소망' }],
-        },
-        중거리: {
-            통합: [
-                { no: 1,grade: 7, name: '이승주' },
-                { no: 2,grade: 9, name: 'Kim Joyce Seoyon' },
-                { no: 3,grade: 12, name: '심예진' },
-                { no: 4,grade: 7, name: '우도현' },
-                { no: 5,grade: 8, name: '김찬영' },
-                { no: 6,grade: 9, name: '이재이' },
-                { no: 7,grade: 12, name: '하지훈' },
-                { no: 8,grade: 10, name: '전준호' },
-                { no: 9,grade: 12, name: '강민성' },
-                { no: 10,grade: 12, name: '박예준'},
-                { no: 11,grade: 12, name: '권태연'},
-            ],
         },
 
         이어달리기: {
@@ -470,6 +477,28 @@ export const LINEUP = {
                 { no: 3, grade: 10, name: '권예빈' },
             ],
         },
+        중거리: {
+            남중_1600M: [
+                { no: 1, grade: 9, name: '함은성' },
+                { no: 2, grade: 7, name: '김정헌' },
+                { no: 3, grade: 7, name: '박주하' },
+            ],
+            여중_800M: [
+                { no: 1, grade: 7, name: '원태연' },
+                { no: 2, grade: 8, name: '남궁두나' },
+                { no: 3, grade: 9, name: '이다빈' },
+            ],
+            남고_2400M: [
+                { no: 1, grade: 10, name: '도연우' },
+                { no: 2, grade: 10, name: '정우성' },
+                { no: 3, grade: 10, name: '이은율' },
+            ],
+            여고_1600M: [
+                { no: 1, grade: 11, name: '이다혜' },
+                { no: 2, grade: 11, name: '신아림' },
+                { no: 3, grade: 11, name: '김주안' },
+            ],
+        },
     },
     세종: {
         농구: {
@@ -565,6 +594,25 @@ export const LINEUP = {
             '품새(고)': [
                 { no: 1, grade: 11, name: '박환상' },
                 { no: 2, grade: 11, name: '김하진' },
+            ],
+        },
+        중거리: {
+            남중_1600M: [
+                { no: 1, grade: 7, name: '이나건' },
+                { no: 2, grade: 9, name: '임희수' },
+                { no: 3, grade: 7, name: '정은수' },
+            ],
+            여중_800M: [
+                { no: 1, grade: 9, name: '김영진' },
+                { no: 2, grade: 9, name: 'Jiwoo Kim' },
+            ],
+            남고_2400M: [
+                { no: 1, grade: 11, name: '박예환' },
+                { no: 2, grade: 10, name: '정현수' },
+            ],
+            여고_1600M: [
+                { no: 1, grade: 11, name: '김하진' },
+                { no: 2, grade: 10, name: 'Afton McClure' },
             ],
         },
     },
