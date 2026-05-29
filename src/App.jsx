@@ -26,7 +26,7 @@ export default function App() {
                     <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
 
                     <Route element={<Layout />}>
-                        <Route path="/" element={<HomePage />} />
+                        <Route path="/" element={<DashboardPage />} />
                         <Route path="/live" element={<LivePage />} />
                         <Route path="/live/:matchId" element={<LiveMatchPage />} />
                         <Route path="/schedule" element={<SchedulePage />} />

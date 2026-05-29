@@ -8,7 +8,7 @@ import SyncLogo from './SyncLogo';
 const SHOW_DEV_TABS = import.meta.env.DEV;
 
 const NAV_ITEMS = [
-    { to: '/', label: '홈', end: true },
+    // { to: '/', label: '홈', end: true },
     { to: '/dashboard', label: '현황판' },
     { to: '/live', label: 'LIVE', live: true },
     { to: '/schedule', label: '경기 일정' },
