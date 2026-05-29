@@ -7,18 +7,24 @@ import { CAMPUS_COLORS } from '../data/data';
 const CAMPUS_FILTER_ALL = '__all';
 
 function PlayerRow({ player }) {
+    // label 항목이면 섹션 헤더로 렌더링
+    if (player.label) {
+        return <li className="lp-row-label">{player.label}</li>;
+    }
+
     return (
         <li className="lp-row">
             {player.grade != null && <span className="lp-grade">{player.grade}</span>}
             <span className="lp-name">{player.name}</span>
-            {player.role && <span className="lp-role">{player.role}</span>}
             {player.alt && <span className="lp-alt">{player.alt}</span>}
+            {player.role && <span className="lp-role">{player.role}</span>}
         </li>
     );
 }
 
 function sortByGrade(players) {
-    // 학년 높은 순(12 → 7), 학년 없는 인원은 맨 아래
+    // label 항목은 정렬하지 않고 원래 순서 유지
+    if (players.some((p) => p.label)) return players;
     return players.slice().sort((a, b) => {
         const ga = a.grade ?? -Infinity;
         const gb = b.grade ?? -Infinity;

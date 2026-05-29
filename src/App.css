@@ -8559,3 +8559,12 @@ img {
         transform: translateY(0);
     }
 }
+.lp-row-label {
+    list-style: none;
+    font-weight: 700;
+    font-size: 0.8rem;
+    color: var(--card-accent);
+    padding: 0.6rem 0.4rem 0.2rem;
+    border-bottom: 1px solid var(--card-accent);
+    margin-top: 0.4rem;
+}
