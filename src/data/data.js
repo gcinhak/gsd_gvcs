@@ -153,7 +153,7 @@ export const SCHEDULE = {
             { start: '11:30', end: '12:00', round: '예선', category: '남자 중등', match: '문경 VS 음성' },
             { start: '12:00', end: '12:30', round: '예선', category: '남자 고등', match: '문경 VS 음성' },
             { start: '13:00', end: '13:30', round: '결선', category: '여자 연합', match: '문경 VS 세종' },
-            { start: '13:30', end: '14:00', round: '결선', category: '남자 중등', match: '세종 VS 예선 승리 팀' },
+            { start: '13:30', end: '14:00', round: '결선', category: '남자 중등', match: '세종 VS 문경' },
             { start: '14:00', end: '14:30', round: '결선', category: '남자 고등', match: '세종 VS 예선 승리 팀' },
         ],
     },
@@ -1102,7 +1102,7 @@ export const LIVE_MATCHES = [
         round: '결선',
         category: '남중',
         venue: '체육관',
-        teams: { home: '세종', away: '예선 승리 팀' },
+        teams: { home: '세종', away: '문경' },
         lineup: { home: [], away: [] },
     },
     {
