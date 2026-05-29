@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from 'react';
+﻿import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import LiveClock from '../components/LiveClock';
 import {
@@ -831,6 +831,7 @@ export default function DashboardPage() {
     const [selectedDetail, setSelectedDetail] = useState(null);
     const [selectedTugDetail, setSelectedTugDetail] = useState(null);
     const [selectedMidDetail, setSelectedMidDetail] = useState(null);
+    const lastTsRef = useRef({});
 
     const liveMatchMap = useMemo(() => {
         return LIVE_MATCHES.reduce((acc, match) => {
@@ -896,19 +897,60 @@ export default function DashboardPage() {
     useEffect(() => {
         if (setMatchIds.length === 0) return;
         let cancelled = false;
+        let pullCount = 0;
+        const FULL_RELOAD_EVERY = 15;
 
         const pull = async () => {
-            try {
-                const entries = await Promise.all(
-                    setMatchIds.map(async (matchId) => {
-                        const data = await fetchComments(matchId, 0);
-                        return [matchId, data.comments || []];
-                    })
-                );
-                if (!cancelled) setSetCommentsMap(Object.fromEntries(entries));
-            } catch {
-                /* set comments unavailable */
+            // 주기적으로 lastTs 초기화 → 다음 fetch는 since=0
+            if (pullCount > 0 && pullCount % FULL_RELOAD_EVERY === 0) {
+                lastTsRef.current = {};
             }
+            pullCount += 1;
+
+            const results = await Promise.allSettled(
+                setMatchIds.map(async (matchId) => {
+                    const since = lastTsRef.current[matchId] ?? 0;
+                    const data = await fetchComments(matchId, since);
+                    return { matchId, since, comments: data.comments || [] };
+                })
+            );
+
+            if (cancelled) return;
+
+            setSetCommentsMap((prev) => {
+                const next = { ...prev };
+                let changed = false;
+
+                for (const r of results) {
+                    if (r.status !== 'fulfilled') continue;
+                    const { matchId, since, comments } = r.value;
+                    if (comments.length === 0) continue;
+
+                    if (since === 0) {
+                        // 첫 폴링 — 통째로 채움
+                        next[matchId] = comments;
+                        changed = true;
+                    } else {
+                        // 증분 — 기존에 합치고 id로 중복 제거
+                        const existing = prev[matchId] || [];
+                        const seen = new Set(existing.map((c) => c.id));
+                        const fresh = comments.filter((c) => !seen.has(c.id));
+                        if (fresh.length > 0) {
+                            next[matchId] = existing.concat(fresh);
+                            changed = true;
+                        }
+                    }
+
+                    // lastTs 갱신 (응답에서 가장 늦은 ts)
+                    const lastTs = comments[comments.length - 1]?.ts;
+                    if (lastTs) {
+                        const cur = lastTsRef.current[matchId] ?? 0;
+                        lastTsRef.current[matchId] = Math.max(cur, lastTs);
+                    }
+                }
+
+                return changed ? next : prev; // 새 코멘트 0개면 같은 ref 반환 → 리렌더 스킵
+            });
         };
 
         pull();
