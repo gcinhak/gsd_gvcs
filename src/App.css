@@ -7650,55 +7650,63 @@ img {
     border-bottom: 1px solid #dbe3ef;
 }
 
-.db-event-card.event-relay {
-    order: 3;
-    grid-column: span 4;
-}
-.db-event-card.event-basketball,
-.db-event-card.event-volleyball,
-.db-event-card.event-soccer {
-    grid-column: span 10;
-}
-.db-event-card.event-soccer {
-    grid-column: span 9;
-}
-.db-event-card.event-table-tennis,
-.db-event-card.event-tug-of-war {
-    grid-column: span 7;
-}
-.db-event-card.event-tug-of-war {
-    grid-column: span 8;
-}
-.db-event-card.event-taekwondo,
-.db-event-card.event-chess {
-    grid-column: span 9;
-}
-.db-event-card.event-middle-distance {
-    grid-column: span 6;
-}
+/* ── 1행: 농구(9) + 배구(9) + 중거리(6) = 24 ── */
 .db-event-card.event-basketball {
     order: 1;
+    grid-column: span 9;
 }
 .db-event-card.event-volleyball {
     order: 2;
+    grid-column: span 9;
 }
+.db-event-card.event-middle-distance {
+    order: 3;
+    grid-column: span 6;
+}
+
+/* ── 2행: 축구(9) + 탁구(6) + 초등부(3) + 줄다리기(6) = 24 ── */
 .db-event-card.event-soccer {
     order: 4;
+    grid-column: span 9;
 }
 .db-event-card.event-table-tennis {
     order: 5;
+    grid-column: span 6;
 }
-.db-event-card.event-tug-of-war {
+.db-event-card.event-elementary {
     order: 6;
+    grid-column: span 4;
 }
-.db-event-card.event-taekwondo {
+.db-event-card.event-relay {
     order: 7;
+    grid-column: span 5;
 }
-.db-event-card.event-middle-distance {
+
+/* ── 3행: 태권도(9) + 체스(9) + 이어달리기(6) = 24 ── */
+.db-event-card.event-taekwondo {
     order: 8;
+    grid-column: span 9;
 }
 .db-event-card.event-chess {
     order: 9;
+    grid-column: span 9;
+}
+
+.db-event-card.event-tug-of-war {
+    order: 10;
+    grid-column: span 6;
+}
+
+/* border 정리 (우측/하단 border 제거 규칙 재정의) */
+.db-event-card.event-relay,
+.db-event-card.event-tug-of-war,
+.db-event-card.event-chess {
+    border-right: 1px solid #dbe3ef;
+}
+.db-event-card.event-taekwondo,
+.db-event-card.event-middle-distance,
+.db-event-card.event-chess {
+    border-bottom: 1px solid #dbe3ef;
 }
 .db-event-top {
     grid-template-columns: minmax(0, 1fr) auto;

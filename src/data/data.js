@@ -1481,6 +1481,19 @@ export const LIVE_MATCHES = [
         scoringType: 'firstPlace',
         lineup: { home: [], away: [] },
     },
+    {
+        id: 'elem-main',
+        day: '2026-05-30',
+        startTime: '10:00',
+        sport: '초등부',
+        round: '결선',
+        category: '초등부',
+        venue: '',
+        teams: { home: '문경', away: '음성' },
+        mode: 'scoring',
+        scoringType: 'elementary',
+        lineup: { home: [], away: [] },
+    },
 ];
 
 /** 라이브 중계 가능한 매치만 필터링한 배열 (UI에서 직접 사용). */

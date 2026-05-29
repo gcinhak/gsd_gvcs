@@ -273,8 +273,8 @@ function MatchAdminCard({ match, state, comments, onUpdate, onAddComment, onDele
         const winnerTeam = winnerOnlySetMatchLocal
             ? scoreTeam
             : cur.home > cur.away
-                ? match.teams.home
-                : match.teams.away;
+              ? match.teams.home
+              : match.teams.away;
         const winnerSide = computeScoreSide(winnerTeam);
         const nextHome = setSummary.home + (winnerSide === 'home' ? 1 : 0);
         const nextAway = setSummary.away + (winnerSide === 'away' ? 1 : 0);
@@ -367,9 +367,7 @@ function MatchAdminCard({ match, state, comments, onUpdate, onAddComment, onDele
     const serverAway = state?.awayScore || 0;
     const winnerOnlySetMatch = isWinnerOnlySetMatch(match);
     const isScoringMode = !winnerOnlySetMatch && !!scoreTeam && Number(scoreAmount) > 0;
-    const setSummary = isSetMatch(match)
-        ? getSetSummary(comments, match, quarters, state)
-        : null;
+    const setSummary = isSetMatch(match) ? getSetSummary(comments, match, quarters, state) : null;
     const hasSetScore = setSummary && (setSummary.home > 0 || setSummary.away > 0);
     const displayHome = hasSetScore ? setSummary.home : serverHome;
     const displayAway = hasSetScore ? setSummary.away : serverAway;
@@ -403,10 +401,7 @@ function MatchAdminCard({ match, state, comments, onUpdate, onAddComment, onDele
             <div className="ac-controls">
                 <label className="ac-field">
                     <span>상태</span>
-                    <select
-                        value={status}
-                        onChange={(e) => updateStatus(e.target.value)}
-                    >
+                    <select value={status} onChange={(e) => updateStatus(e.target.value)}>
                         {STATUS_OPTIONS.map((s) => (
                             <option key={s} value={s}>
                                 {s}
@@ -569,7 +564,13 @@ function MatchAdminCard({ match, state, comments, onUpdate, onAddComment, onDele
                                 type="submit"
                                 disabled={posting || (!pendingSetEnd && !isScoringMode && !content.trim())}
                             >
-                                {posting ? '…' : pendingSetEnd ? '세트 종료 전송' : isScoringMode ? '득점 전송' : '전송'}
+                                {posting
+                                    ? '…'
+                                    : pendingSetEnd
+                                      ? '세트 종료 전송'
+                                      : isScoringMode
+                                        ? '득점 전송'
+                                        : '전송'}
                             </button>
                         </div>
                     </form>
@@ -739,8 +740,7 @@ function PlacementScoringCard({ match, state, comments = [], onAddComment, onUpd
     };
 
     const submit = async () => {
-        const entries = ALL_CAMPUSES.map((c) => ({ campus: c, score: totals[c] }))
-            .filter((e) => e.score > 0);
+        const entries = ALL_CAMPUSES.map((c) => ({ campus: c, score: totals[c] })).filter((e) => e.score > 0);
         if (entries.length === 0) {
             alert('점수가 0점입니다. 출전 인원이나 순위를 먼저 입력해주세요.');
             return;
@@ -769,17 +769,16 @@ function PlacementScoringCard({ match, state, comments = [], onAddComment, onUpd
     };
 
     return (
-        <article className={`scoring-card placement-card ${isFinished ? 'is-finished' : ''} ${open ? 'is-open' : 'is-collapsed'}`}>
-            <button
-                type="button"
-                className="scoring-head-btn"
-                onClick={() => setOpen((v) => !v)}
-                aria-expanded={open}
-            >
+        <article
+            className={`scoring-card placement-card ${isFinished ? 'is-finished' : ''} ${open ? 'is-open' : 'is-collapsed'}`}
+        >
+            <button type="button" className="scoring-head-btn" onClick={() => setOpen((v) => !v)} aria-expanded={open}>
                 <div className="scoring-meta">
                     <span className="scoring-day">{match.day.slice(5)}</span>
                     {match.startTime && <span className="scoring-time">{match.startTime}</span>}
-                    <span className="scoring-cat">{match.sport} · {match.category}</span>
+                    <span className="scoring-cat">
+                        {match.sport} · {match.category}
+                    </span>
                 </div>
                 <div className="scoring-head-right">
                     {!open && isFinished && Object.keys(savedTotals).length > 0 && (
@@ -792,98 +791,104 @@ function PlacementScoringCard({ match, state, comments = [], onAddComment, onUpd
                         </span>
                     )}
                     <StatusPicker matchId={match.id} currentStatus={state?.status} onUpdate={onUpdate} />
-                    <span className={`scoring-chevron ${open ? 'is-open' : ''}`} aria-hidden>▾</span>
+                    <span className={`scoring-chevron ${open ? 'is-open' : ''}`} aria-hidden>
+                        ▾
+                    </span>
                 </div>
             </button>
 
-            {open && <>
-            <div className="pl-rule">
-                1등 20 · 2등 15 · 3등 10 · 4등 7 · 5등 5 · 그 외 완주 2점
-            </div>
+            {open && (
+                <>
+                    <div className="pl-rule">1등 20 · 2등 15 · 3등 10 · 4등 7 · 5등 5 · 그 외 완주 2점</div>
 
-            <div className="pl-participants">
-                <div className="pl-section-title">캠퍼스별 출전 인원</div>
-                <div className="pl-participants-row">
-                    {ALL_CAMPUSES.map((c) => {
-                        const cc = CAMPUS_COLORS[c] || {};
-                        return (
-                            <label key={c} className="pl-participants-cell" style={{ '--c': cc.bg, '--c-soft': cc.soft }}>
-                                <span className="pl-pc-label">{c}</span>
-                                <input
-                                    type="number"
-                                    min="0"
-                                    value={participants[c]}
-                                    onChange={(e) => setPart(c, e.target.value)}
-                                    placeholder="0"
-                                    disabled={saving}
-                                />
-                            </label>
-                        );
-                    })}
-                </div>
-            </div>
-
-            <div className="pl-ranks">
-                <div className="pl-section-title">순위 (1~5등)</div>
-                {placements.map((picked, idx) => (
-                    <div key={idx} className="pl-rank-row">
-                        <span className="pl-rank-label">
-                            <strong>{idx + 1}등</strong>
-                            <span className="pl-rank-pts">+{PLACEMENT_POINTS[idx]}</span>
-                        </span>
-                        <div className="pl-rank-pills">
+                    <div className="pl-participants">
+                        <div className="pl-section-title">캠퍼스별 출전 인원</div>
+                        <div className="pl-participants-row">
                             {ALL_CAMPUSES.map((c) => {
                                 const cc = CAMPUS_COLORS[c] || {};
-                                const active = picked === c;
-                                const style = active
-                                    ? { background: cc.bg, color: '#fff', borderColor: cc.bg }
-                                    : { background: cc.soft, color: cc.bg, borderColor: cc.bg };
                                 return (
-                                    <button
+                                    <label
                                         key={c}
-                                        type="button"
-                                        className={`pl-rank-pill ${active ? 'active' : ''}`}
-                                        style={style}
-                                        onClick={() => setRank(idx, c)}
-                                        disabled={saving}
+                                        className="pl-participants-cell"
+                                        style={{ '--c': cc.bg, '--c-soft': cc.soft }}
                                     >
-                                        {c}
-                                    </button>
+                                        <span className="pl-pc-label">{c}</span>
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            value={participants[c]}
+                                            onChange={(e) => setPart(c, e.target.value)}
+                                            placeholder="0"
+                                            disabled={saving}
+                                        />
+                                    </label>
                                 );
                             })}
                         </div>
                     </div>
-                ))}
-            </div>
 
-            <div className="pl-totals">
-                <div className="pl-section-title">합계</div>
-                <div className="pl-totals-row">
-                    {ALL_CAMPUSES.map((c) => {
-                        const cc = CAMPUS_COLORS[c] || {};
-                        const isWinner = winnerCampus === c;
-                        return (
-                            <div
-                                key={c}
-                                className={`pl-total-cell ${isWinner ? 'is-winner' : ''}`}
-                                style={{ '--c': cc.bg, '--c-soft': cc.soft }}
-                            >
-                                <span className="pl-total-camp">{c}</span>
-                                <span className="pl-total-num">{totals[c]}</span>
-                                {isWinner && <span className="scoring-trophy">🏆</span>}
+                    <div className="pl-ranks">
+                        <div className="pl-section-title">순위 (1~5등)</div>
+                        {placements.map((picked, idx) => (
+                            <div key={idx} className="pl-rank-row">
+                                <span className="pl-rank-label">
+                                    <strong>{idx + 1}등</strong>
+                                    <span className="pl-rank-pts">+{PLACEMENT_POINTS[idx]}</span>
+                                </span>
+                                <div className="pl-rank-pills">
+                                    {ALL_CAMPUSES.map((c) => {
+                                        const cc = CAMPUS_COLORS[c] || {};
+                                        const active = picked === c;
+                                        const style = active
+                                            ? { background: cc.bg, color: '#fff', borderColor: cc.bg }
+                                            : { background: cc.soft, color: cc.bg, borderColor: cc.bg };
+                                        return (
+                                            <button
+                                                key={c}
+                                                type="button"
+                                                className={`pl-rank-pill ${active ? 'active' : ''}`}
+                                                style={style}
+                                                onClick={() => setRank(idx, c)}
+                                                disabled={saving}
+                                            >
+                                                {c}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
                             </div>
-                        );
-                    })}
-                </div>
-            </div>
+                        ))}
+                    </div>
 
-            <div className="scoring-foot">
-                {saved && <span className="scoring-saved">✓ 저장됨</span>}
-                <button type="button" className="scoring-save" onClick={submit} disabled={saving}>
-                    {saving ? '저장중…' : isFinished ? '재저장' : '저장 (결과 확정)'}
-                </button>
-            </div>
-            </>}
+                    <div className="pl-totals">
+                        <div className="pl-section-title">합계</div>
+                        <div className="pl-totals-row">
+                            {ALL_CAMPUSES.map((c) => {
+                                const cc = CAMPUS_COLORS[c] || {};
+                                const isWinner = winnerCampus === c;
+                                return (
+                                    <div
+                                        key={c}
+                                        className={`pl-total-cell ${isWinner ? 'is-winner' : ''}`}
+                                        style={{ '--c': cc.bg, '--c-soft': cc.soft }}
+                                    >
+                                        <span className="pl-total-camp">{c}</span>
+                                        <span className="pl-total-num">{totals[c]}</span>
+                                        {isWinner && <span className="scoring-trophy">🏆</span>}
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    <div className="scoring-foot">
+                        {saved && <span className="scoring-saved">✓ 저장됨</span>}
+                        <button type="button" className="scoring-save" onClick={submit} disabled={saving}>
+                            {saving ? '저장중…' : isFinished ? '재저장' : '저장 (결과 확정)'}
+                        </button>
+                    </div>
+                </>
+            )}
         </article>
     );
 }
@@ -895,6 +900,7 @@ function ScoringMatchCard({ match, state, comments = [], onAddComment, onUpdate,
     if (match.scoringType === 'sets') return <SetsScoringCard {...props} />;
     if (match.scoringType === 'tableTennis') return <TableTennisScoringCard {...props} />;
     if (match.scoringType === 'chess') return <ChessScoringCard {...props} />;
+    if (match.scoringType === 'elementary') return <ElementaryScoringCard {...props} />;
     return <SimpleScoringCard {...props} />;
 }
 
@@ -994,12 +1000,16 @@ function TableTennisScoringCard({ match, state, comments = [], onAddComment, onU
     };
 
     return (
-        <article className={`scoring-card placement-card ${isFinished ? 'is-finished' : ''} ${open ? 'is-open' : 'is-collapsed'}`}>
+        <article
+            className={`scoring-card placement-card ${isFinished ? 'is-finished' : ''} ${open ? 'is-open' : 'is-collapsed'}`}
+        >
             <button type="button" className="scoring-head-btn" onClick={() => setOpen((v) => !v)} aria-expanded={open}>
                 <div className="scoring-meta">
                     <span className="scoring-day">{match.day.slice(5)}</span>
                     {match.startTime && <span className="scoring-time">{match.startTime}</span>}
-                    <span className="scoring-cat">{match.sport} · {match.category}</span>
+                    <span className="scoring-cat">
+                        {match.sport} · {match.category}
+                    </span>
                 </div>
                 <div className="scoring-head-right">
                     {!open && isFinished && matchWinner && (
@@ -1010,66 +1020,78 @@ function TableTennisScoringCard({ match, state, comments = [], onAddComment, onU
                         </span>
                     )}
                     <StatusPicker matchId={match.id} currentStatus={state?.status} onUpdate={onUpdate} />
-                    <span className={`scoring-chevron ${open ? 'is-open' : ''}`} aria-hidden>▾</span>
+                    <span className={`scoring-chevron ${open ? 'is-open' : ''}`} aria-hidden>
+                        ▾
+                    </span>
                 </div>
             </button>
-            {open && <>
-                <div className="pl-rule">{maxScore}점 {setCount}세트 — 출전하지 않은 캠퍼스는 0으로 비워두세요</div>
-                <div className="tt-table">
-                    <div className="tt-row tt-row-head">
-                        <span className="tt-cell tt-cell-label" />
-                        {ALL_CAMPUSES.map((c) => (
-                            <span key={c} className="tt-cell tt-cell-head" style={{ color: CAMPUS_COLORS[c]?.bg }}>
-                                {c}
-                            </span>
-                        ))}
-                        <span className="tt-cell tt-cell-winner">세트 승</span>
+            {open && (
+                <>
+                    <div className="pl-rule">
+                        {maxScore}점 {setCount}세트 — 출전하지 않은 캠퍼스는 0으로 비워두세요
                     </div>
-                    {sets.map((s, idx) => (
-                        <div key={idx} className="tt-row">
-                            <span className="tt-cell tt-cell-label">
-                                <strong>{idx + 1}세트</strong>
-                            </span>
-                            {ALL_CAMPUSES.map((c) => {
-                                const isWinner = setWinners[idx] === c;
-                                return (
-                                    <span key={c} className={`tt-cell ${isWinner ? 'is-winner' : ''}`}
-                                          style={{ '--c': CAMPUS_COLORS[c]?.bg, '--c-soft': CAMPUS_COLORS[c]?.soft }}>
-                                        <input
-                                            type="number"
-                                            min="0"
-                                            max={maxScore}
-                                            value={s[c]}
-                                            onChange={(e) => updateScore(idx, c, e.target.value)}
-                                            placeholder="0"
-                                            disabled={saving}
-                                        />
-                                    </span>
-                                );
-                            })}
-                            <span className="tt-cell tt-cell-winner">
-                                {setWinners[idx] ? (
-                                    <span style={{ color: CAMPUS_COLORS[setWinners[idx]]?.bg, fontWeight: 700 }}>
-                                        {setWinners[idx]}
-                                    </span>
-                                ) : '—'}
-                            </span>
+                    <div className="tt-table">
+                        <div className="tt-row tt-row-head">
+                            <span className="tt-cell tt-cell-label" />
+                            {ALL_CAMPUSES.map((c) => (
+                                <span key={c} className="tt-cell tt-cell-head" style={{ color: CAMPUS_COLORS[c]?.bg }}>
+                                    {c}
+                                </span>
+                            ))}
+                            <span className="tt-cell tt-cell-winner">세트 승</span>
                         </div>
-                    ))}
-                </div>
-                {matchWinner && (
-                    <div className="sets-winner-line">
-                        매치 승리: <strong style={{ color: CAMPUS_COLORS[matchWinner]?.bg }}>🏆 {matchWinner}</strong>
-                        {' '} ({setWinsByCampus[matchWinner]}세트 선취)
+                        {sets.map((s, idx) => (
+                            <div key={idx} className="tt-row">
+                                <span className="tt-cell tt-cell-label">
+                                    <strong>{idx + 1}세트</strong>
+                                </span>
+                                {ALL_CAMPUSES.map((c) => {
+                                    const isWinner = setWinners[idx] === c;
+                                    return (
+                                        <span
+                                            key={c}
+                                            className={`tt-cell ${isWinner ? 'is-winner' : ''}`}
+                                            style={{ '--c': CAMPUS_COLORS[c]?.bg, '--c-soft': CAMPUS_COLORS[c]?.soft }}
+                                        >
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                max={maxScore}
+                                                value={s[c]}
+                                                onChange={(e) => updateScore(idx, c, e.target.value)}
+                                                placeholder="0"
+                                                disabled={saving}
+                                            />
+                                        </span>
+                                    );
+                                })}
+                                <span className="tt-cell tt-cell-winner">
+                                    {setWinners[idx] ? (
+                                        <span style={{ color: CAMPUS_COLORS[setWinners[idx]]?.bg, fontWeight: 700 }}>
+                                            {setWinners[idx]}
+                                        </span>
+                                    ) : (
+                                        '—'
+                                    )}
+                                </span>
+                            </div>
+                        ))}
                     </div>
-                )}
-                <div className="scoring-foot">
-                    {saved && <span className="scoring-saved">✓ 저장됨</span>}
-                    <button type="button" className="scoring-save" onClick={submit} disabled={saving}>
-                        {saving ? '저장중…' : isFinished ? '재저장' : '저장 (결과 확정)'}
-                    </button>
-                </div>
-            </>}
+                    {matchWinner && (
+                        <div className="sets-winner-line">
+                            매치 승리:{' '}
+                            <strong style={{ color: CAMPUS_COLORS[matchWinner]?.bg }}>🏆 {matchWinner}</strong> (
+                            {setWinsByCampus[matchWinner]}세트 선취)
+                        </div>
+                    )}
+                    <div className="scoring-foot">
+                        {saved && <span className="scoring-saved">✓ 저장됨</span>}
+                        <button type="button" className="scoring-save" onClick={submit} disabled={saving}>
+                            {saving ? '저장중…' : isFinished ? '재저장' : '저장 (결과 확정)'}
+                        </button>
+                    </div>
+                </>
+            )}
         </article>
     );
 }
@@ -1117,9 +1139,7 @@ function ChessScoringCard({ match, state, comments = [], onAddComment, onUpdate,
     })();
 
     const submit = async () => {
-        const hasInput = ALL_CAMPUSES.some((c) =>
-            ['W', 'D', 'L'].some((k) => Number(stats[c][k]) > 0)
-        );
+        const hasInput = ALL_CAMPUSES.some((c) => ['W', 'D', 'L'].some((k) => Number(stats[c][k]) > 0));
         if (!hasInput) {
             alert('승/무/패 횟수를 입력해주세요.');
             return;
@@ -1161,12 +1181,16 @@ function ChessScoringCard({ match, state, comments = [], onAddComment, onUpdate,
     };
 
     return (
-        <article className={`scoring-card placement-card ${isFinished ? 'is-finished' : ''} ${open ? 'is-open' : 'is-collapsed'}`}>
+        <article
+            className={`scoring-card placement-card ${isFinished ? 'is-finished' : ''} ${open ? 'is-open' : 'is-collapsed'}`}
+        >
             <button type="button" className="scoring-head-btn" onClick={() => setOpen((v) => !v)} aria-expanded={open}>
                 <div className="scoring-meta">
                     <span className="scoring-day">{match.day.slice(5)}</span>
                     {match.startTime && <span className="scoring-time">{match.startTime}</span>}
-                    <span className="scoring-cat">{match.sport} · {match.category}</span>
+                    <span className="scoring-cat">
+                        {match.sport} · {match.category}
+                    </span>
                 </div>
                 <div className="scoring-head-right">
                     {!open && isFinished && winnerCampus && (
@@ -1179,55 +1203,191 @@ function ChessScoringCard({ match, state, comments = [], onAddComment, onUpdate,
                         </span>
                     )}
                     <StatusPicker matchId={match.id} currentStatus={state?.status} onUpdate={onUpdate} />
-                    <span className={`scoring-chevron ${open ? 'is-open' : ''}`} aria-hidden>▾</span>
+                    <span className={`scoring-chevron ${open ? 'is-open' : ''}`} aria-hidden>
+                        ▾
+                    </span>
                 </div>
             </button>
-            {open && <>
-                <div className="pl-rule">승 1점 · 무 0.5점 · 패 0점 (1인당 2경기)</div>
-                <div className="chess-table">
-                    <div className="chess-row chess-row-head">
-                        <span className="chess-cell chess-cell-label" />
-                        <span className="chess-cell chess-cell-h">승</span>
-                        <span className="chess-cell chess-cell-h">무</span>
-                        <span className="chess-cell chess-cell-h">패</span>
-                        <span className="chess-cell chess-cell-h chess-total-h">총점</span>
+            {open && (
+                <>
+                    <div className="pl-rule">승 1점 · 무 0.5점 · 패 0점 (1인당 2경기)</div>
+                    <div className="chess-table">
+                        <div className="chess-row chess-row-head">
+                            <span className="chess-cell chess-cell-label" />
+                            <span className="chess-cell chess-cell-h">승</span>
+                            <span className="chess-cell chess-cell-h">무</span>
+                            <span className="chess-cell chess-cell-h">패</span>
+                            <span className="chess-cell chess-cell-h chess-total-h">총점</span>
+                        </div>
+                        {ALL_CAMPUSES.map((c) => {
+                            const cc = CAMPUS_COLORS[c] || {};
+                            const isWinner = winnerCampus === c;
+                            return (
+                                <div
+                                    key={c}
+                                    className={`chess-row ${isWinner ? 'is-winner' : ''}`}
+                                    style={{ '--c': cc.bg, '--c-soft': cc.soft }}
+                                >
+                                    <span className="chess-cell chess-cell-label" style={{ color: cc.bg }}>
+                                        {isWinner && <span>🏆 </span>}
+                                        <strong>{c}</strong>
+                                    </span>
+                                    {['W', 'D', 'L'].map((k) => (
+                                        <span key={k} className="chess-cell">
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                value={stats[c][k]}
+                                                onChange={(e) => update(c, k, e.target.value)}
+                                                placeholder="0"
+                                                disabled={saving}
+                                            />
+                                        </span>
+                                    ))}
+                                    <span className="chess-cell chess-total">{totals[c]}</span>
+                                </div>
+                            );
+                        })}
                     </div>
-                    {ALL_CAMPUSES.map((c) => {
-                        const cc = CAMPUS_COLORS[c] || {};
-                        const isWinner = winnerCampus === c;
-                        return (
-                            <div key={c} className={`chess-row ${isWinner ? 'is-winner' : ''}`}
-                                 style={{ '--c': cc.bg, '--c-soft': cc.soft }}>
-                                <span className="chess-cell chess-cell-label" style={{ color: cc.bg }}>
-                                    {isWinner && <span>🏆 </span>}
-                                    <strong>{c}</strong>
+                    <div className="scoring-foot">
+                        {savedFlag && <span className="scoring-saved">✓ 저장됨</span>}
+                        <button type="button" className="scoring-save" onClick={submit} disabled={saving}>
+                            {saving ? '저장중…' : isFinished ? '재저장' : '저장 (결과 확정)'}
+                        </button>
+                    </div>
+                </>
+            )}
+        </article>
+    );
+}
+
+function ElementaryScoringCard({ match, state, comments = [], onAddComment, onUpdate, onDeleteComment }) {
+    const saved = { 문경: '', 음성: '', 세종: '' };
+    for (const c of comments) {
+        if (!c?.scoreTeam || c?.quarter) continue;
+        if (saved[c.scoreTeam] !== undefined) saved[c.scoreTeam] = Number(c.scoreAmount) || 0;
+    }
+
+    const [wins, setWins] = useState(saved);
+    const [saving, setSaving] = useState(false);
+    const [savedFlag, setSavedFlag] = useState(false);
+    const [open, setOpen] = useState(false);
+    const isFinished = state?.status === 'finished';
+
+    const winnerCampus = (() => {
+        let winner = null,
+            max = -1;
+        for (const c of ALL_CAMPUSES) {
+            const n = Number(wins[c]) || 0;
+            if (n > max) {
+                max = n;
+                winner = c;
+            }
+        }
+        return max > 0 ? winner : null;
+    })();
+
+    const submit = async () => {
+        if (!ALL_CAMPUSES.some((c) => Number(wins[c]) > 0)) {
+            alert('승 횟수를 입력해주세요.');
+            return;
+        }
+        setSaving(true);
+        try {
+            await wipeScoreComments(onDeleteComment, match.id, comments);
+            for (const c of ALL_CAMPUSES) {
+                const n = Number(wins[c]);
+                if (!Number.isFinite(n) || n <= 0) continue;
+                await onAddComment(match.id, {
+                    type: 'score',
+                    content: `${c} ${n}승`,
+                    scoreTeam: c,
+                    scoreAmount: n,
+                });
+            }
+            await onUpdate(match.id, { status: 'finished' });
+            setSavedFlag(true);
+        } catch (err) {
+            alert('저장 실패: ' + err.message);
+        }
+        setSaving(false);
+    };
+
+    return (
+        <article
+            className={`scoring-card placement-card ${isFinished ? 'is-finished' : ''} ${open ? 'is-open' : 'is-collapsed'}`}
+        >
+            <button type="button" className="scoring-head-btn" onClick={() => setOpen((v) => !v)} aria-expanded={open}>
+                <div className="scoring-meta">
+                    <span className="scoring-day">{match.day.slice(5)}</span>
+                    {match.startTime && <span className="scoring-time">{match.startTime}</span>}
+                    <span className="scoring-cat">
+                        {match.sport} · {match.category}
+                    </span>
+                </div>
+                <div className="scoring-head-right">
+                    {!open && isFinished && winnerCampus && (
+                        <span className="scoring-mini-totals">
+                            {ALL_CAMPUSES.map((c) => (
+                                <span key={c} className="scoring-mini-total" style={{ '--c': CAMPUS_COLORS[c]?.bg }}>
+                                    {c} {Number(wins[c]) || 0}승
                                 </span>
-                                {['W', 'D', 'L'].map((k) => (
-                                    <span key={k} className="chess-cell">
+                            ))}
+                        </span>
+                    )}
+                    <StatusPicker matchId={match.id} currentStatus={state?.status} onUpdate={onUpdate} />
+                    <span className={`scoring-chevron ${open ? 'is-open' : ''}`} aria-hidden>
+                        ▾
+                    </span>
+                </div>
+            </button>
+
+            {open && (
+                <>
+                    <div className="pl-rule">승이 많은 캠퍼스 우승</div>
+                    <div className="chess-table">
+                        <div className="chess-row chess-row-head">
+                            <span className="chess-cell chess-cell-label" />
+                            <span className="chess-cell chess-cell-h">승</span>
+                        </div>
+                        {ALL_CAMPUSES.map((c) => {
+                            const cc = CAMPUS_COLORS[c] || {};
+                            const isWinner = winnerCampus === c;
+                            return (
+                                <div
+                                    key={c}
+                                    className={`chess-row ${isWinner ? 'is-winner' : ''}`}
+                                    style={{ '--c': cc.bg, '--c-soft': cc.soft }}
+                                >
+                                    <span className="chess-cell chess-cell-label" style={{ color: cc.bg }}>
+                                        {isWinner && <span>🏆 </span>}
+                                        <strong>{c}</strong>
+                                    </span>
+                                    <span className="chess-cell">
                                         <input
                                             type="number"
                                             min="0"
-                                            value={stats[c][k]}
-                                            onChange={(e) => update(c, k, e.target.value)}
+                                            value={wins[c]}
+                                            onChange={(e) => {
+                                                setSavedFlag(false);
+                                                setWins((s) => ({ ...s, [c]: e.target.value }));
+                                            }}
                                             placeholder="0"
                                             disabled={saving}
                                         />
                                     </span>
-                                ))}
-                                <span className="chess-cell chess-total">
-                                    {totals[c]}
-                                </span>
-                            </div>
-                        );
-                    })}
-                </div>
-                <div className="scoring-foot">
-                    {savedFlag && <span className="scoring-saved">✓ 저장됨</span>}
-                    <button type="button" className="scoring-save" onClick={submit} disabled={saving}>
-                        {saving ? '저장중…' : isFinished ? '재저장' : '저장 (결과 확정)'}
-                    </button>
-                </div>
-            </>}
+                                </div>
+                            );
+                        })}
+                    </div>
+                    <div className="scoring-foot">
+                        {savedFlag && <span className="scoring-saved">✓ 저장됨</span>}
+                        <button type="button" className="scoring-save" onClick={submit} disabled={saving}>
+                            {saving ? '저장중…' : isFinished ? '재저장' : '저장 (결과 확정)'}
+                        </button>
+                    </div>
+                </>
+            )}
         </article>
     );
 }
@@ -1274,7 +1434,9 @@ function FirstPlaceScoringCard({ match, state, comments = [], onAddComment, onUp
                 <div className="scoring-meta">
                     <span className="scoring-day">{match.day.slice(5)}</span>
                     {match.startTime && <span className="scoring-time">{match.startTime}</span>}
-                    <span className="scoring-cat">{match.sport} · {match.category}</span>
+                    <span className="scoring-cat">
+                        {match.sport} · {match.category}
+                    </span>
                 </div>
                 <div className="scoring-head-right">
                     {!open && isFinished && savedWinner && (
@@ -1285,43 +1447,47 @@ function FirstPlaceScoringCard({ match, state, comments = [], onAddComment, onUp
                         </span>
                     )}
                     <StatusPicker matchId={match.id} currentStatus={state?.status} onUpdate={onUpdate} />
-                    <span className={`scoring-chevron ${open ? 'is-open' : ''}`} aria-hidden>▾</span>
+                    <span className={`scoring-chevron ${open ? 'is-open' : ''}`} aria-hidden>
+                        ▾
+                    </span>
                 </div>
             </button>
-            {open && <>
-                <div className="pl-rule">1등으로 들어온 캠퍼스가 승리합니다</div>
-                <div className="fp-pick">
-                    <div className="pl-section-title">1등 캠퍼스</div>
-                    <div className="fp-pills">
-                        {ALL_CAMPUSES.map((c) => {
-                            const cc = CAMPUS_COLORS[c] || {};
-                            const active = winner === c;
-                            const style = active
-                                ? { background: cc.bg, color: '#fff', borderColor: cc.bg }
-                                : { background: cc.soft, color: cc.bg, borderColor: cc.bg };
-                            return (
-                                <button
-                                    key={c}
-                                    type="button"
-                                    className={`fp-pill ${active ? 'active' : ''}`}
-                                    style={style}
-                                    onClick={() => pick(c)}
-                                    disabled={saving}
-                                >
-                                    {active && <span aria-hidden>🏆 </span>}
-                                    {c}
-                                </button>
-                            );
-                        })}
+            {open && (
+                <>
+                    <div className="pl-rule">1등으로 들어온 캠퍼스가 승리합니다</div>
+                    <div className="fp-pick">
+                        <div className="pl-section-title">1등 캠퍼스</div>
+                        <div className="fp-pills">
+                            {ALL_CAMPUSES.map((c) => {
+                                const cc = CAMPUS_COLORS[c] || {};
+                                const active = winner === c;
+                                const style = active
+                                    ? { background: cc.bg, color: '#fff', borderColor: cc.bg }
+                                    : { background: cc.soft, color: cc.bg, borderColor: cc.bg };
+                                return (
+                                    <button
+                                        key={c}
+                                        type="button"
+                                        className={`fp-pill ${active ? 'active' : ''}`}
+                                        style={style}
+                                        onClick={() => pick(c)}
+                                        disabled={saving}
+                                    >
+                                        {active && <span aria-hidden>🏆 </span>}
+                                        {c}
+                                    </button>
+                                );
+                            })}
+                        </div>
                     </div>
-                </div>
-                <div className="scoring-foot">
-                    {saved && <span className="scoring-saved">✓ 저장됨</span>}
-                    <button type="button" className="scoring-save" onClick={submit} disabled={saving}>
-                        {saving ? '저장중…' : isFinished ? '재저장' : '저장 (결과 확정)'}
-                    </button>
-                </div>
-            </>}
+                    <div className="scoring-foot">
+                        {saved && <span className="scoring-saved">✓ 저장됨</span>}
+                        <button type="button" className="scoring-save" onClick={submit} disabled={saving}>
+                            {saving ? '저장중…' : isFinished ? '재저장' : '저장 (결과 확정)'}
+                        </button>
+                    </div>
+                </>
+            )}
         </article>
     );
 }
@@ -1403,7 +1569,9 @@ function SetsScoringCard({ match, state, comments = [], onAddComment, onUpdate, 
                 <div className="scoring-meta">
                     <span className="scoring-day">{match.day.slice(5)}</span>
                     {match.startTime && <span className="scoring-time">{match.startTime}</span>}
-                    <span className="scoring-cat">{match.sport} · {match.category}</span>
+                    <span className="scoring-cat">
+                        {match.sport} · {match.category}
+                    </span>
                 </div>
                 <div className="scoring-head-right">
                     {!open && isFinished && matchWinner && (
@@ -1414,53 +1582,60 @@ function SetsScoringCard({ match, state, comments = [], onAddComment, onUpdate, 
                         </span>
                     )}
                     <StatusPicker matchId={match.id} currentStatus={state?.status} onUpdate={onUpdate} />
-                    <span className={`scoring-chevron ${open ? 'is-open' : ''}`} aria-hidden>▾</span>
+                    <span className={`scoring-chevron ${open ? 'is-open' : ''}`} aria-hidden>
+                        ▾
+                    </span>
                 </div>
             </button>
-            {open && <>
-                <div className="pl-rule">{setCount}판 {Math.ceil(setCount / 2)}선승 — 세트별 승리 캠퍼스를 선택하세요</div>
-                <div className="sets-list">
-                    {setWinners.map((w, idx) => (
-                        <div key={idx} className="pl-rank-row">
-                            <span className="pl-rank-label">
-                                <strong>{idx + 1}세트</strong>
-                            </span>
-                            <div className="pl-rank-pills">
-                                {ALL_CAMPUSES.map((c) => {
-                                    const cc = CAMPUS_COLORS[c] || {};
-                                    const active = w === c;
-                                    const style = active
-                                        ? { background: cc.bg, color: '#fff', borderColor: cc.bg }
-                                        : { background: cc.soft, color: cc.bg, borderColor: cc.bg };
-                                    return (
-                                        <button
-                                            key={c}
-                                            type="button"
-                                            className={`pl-rank-pill ${active ? 'active' : ''}`}
-                                            style={style}
-                                            onClick={() => setWin(idx, c)}
-                                            disabled={saving}
-                                        >
-                                            {c}
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                        </div>
-                    ))}
-                </div>
-                {matchWinner && (
-                    <div className="sets-winner-line">
-                        매치 승리: <strong style={{ color: CAMPUS_COLORS[matchWinner]?.bg }}>🏆 {matchWinner}</strong>
+            {open && (
+                <>
+                    <div className="pl-rule">
+                        {setCount}판 {Math.ceil(setCount / 2)}선승 — 세트별 승리 캠퍼스를 선택하세요
                     </div>
-                )}
-                <div className="scoring-foot">
-                    {saved && <span className="scoring-saved">✓ 저장됨</span>}
-                    <button type="button" className="scoring-save" onClick={submit} disabled={saving}>
-                        {saving ? '저장중…' : isFinished ? '재저장' : '저장 (결과 확정)'}
-                    </button>
-                </div>
-            </>}
+                    <div className="sets-list">
+                        {setWinners.map((w, idx) => (
+                            <div key={idx} className="pl-rank-row">
+                                <span className="pl-rank-label">
+                                    <strong>{idx + 1}세트</strong>
+                                </span>
+                                <div className="pl-rank-pills">
+                                    {ALL_CAMPUSES.map((c) => {
+                                        const cc = CAMPUS_COLORS[c] || {};
+                                        const active = w === c;
+                                        const style = active
+                                            ? { background: cc.bg, color: '#fff', borderColor: cc.bg }
+                                            : { background: cc.soft, color: cc.bg, borderColor: cc.bg };
+                                        return (
+                                            <button
+                                                key={c}
+                                                type="button"
+                                                className={`pl-rank-pill ${active ? 'active' : ''}`}
+                                                style={style}
+                                                onClick={() => setWin(idx, c)}
+                                                disabled={saving}
+                                            >
+                                                {c}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                    {matchWinner && (
+                        <div className="sets-winner-line">
+                            매치 승리:{' '}
+                            <strong style={{ color: CAMPUS_COLORS[matchWinner]?.bg }}>🏆 {matchWinner}</strong>
+                        </div>
+                    )}
+                    <div className="scoring-foot">
+                        {saved && <span className="scoring-saved">✓ 저장됨</span>}
+                        <button type="button" className="scoring-save" onClick={submit} disabled={saving}>
+                            {saving ? '저장중…' : isFinished ? '재저장' : '저장 (결과 확정)'}
+                        </button>
+                    </div>
+                </>
+            )}
         </article>
     );
 }
@@ -1504,8 +1679,9 @@ function SimpleScoringCard({ match, state, comments = [], onAddComment, onUpdate
     })();
 
     const submit = async () => {
-        const entries = ALL_CAMPUSES.map((c) => ({ campus: c, score: Number(scores[c]) }))
-            .filter((e) => Number.isFinite(e.score) && e.score !== 0);
+        const entries = ALL_CAMPUSES.map((c) => ({ campus: c, score: Number(scores[c]) })).filter(
+            (e) => Number.isFinite(e.score) && e.score !== 0
+        );
         if (entries.length === 0) {
             alert('점수를 1개 이상 입력해주세요.');
             return;
@@ -1531,16 +1707,13 @@ function SimpleScoringCard({ match, state, comments = [], onAddComment, onUpdate
 
     return (
         <article className={`scoring-card ${isFinished ? 'is-finished' : ''} ${open ? 'is-open' : 'is-collapsed'}`}>
-            <button
-                type="button"
-                className="scoring-head-btn"
-                onClick={() => setOpen((v) => !v)}
-                aria-expanded={open}
-            >
+            <button type="button" className="scoring-head-btn" onClick={() => setOpen((v) => !v)} aria-expanded={open}>
                 <div className="scoring-meta">
                     <span className="scoring-day">{match.day.slice(5)}</span>
                     {match.startTime && <span className="scoring-time">{match.startTime}</span>}
-                    <span className="scoring-cat">{match.sport} · {match.category}</span>
+                    <span className="scoring-cat">
+                        {match.sport} · {match.category}
+                    </span>
                 </div>
                 <div className="scoring-head-right">
                     {!open && isFinished && Object.keys(existingScores).length > 0 && (
@@ -1553,51 +1726,57 @@ function SimpleScoringCard({ match, state, comments = [], onAddComment, onUpdate
                         </span>
                     )}
                     <StatusPicker matchId={match.id} currentStatus={state?.status} onUpdate={onUpdate} />
-                    <span className={`scoring-chevron ${open ? 'is-open' : ''}`} aria-hidden>▾</span>
+                    <span className={`scoring-chevron ${open ? 'is-open' : ''}`} aria-hidden>
+                        ▾
+                    </span>
                 </div>
             </button>
-            {open && <>
-            <div className="scoring-inputs">
-                {ALL_CAMPUSES.map((c) => {
-                    const cc = CAMPUS_COLORS[c] || {};
-                    const isWinner = winnerCampus === c && Number(scores[c]) > 0;
-                    return (
-                        <label key={c} className={`scoring-input ${isWinner ? 'is-winner' : ''}`}
-                               style={{ '--c': cc.bg, '--c-soft': cc.soft }}>
-                            <span className="scoring-input-label">{c}</span>
-                            <input
-                                type="number"
-                                step="0.01"
-                                min="0"
-                                value={scores[c]}
-                                onChange={(e) => setOne(c, e.target.value)}
-                                disabled={saving}
-                                placeholder="0"
-                            />
-                            {isWinner && <span className="scoring-trophy">🏆</span>}
-                        </label>
-                    );
-                })}
-            </div>
-            <div className="scoring-foot">
-                {saved && <span className="scoring-saved">✓ 저장됨</span>}
-                <button
-                    type="button"
-                    className="scoring-save"
-                    onClick={submit}
-                    disabled={saving}
-                >
-                    {saving ? '저장중…' : isFinished ? '재저장' : '저장 (결과 확정)'}
-                </button>
-            </div>
-            </>}
+            {open && (
+                <>
+                    <div className="scoring-inputs">
+                        {ALL_CAMPUSES.map((c) => {
+                            const cc = CAMPUS_COLORS[c] || {};
+                            const isWinner = winnerCampus === c && Number(scores[c]) > 0;
+                            return (
+                                <label
+                                    key={c}
+                                    className={`scoring-input ${isWinner ? 'is-winner' : ''}`}
+                                    style={{ '--c': cc.bg, '--c-soft': cc.soft }}
+                                >
+                                    <span className="scoring-input-label">{c}</span>
+                                    <input
+                                        type="number"
+                                        step="0.01"
+                                        min="0"
+                                        value={scores[c]}
+                                        onChange={(e) => setOne(c, e.target.value)}
+                                        disabled={saving}
+                                        placeholder="0"
+                                    />
+                                    {isWinner && <span className="scoring-trophy">🏆</span>}
+                                </label>
+                            );
+                        })}
+                    </div>
+                    <div className="scoring-foot">
+                        {saved && <span className="scoring-saved">✓ 저장됨</span>}
+                        <button type="button" className="scoring-save" onClick={submit} disabled={saving}>
+                            {saving ? '저장중…' : isFinished ? '재저장' : '저장 (결과 확정)'}
+                        </button>
+                    </div>
+                </>
+            )}
         </article>
     );
 }
 
 function ScoringPanel({ matches, statesMap, commentsMap, onAddComment, onUpdate, onDeleteComment }) {
     if (matches.length === 0) {
-        return <div className="empty-state"><p>채점제 종목이 없습니다.</p></div>;
+        return (
+            <div className="empty-state">
+                <p>채점제 종목이 없습니다.</p>
+            </div>
+        );
     }
     return (
         <div className="scoring-grid">
@@ -1741,8 +1920,8 @@ export default function AdminRelayPage() {
                             {tab === 'scoring'
                                 ? '채점제 종목(태권체조·품새)은 경기 끝나고 캠퍼스별 점수를 한번에 입력하세요.'
                                 : selectedMatchId
-                                    ? '매치를 중계하는 중입니다. 메시지 입력 시 점수도 자동 누적됩니다.'
-                                    : '아래 목록에서 중계할 매치를 선택하세요.'}
+                                  ? '매치를 중계하는 중입니다. 메시지 입력 시 점수도 자동 누적됩니다.'
+                                  : '아래 목록에서 중계할 매치를 선택하세요.'}
                         </p>
                     </div>
                     <button className="ar-logout" onClick={logout}>

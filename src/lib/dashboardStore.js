@@ -147,6 +147,14 @@ export const INITIAL_DASHBOARD_EVENTS = [
             division('tug-a-eum-sej', '성인 음성vs세종'),
         ],
     },
+    {
+        id: 'elementary',
+        sport: '초등부',
+        rule: '승이 많은 캠퍼스 우승',
+        status: '경기 전',
+        winnerKey: 'pending',
+        divisions: [division('elem-main', '초등부')],
+    },
 ];
 
 export function getCampus(key) {

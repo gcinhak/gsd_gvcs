@@ -39,7 +39,13 @@ function formatDashboardScore(event, division, state, comments = [], match) {
 }
 
 function shouldShowDashboardScore(event, division) {
-    if (event.id === 'relay' || event.id === 'table-tennis' || event.id === 'chess' || event.id === 'tug-of-war')
+    if (
+        event.id === 'relay' ||
+        event.id === 'table-tennis' ||
+        event.id === 'chess' ||
+        event.id === 'tug-of-war' ||
+        event.id === 'elementary'
+    )
         return false;
     if (event.id === 'taekwondo' && !division.id.includes('sparring')) return false;
     return true;
@@ -55,7 +61,8 @@ function getPendingMatchup(event, division, match) {
     if (match?.mode === 'scoring') return '문경 VS 음성 VS 세종';
     const relayMatchup = formatMatchup(match);
     if (relayMatchup) return relayMatchup;
-    if (event.id === 'middle-distance' || event.id === 'relay') return '문경 VS 음성 VS 세종';
+    if (event.id === 'middle-distance' || event.id === 'relay' || event.id === 'elementary')
+        return '문경 VS 음성 VS 세종';
     if (event.id === 'taekwondo' && !division.id.includes('sparring')) return '문경 VS 음성 VS 세종';
     return '문경 VS 음성';
 }
@@ -205,8 +212,19 @@ function getRelayDisplayState(event, division, match, relayState, relayComments 
     };
     if (!relayState || !match) return base;
 
-    // ── 채점제 매치는 캠퍼스별 코멘트에서 직접 승자 계산 ──
     if (match.mode === 'scoring') {
+        // 초등부: comment 있으면 바로 계산
+        if (match.scoringType === 'elementary') {
+            if (relayComments.length > 0) {
+                const winnerName = getScoringWinner(match, relayComments);
+                return {
+                    state: 'done',
+                    winnerKey: winnerName ? campusKeyFromTeamName(winnerName) : 'pending',
+                };
+            }
+            return base;
+        }
+
         if (relayState.status === 'finished') {
             const winnerName = getScoringWinner(match, relayComments);
             return {
@@ -221,6 +239,10 @@ function getRelayDisplayState(event, division, match, relayState, relayComments 
 
     if (isSetEvent(event)) {
         const summary = getSetSummary(relayComments, match, getQuarters(match.sport), relayState);
+
+        // ★ 핵심 수정: 세트 comment가 아직 로드되지 않은 경우 base 반환
+        if (relayComments.length === 0) return base;
+
         const relayScore = getScorePair(relayState);
         const score = summary.home > 0 || summary.away > 0 ? summary : relayScore;
         const targetWins = getSetTargetWins(match);

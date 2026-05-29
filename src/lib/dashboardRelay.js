@@ -35,6 +35,7 @@ export const DIVISION_RELAY_MATCHES = {
     'table-high': 'sat-tt-high',
     'table-popular': 'sat-tt-popular',
     'table-staff': 'sat-tt-staff',
+    'elem-main': 'elem-main',
 };
 
 export function getRelayMatchId(division) {
