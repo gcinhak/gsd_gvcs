@@ -215,13 +215,23 @@ export const LINEUP = {
                 { no: 4, name: '신찬영' },
             ],
         },
-        /* 
+
         체스: {
-            '7-8학년': [{ no: 1, grade: 8, name: '박주원' }, { no: 2, grade: 8,name: '임온찬' }],
-            '9-10학년': [{ no: 1, grade: 9, name: '변지원' }, { no: 2, grade: 9,name: '윤종한' }],
-            '11-12학년': [{ no: 1, grade: 11, name: '윤주호' }, { no: 2, grade: 12, name: '정소망' }],
+            '7-8학년': [
+                { no: 1, grade: 8, name: '박주원' },
+                { no: 2, grade: 8, name: '이래휘' },
+            ],
+            '9-10학년': [
+                { no: 1, grade: 9, name: '변지원' },
+                { no: 2, grade: 9, name: '윤종한' },
+            ],
+            '11-12학년': [
+                { no: 1, grade: 11, name: '윤주호' },
+                { no: 2, grade: 12, name: '정소망' },
+            ],
         },
 
+        /* 
         이어달리기: {
             통합: [
                 { no: 1, grade: 8, name: '이선율', role: '학생' },
@@ -526,6 +536,11 @@ export const LINEUP = {
                 { no: 4, name: '독고윤' },
             ],
         },
+        체스: {
+            '7-8학년': [{ no: 1, grade: 7, name: '김선우' }],
+            '9-10학년': [{ no: 1, grade: 10, name: '김예찬' }],
+            '11-12학년': [{ no: 1, grade: 11, name: '장동현' }],
+        },
     },
     세종: {
         농구: {
@@ -666,6 +681,17 @@ export const LINEUP = {
                 { no: 1, name: '장현진' },
                 { no: 2, name: '최재희' },
             ],
+        },
+        체스: {
+            '7-8학년': [
+                { no: 1, grade: 7, name: '김평주' },
+                { no: 2, grade: 7, name: '이산' },
+            ],
+            '9-10학년': [
+                { no: 1, grade: 10, name: '노우빈' },
+                { no: 2, grade: 10, name: '김시온' },
+            ],
+            '11-12학년': [{ no: 1, grade: 11, name: '윤성훈' }],
         },
     },
 };
