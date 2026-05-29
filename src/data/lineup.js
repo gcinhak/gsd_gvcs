@@ -646,27 +646,27 @@ export const LINEUP = {
                 { no: 3, grade: 11, name: '석지혜' },
             ],
         },
-    },
-    탁구: {
-        중등부: [
-            { no: 1, grade: 7, name: '정은수' },
-            { no: 2, grade: 0, name: '이지호' },
-            { no: 3, grade: 7, name: '박향유' },
-        ],
-        고등부: [
-            { no: 1, grade: 10, name: '정현수' },
-            { no: 2, grade: 10, name: '김민후' },
-            { no: 3, grade: 10, name: '신지오' },
-            { no: 4, grade: 10, name: '이주하' },
-        ],
-        인기모: [
-            { no: 1, name: '정현수(부)' },
-            { no: 2, name: '임은한(모)' },
-        ],
-        교직원: [
-            { no: 1, name: '장현진' },
-            { no: 2, name: '최재희' },
-        ],
+        탁구: {
+            중등부: [
+                { no: 1, grade: 7, name: '정은수' },
+                { no: 2, grade: 0, name: '이지호' },
+                { no: 3, grade: 7, name: '박향유' },
+            ],
+            고등부: [
+                { no: 1, grade: 10, name: '정현수' },
+                { no: 2, grade: 10, name: '김민후' },
+                { no: 3, grade: 10, name: '신지오' },
+                { no: 4, grade: 10, name: '이주하' },
+            ],
+            인기모: [
+                { no: 1, name: '정현수(부)' },
+                { no: 2, name: '임은한(모)' },
+            ],
+            교직원: [
+                { no: 1, name: '장현진' },
+                { no: 2, name: '최재희' },
+            ],
+        },
     },
 };
 /* ───── Helpers ───── */
