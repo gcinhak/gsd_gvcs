@@ -149,11 +149,11 @@ export const INITIAL_DASHBOARD_EVENTS = [
     },
     {
         id: 'elementary',
-        sport: '초등부',
+        sport: '초등경기',
         rule: '승이 많은 캠퍼스 우승',
         status: '경기 전',
         winnerKey: 'pending',
-        divisions: [division('elem-main', '초등부')],
+        divisions: [division('elem-main', '초등경기')],
     },
 ];
 
