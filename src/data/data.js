@@ -350,7 +350,7 @@ export const SCHEDULE = {
                         end: '15:00',
                         // isFinal: true,
                         courts: [
-                            { round: '결선', category: '중학교 복식', match: '문경 VS 예선 승리 팀' },
+                            { round: '결선', category: '중학교 복식', match: '문경 VS 음성' },
                             { round: '결선', category: '고등학교 여 단식', match: '세종 VS 음성' },
                             { round: '결선', category: '고등학교 남 단식', match: '세종 VS 음성' },
                         ],
@@ -361,8 +361,8 @@ export const SCHEDULE = {
                         end: '15:10',
                         // isFinal: true,
                         courts: [
-                            { round: '결선', category: '중학교 여 단식', match: '문경 VS 예선 승리 팀' },
-                            { round: '결선', category: '중학교 남 단식', match: '문경 VS 예선 승리 팀' },
+                            { round: '결선', category: '중학교 여 단식', match: '문경 VS 음성' },
+                            { round: '결선', category: '중학교 남 단식', match: '문경 VS 음성' },
                             { round: '결선', category: '고등학교 복식', match: '세종 VS 음성' },
                         ],
                     },
@@ -1342,7 +1342,7 @@ export const LIVE_MATCHES = [
         round: '결선',
         category: '중등부',
         venue: '체육관 보조',
-        teams: { home: '문경', away: '예선 승리팀' },
+        teams: { home: '문경', away: '음성' },
         mode: 'scoring',
         scoringType: 'tableTennis',
         setCount: 3,
