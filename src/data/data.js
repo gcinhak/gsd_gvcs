@@ -328,8 +328,8 @@ export const SCHEDULE = {
                         end: '14:40',
                         // isFinal: true,
                         courts: [
-                            { round: '결선', category: '교직원 남 단식', match: '음성 VS 예선 승리 팀' },
-                            { round: '결선', category: '교직원 여 단식', match: '음성 VS 예선 승리 팀' },
+                            { round: '결선', category: '교직원 남 단식', match: '음성 VS 문경' },
+                            { round: '결선', category: '교직원 여 단식', match: '음성 VS 문경' },
                             { round: '결선', category: '인기모 복식', match: '음성 VS 세종' },
                         ],
                     },
@@ -341,7 +341,7 @@ export const SCHEDULE = {
                         courts: [
                             { round: '결선', category: '인기모 여 단식', match: '음성 VS 세종' },
                             { round: '결선', category: '인기모 남 단식', match: '음성 VS 세종' },
-                            { round: '결선', category: '교직원 복식', match: '음성 VS 예선 승리 팀' },
+                            { round: '결선', category: '교직원 복식', match: '음성 VS 문경' },
                         ],
                     },
                     {
