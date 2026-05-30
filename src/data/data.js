@@ -202,7 +202,7 @@ export const SCHEDULE = {
                         end: '14:50',
                         round: '결선',
                         label: '축구 남고부',
-                        sub: '문경 VS 예선 승리팀',
+                        sub: '문경 VS 음성',
                         meta: '50분',
                     },
                     { start: '15:30', end: '16:00', label: '줄다리기·이어달리기 선수 확인', meta: '주변 정리' },
@@ -1170,7 +1170,7 @@ export const LIVE_MATCHES = [
         round: '결선',
         category: '남고부',
         venue: '보조경기장',
-        teams: { home: '문경', away: '예선 승리 팀' },
+        teams: { home: '문경', away: '음성' },
         lineup: { home: [], away: [] },
     },
     {
