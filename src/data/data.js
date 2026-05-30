@@ -351,8 +351,8 @@ export const SCHEDULE = {
                         // isFinal: true,
                         courts: [
                             { round: '결선', category: '중학교 복식', match: '문경 VS 예선 승리 팀' },
-                            { round: '결선', category: '고등학교 여 단식', match: '세종 VS 문경' },
-                            { round: '결선', category: '고등학교 남 단식', match: '세종 VS 문경' },
+                            { round: '결선', category: '고등학교 여 단식', match: '세종 VS 음성' },
+                            { round: '결선', category: '고등학교 남 단식', match: '세종 VS 음성' },
                         ],
                     },
                     {
@@ -363,7 +363,7 @@ export const SCHEDULE = {
                         courts: [
                             { round: '결선', category: '중학교 여 단식', match: '문경 VS 예선 승리 팀' },
                             { round: '결선', category: '중학교 남 단식', match: '문경 VS 예선 승리 팀' },
-                            { round: '결선', category: '고등학교 복식', match: '세종 VS 문경' },
+                            { round: '결선', category: '고등학교 복식', match: '세종 VS 음성' },
                         ],
                     },
                 ],
