@@ -287,16 +287,20 @@ export const SCHEDULE = {
                         start: '13:50',
                         end: '14:00',
                         courts: [
-                            { round: '예선', category: '인기모 남 단식', match: '문경 VS 세종' },
                             { round: '예선', category: '인기모 여 단식', match: '문경 VS 세종' },
-                            null,
+                            { round: '예선', category: '인기모 남 단식', match: '문경 VS 세종' },
+                            { round: '예선', category: '교직원 복식', match: '문경 VS 세종' },
                         ],
                     },
                     {
                         num: '1-2경기',
                         start: '14:00',
                         end: '14:10',
-                        courts: [null, null, { round: '예선', category: '인기모 복식', match: '문경 VS 세종' }],
+                        courts: [
+                            { round: '예선', category: '교직원 남 단식', match: '문경 VS 세종' },
+                            { round: '예선', category: '교직원 여 단식', match: '문경 VS 세종' },
+                            { round: '예선', category: '인기모 복식', match: '문경 VS 세종' },
+                        ],
                     },
                     {
                         num: '2-1경기',
@@ -314,8 +318,8 @@ export const SCHEDULE = {
                         end: '14:30',
                         courts: [
                             { round: '예선', category: '중학교 복식', match: '음성 VS 세종' },
-                            { round: '예선', category: '고등학교 남 단식', match: '문경 VS 음성' },
                             { round: '예선', category: '고등학교 여 단식', match: '문경 VS 음성' },
+                            { round: '예선', category: '고등학교 남 단식', match: '문경 VS 음성' },
                         ],
                     },
                     {
@@ -324,9 +328,9 @@ export const SCHEDULE = {
                         end: '14:40',
                         // isFinal: true,
                         courts: [
-                            { round: '결선', category: '인기모 남 단식', match: '음성 VS 세종' },
-                            { round: '결선', category: '인기모 여 단식', match: '음성 VS 세종' },
-                            null,
+                            { round: '결선', category: '교직원 남 단식', match: '음성 VS 예선 승리 팀' },
+                            { round: '결선', category: '교직원 여 단식', match: '음성 VS 예선 승리 팀' },
+                            { round: '결선', category: '인기모 복식', match: '음성 VS 세종' },
                         ],
                     },
                     {
@@ -334,7 +338,11 @@ export const SCHEDULE = {
                         start: '14:40',
                         end: '14:50',
                         // isFinal: true,
-                        courts: [null, null, { round: '결선', category: '인기모 복식', match: '음성 VS 세종' }],
+                        courts: [
+                            { round: '결선', category: '인기모 여 단식', match: '음성 VS 세종' },
+                            { round: '결선', category: '인기모 남 단식', match: '음성 VS 세종' },
+                            { round: '결선', category: '교직원 복식', match: '음성 VS 예선 승리 팀' },
+                        ],
                     },
                     {
                         num: '4-1경기',
@@ -343,8 +351,8 @@ export const SCHEDULE = {
                         // isFinal: true,
                         courts: [
                             { round: '결선', category: '중학교 복식', match: '문경 VS 예선 승리 팀' },
-                            { round: '결선', category: '고등학교 남 단식', match: '세종 VS 예선 승리 팀' },
-                            { round: '결선', category: '고등학교 여 단식', match: '세종 VS 예선 승리 팀' },
+                            { round: '결선', category: '고등학교 여 단식', match: '세종 VS 문경' },
+                            { round: '결선', category: '고등학교 남 단식', match: '세종 VS 문경' },
                         ],
                     },
                     {
@@ -353,9 +361,9 @@ export const SCHEDULE = {
                         end: '15:10',
                         // isFinal: true,
                         courts: [
-                            { round: '결선', category: '중학교 남 단식', match: '문경 VS 예선 승리 팀' },
                             { round: '결선', category: '중학교 여 단식', match: '문경 VS 예선 승리 팀' },
-                            { round: '결선', category: '고등학교 복식', match: '세종 VS 예선 승리 팀' },
+                            { round: '결선', category: '중학교 남 단식', match: '문경 VS 예선 승리 팀' },
+                            { round: '결선', category: '고등학교 복식', match: '세종 VS 문경' },
                         ],
                     },
                 ],
@@ -1334,7 +1342,7 @@ export const LIVE_MATCHES = [
         round: '결선',
         category: '중등부',
         venue: '체육관 보조',
-        teams: { home: '문경', away: '음성' },
+        teams: { home: '문경', away: '예선 승리팀' },
         mode: 'scoring',
         scoringType: 'tableTennis',
         setCount: 3,
@@ -1349,7 +1357,7 @@ export const LIVE_MATCHES = [
         round: '결선',
         category: '고등부',
         venue: '체육관 보조',
-        teams: { home: '문경', away: '음성' },
+        teams: { home: '세종', away: '예선 승리팀' },
         mode: 'scoring',
         scoringType: 'tableTennis',
         setCount: 3,
@@ -1364,7 +1372,7 @@ export const LIVE_MATCHES = [
         round: '결선',
         category: '인기모',
         venue: '체육관 보조',
-        teams: { home: '문경', away: '음성' },
+        teams: { home: '음성', away: '예선 승리팀' },
         mode: 'scoring',
         scoringType: 'tableTennis',
         setCount: 3,
@@ -1379,7 +1387,7 @@ export const LIVE_MATCHES = [
         round: '결선',
         category: '교직원',
         venue: '체육관 보조',
-        teams: { home: '문경', away: '음성' },
+        teams: { home: '음성', away: '문경' },
         mode: 'scoring',
         scoringType: 'tableTennis',
         setCount: 3,
