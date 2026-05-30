@@ -324,8 +324,8 @@ export const SCHEDULE = {
                         end: '14:40',
                         // isFinal: true,
                         courts: [
-                            { round: '결선', category: '인기모 남 단식', match: '음성 VS 예선 승리 팀' },
-                            { round: '결선', category: '인기모 여 단식', match: '음성 VS 예선 승리 팀' },
+                            { round: '결선', category: '인기모 남 단식', match: '음성 VS 세종' },
+                            { round: '결선', category: '인기모 여 단식', match: '음성 VS 세종' },
                             null,
                         ],
                     },
@@ -334,7 +334,7 @@ export const SCHEDULE = {
                         start: '14:40',
                         end: '14:50',
                         // isFinal: true,
-                        courts: [null, null, { round: '결선', category: '인기모 복식', match: '음성 VS 예선 승리 팀' }],
+                        courts: [null, null, { round: '결선', category: '인기모 복식', match: '음성 VS 세종' }],
                     },
                     {
                         num: '4-1경기',
