@@ -9,7 +9,7 @@ import SequenceGame from '../components/games/SequenceGame';
 import ShootTargetGame from '../components/games/ShootTargetGame';
 import WhackAMoleGame from '../components/games/WhackAMoleGame';
 import { CAMPUS_COLORS } from '../data/data';
-import { fetchTerritory, playTerritory } from '../lib/territoryApi';
+import { fetchTerritory, playTerritory, startTerritory } from '../lib/territoryApi';
 
 const CAMPUSES = ['문경', '음성', '세종'];
 const MY_CAMPUS_KEY = 'gsd-territory-mycampus';
@@ -725,6 +725,9 @@ export default function TerritoryPage() {
     const [gameType, setGameType] = useState(null);
     const [modalOpen, setModalOpen] = useState(false);
     const [isAnimating, setIsAnimating] = useState(false);
+    const [starting, setStarting] = useState(false); // /start 요청 진행 중
+    const [startNotice, setStartNotice] = useState(''); // 쿨다운/레이트리밋 안내
+    const gameTokenRef = useRef(null); // 서버 발급 1회용 토큰(nonce)
     const isLocalSubmitRef = useRef(false); // 내가 직접 제출한 경우에만 true
     const modalOpenRef = useRef(false); // 폴링 closure에서 최신 modalOpen 참조용
 
@@ -776,13 +779,34 @@ export default function TerritoryPage() {
         window.localStorage.setItem(MY_CAMPUS_KEY, c);
     };
 
-    const startGame = () => {
-        if (!myCampus) return;
-        setGameType((prev) => prev ?? pickRandomGame());
-        setModalOpen(true);
+    // 캠퍼스 선택 → 서버 토큰 발급 → 게임 시작
+    const beginGame = async (c) => {
+        if (starting || isAnimating) return;
+        selectCampus(c);
+        setStarting(true);
+        setStartNotice('');
+        try {
+            const { nonce } = await startTerritory();
+            gameTokenRef.current = nonce;
+            setGameType(pickRandomGame());
+            setModalOpen(true);
+        } catch (e) {
+            gameTokenRef.current = null;
+            if (e.status === 429) {
+                const sec = Math.max(1, Math.ceil((e.retryAfterMs || 2000) / 1000));
+                setStartNotice(`너무 빠릅니다. ${sec}초 후 다시 시도하세요.`);
+            } else {
+                setStartNotice('게임을 시작할 수 없습니다. 잠시 후 다시 시도하세요.');
+            }
+        } finally {
+            setStarting(false);
+        }
     };
 
-    const cancelGame = () => setModalOpen(false);
+    const cancelGame = () => {
+        gameTokenRef.current = null; // 미사용 토큰 폐기 (서버에서도 곧 만료)
+        setModalOpen(false);
+    };
 
     const finishGame = () => {
         setModalOpen(false);
@@ -790,17 +814,15 @@ export default function TerritoryPage() {
     };
 
     const onGameResolved = async (won) => {
-        if (!myCampus) {
-            finishGame();
-            return;
-        }
-        if (!won) {
+        const nonce = gameTokenRef.current;
+        gameTokenRef.current = null; // 1회용: 즉시 무효화 (재제출 방지)
+        if (!myCampus || !won || !nonce) {
             finishGame();
             return;
         }
         try {
             isLocalSubmitRef.current = true;
-            const result = await playTerritory(myCampus);
+            const result = await playTerritory(myCampus, nonce);
             setState({ campuses: result.campuses, total: result.total, empty: result.empty });
         } catch {
             /* 결과 메시지는 표시하지 않으므로 무시 */
@@ -829,12 +851,8 @@ export default function TerritoryPage() {
                                 type="button"
                                 className={`terr-team-pill ${active ? 'active' : ''}`}
                                 style={style}
-                                disabled={isAnimating}
-                                onClick={() => {
-                                    selectCampus(c);
-                                    setGameType(pickRandomGame());
-                                    setModalOpen(true);
-                                }}
+                                disabled={isAnimating || starting}
+                                onClick={() => beginGame(c)}
                                 title={`${c} 캠퍼스로 게임 시작`}
                             >
                                 {c}
@@ -842,6 +860,11 @@ export default function TerritoryPage() {
                         );
                     })}
                 </div>
+                {startNotice && (
+                    <p className="terr-start-notice" style={{ marginTop: 8, fontSize: 13, color: '#ef4444' }}>
+                        {startNotice}
+                    </p>
+                )}
             </div>
 
             {/* GVCS 지도 — 시각화 전용, 클릭 없음 */}

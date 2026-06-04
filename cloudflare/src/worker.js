@@ -39,7 +39,7 @@ const ALLOWED_DOMAIN = 'https://gsd.gvcs.kr';
 const CORS_HEADERS = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, X-Admin-Pin',
+    'Access-Control-Allow-Headers': 'Content-Type, X-Admin-Pin, X-Client-Id',
     'Access-Control-Max-Age': '86400',
 };
 
@@ -109,7 +109,8 @@ export default {
 
             // ── Territory ───────────────────────────────────────────────
             if (path === '/api/territory' && method === 'GET') return getTerritory(env, req, ctx);
-            if (path === '/api/territory/claim' && method === 'POST') return claimTerritory(req, env);
+            if (path === '/api/territory/start' && method === 'POST') return startTerritory(req, env, ctx);
+            if (path === '/api/territory/claim' && method === 'POST') return claimTerritory(req, env, ctx);
 
             // ── Dashboard ───────────────────────────────────────────────
             if (path === '/api/dashboard' && method === 'GET') return getDashboard(env);
@@ -350,6 +351,70 @@ const TERRITORY_TOTAL = 200000;
 const CLAIM_UNITS = 20;
 const STEAL_UNITS = 10;
 
+// ── 게임 토큰(논스) 기반 검증 설정 ──────────────────────────────────────────
+const TOKEN_TTL_MS = 120000; // 발급된 토큰 유효시간 (2분). 이 안에 사용해야 함
+const MIN_PLAY_MS = 1000; // 발급~사용 사이 최소 경과시간. 즉시 클릭/스크립트 차단
+const START_COOLDOWN_MS = 2000; // clientId당 토큰 재발급 최소 간격 (서버판 "3초 쿨다운")
+const RATE_WINDOW_MS = 60000; // 발급 상한 측정 윈도우
+const MAX_PER_WINDOW = 25; // 윈도우(60초)당 clientId 최대 발급 수
+
+/* 비정상 시도 기록 (abnormal_logs 테이블 재사용) — best-effort, 응답 블로킹 안 함 */
+function logAbnormal(env, ctx, { clientId, ip, campus, reason, delta = null }) {
+    const p = env.DB.prepare(
+        'INSERT INTO abnormal_logs (uuid, ip, campus, attempted_delta, reason, created_at) VALUES (?,?,?,?,?,?)'
+    )
+        .bind(clientId || null, ip || null, campus || null, delta, reason, Math.floor(Date.now() / 1000))
+        .run();
+    if (ctx?.waitUntil) ctx.waitUntil(p.catch(() => {}));
+    else p.catch(() => {});
+}
+
+/* POST /api/territory/start — 게임 시작 시 1회용 토큰 발급
+ * - clientId(헤더 X-Client-Id) 단위로 쿨다운/윈도우 상한 적용
+ * - 응답: { nonce, ttlMs, minPlayMs }
+ */
+async function startTerritory(req, env, ctx) {
+    const clientId = (req.headers.get('X-Client-Id') || '').slice(0, 64) || 'anon';
+    const ip = req.headers.get('CF-Connecting-IP') || '';
+    const now = Date.now();
+
+    // 만료 토큰 청소 (기회적, 응답 블로킹 안 함)
+    if (ctx?.waitUntil) {
+        ctx.waitUntil(
+            env.DB.prepare('DELETE FROM territory_tokens WHERE issued_at < ?')
+                .bind(now - TOKEN_TTL_MS)
+                .run()
+                .catch(() => {})
+        );
+    }
+
+    // clientId 기준 최근 발급 현황 (사용/미사용 모두 카운트 → redeem으로 quota 우회 방지)
+    const since = now - RATE_WINDOW_MS;
+    const agg = await env.DB.prepare(
+        'SELECT COUNT(*) AS n, MAX(issued_at) AS last FROM territory_tokens WHERE client_id = ? AND issued_at > ?'
+    )
+        .bind(clientId, since)
+        .first();
+
+    const last = agg?.last ? Number(agg.last) : 0;
+    if (last && now - last < START_COOLDOWN_MS) {
+        logAbnormal(env, ctx, { clientId, ip, reason: 'start_cooldown' });
+        return json({ error: 'cooldown', retryAfterMs: START_COOLDOWN_MS - (now - last) }, 429);
+    }
+    if (agg && Number(agg.n) >= MAX_PER_WINDOW) {
+        logAbnormal(env, ctx, { clientId, ip, reason: 'start_rate_limited', delta: Number(agg.n) });
+        return json({ error: 'rate_limited', retryAfterMs: RATE_WINDOW_MS }, 429);
+    }
+
+    // 추측 불가능한 논스 (랜덤 256bit 상당)
+    const nonce = crypto.randomUUID().replace(/-/g, '') + crypto.randomUUID().replace(/-/g, '');
+    await env.DB.prepare('INSERT INTO territory_tokens (nonce, client_id, ip, issued_at, used) VALUES (?,?,?,?,0)')
+        .bind(nonce, clientId, ip, now)
+        .run();
+
+    return json({ nonce, ttlMs: TOKEN_TTL_MS, minPlayMs: MIN_PLAY_MS });
+}
+
 async function fetchTerritoryRow(env) {
     const { results } = await env.DB.prepare('SELECT campus, claims FROM territory_state').all();
     const campuses = Object.fromEntries(CAMPUSES.map((c) => [c, 0]));
@@ -391,10 +456,46 @@ async function getTerritory(env, req, ctx) {
     return res;
 }
 
-async function claimTerritory(req, env) {
+async function claimTerritory(req, env, ctx) {
     const body = await req.json().catch(() => null);
     const team = body?.team;
+    const nonce = typeof body?.nonce === 'string' ? body.nonce : null;
+    const clientId = (req.headers.get('X-Client-Id') || '').slice(0, 64) || 'anon';
+    const ip = req.headers.get('CF-Connecting-IP') || '';
+
     if (!CAMPUSES.includes(team)) return json({ error: 'invalid team' }, 400);
+
+    if (!nonce) {
+        logAbnormal(env, ctx, { clientId, ip, campus: team, reason: 'missing_token' });
+        return json({ error: 'missing token' }, 403);
+    }
+
+    // ① 원자적 1회용 소비: used=0 인 토큰만 즉시 used=1 로 전환하고 issued_at 회수.
+    //    동시에 두 번 들어와도 RETURNING 으로 행을 받는 쪽은 하나뿐 → double-spend 차단.
+    const consumed = await env.DB.prepare(
+        'UPDATE territory_tokens SET used = 1 WHERE nonce = ? AND used = 0 RETURNING issued_at'
+    )
+        .bind(nonce)
+        .first();
+
+    if (!consumed) {
+        // 존재하지 않거나 이미 사용된 토큰
+        logAbnormal(env, ctx, { clientId, ip, campus: team, reason: 'token_invalid_or_used' });
+        return json({ error: 'invalid or used token' }, 403);
+    }
+
+    // ② 시간 검증 (토큰은 이미 소비됨 → 실패해도 재사용 불가)
+    const age = Date.now() - Number(consumed.issued_at);
+    if (age < MIN_PLAY_MS) {
+        logAbnormal(env, ctx, { clientId, ip, campus: team, reason: 'too_fast', delta: age });
+        return json({ error: 'too fast' }, 403);
+    }
+    if (age > TOKEN_TTL_MS) {
+        logAbnormal(env, ctx, { clientId, ip, campus: team, reason: 'token_expired', delta: age });
+        return json({ error: 'token expired' }, 403);
+    }
+
+    // ── 검증 통과 → 기존 점령/강탈 로직 그대로 ──
     await env.DB.prepare('INSERT INTO territory_state (campus) VALUES (?) ON CONFLICT(campus) DO NOTHING')
         .bind(team)
         .run();

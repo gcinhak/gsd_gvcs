@@ -1,7 +1,7 @@
 name = "gsd-gvcs-popcat"
 main = "src/worker.js"
 compatibility_date = "2026-05-19"
-
+account_id = "26d103b4b1d8be53b4a1ec8a3d340e25"
 [[d1_databases]]
 binding = "DB"
 database_name = "gsd_popcat"
