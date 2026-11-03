@@ -2988,14 +2988,14 @@ img {
     display: inline-flex;
     align-items: center;
     gap: 0.4rem;
-    color: #dc2626 !important;
+    color: #9ca3af !important;
 }
+/* 꺼진 표시: 회색 점, 깜빡임 없음 */
 .live-eyebrow-dot {
     width: 7px;
     height: 7px;
     border-radius: 50%;
-    background: #dc2626;
-    animation: livePulse 1.6s ease-in-out infinite;
+    background: #9ca3af;
 }
 .live-error {
     padding: 0.7rem 1rem;
