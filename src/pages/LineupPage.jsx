@@ -3,6 +3,7 @@ import PageHeader from '../components/PageHeader';
 import CampusBadge from '../components/CampusBadge';
 import { getCampusList, getPlayers, getAllSports, getAllCategoriesForSport } from '../data/lineup';
 import { CAMPUS_COLORS } from '../data/data';
+import { maskName } from '../lib/maskName';
 
 const CAMPUS_FILTER_ALL = '__all';
 
@@ -15,7 +16,7 @@ function PlayerRow({ player }) {
     return (
         <li className="lp-row">
             {player.grade != null && <span className="lp-grade">{player.grade}</span>}
-            <span className="lp-name">{player.name}</span>
+            <span className="lp-name">{maskName(player.name)}</span>
             {player.alt && <span className="lp-alt">{player.alt}</span>}
             {player.role && <span className="lp-role">{player.role}</span>}
         </li>

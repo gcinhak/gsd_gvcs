@@ -5,6 +5,7 @@ import { LIVE_MATCHES, CAMPUS_COLORS, getQuarters } from '../data/data';
 import { getLineupForMatch } from '../data/lineup';
 import { fetchLiveStates, fetchComments } from '../lib/liveApi';
 import { getSetSummary, isSetMatch } from '../lib/volleyballSets';
+import { maskName } from '../lib/maskName';
 
 const POLL_STATE_MS = 3000;
 const POLL_COMMENT_MS = 2000;
@@ -56,7 +57,7 @@ function LineupCard({ team, members }) {
                         <li key={`s-${i}`} className="lu-row">
                             {/* 번호는 정식 등번호 들어오면 다시 노출 */}
                             {m.grade != null && <span className="lu-grade">{m.grade}</span>}
-                            <span className="lu-name">{m.name}</span>
+                            <span className="lu-name">{maskName(m.name)}</span>
                             {m.role && <span className="lu-role">{m.role}</span>}
                             {m.alt && <span className="lu-alt">{m.alt}</span>}
                             {m.position && <span className="lu-pos">{m.position}</span>}
@@ -66,7 +67,7 @@ function LineupCard({ team, members }) {
                     {bench.map((m, i) => (
                         <li key={`b-${i}`} className="lu-row is-bench">
                             {m.grade != null && <span className="lu-grade">{m.grade}</span>}
-                            <span className="lu-name">{m.name}</span>
+                            <span className="lu-name">{maskName(m.name)}</span>
                             {m.role && <span className="lu-role">{m.role}</span>}
                             {m.alt && <span className="lu-alt">{m.alt}</span>}
                         </li>
