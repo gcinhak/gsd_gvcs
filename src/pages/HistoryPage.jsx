@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
 import PageHeader from '../components/PageHeader';
 import CampusBadge from '../components/CampusBadge';
-import { HISTORY, CAMPUS_COLORS, EVENT_ORDER } from '../data/data';
+import { SeasonPending } from '../components/SeasonBlocks';
+import { HISTORY, CAMPUS_COLORS, CURRENT_YEAR, EVENT_ORDER } from '../data/data';
 
 // 윤지 공주가 수정함.
 // git add .
@@ -208,6 +209,14 @@ export default function HistoryPage() {
         <div className="page history-page">
             <div className="history-inner">
                 <PageHeader eyebrow="GLOBAL SPORTS FESTIVAL" title="역대 전적" />
+
+                {!HISTORY.some((h) => h.year === CURRENT_YEAR) && (
+                    <SeasonPending
+                        year={CURRENT_YEAR}
+                        title={`${CURRENT_YEAR} 체육축제 결과`}
+                        message="대회가 끝나면 종목별 결과가 이곳에 기록됩니다."
+                    />
+                )}
 
                 <div className="year-pills">
                     {HISTORY.map((h) => (

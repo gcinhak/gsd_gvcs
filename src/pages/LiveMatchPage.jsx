@@ -4,6 +4,7 @@ import CampusBadge from '../components/CampusBadge';
 import { LIVE_MATCHES, CAMPUS_COLORS, getQuarters } from '../data/data';
 import { getLineupForMatch } from '../data/lineup';
 import { fetchLiveStates, fetchComments } from '../lib/liveApi';
+import { getArchivedComments, getArchivedState, isArchivedMatch } from '../lib/archive2026';
 import { getSetSummary, isSetMatch } from '../lib/volleyballSets';
 import { maskName } from '../lib/maskName';
 
@@ -265,21 +266,35 @@ export default function LiveMatchPage() {
     const { matchId } = useParams();
     const navigate = useNavigate();
     const match = LIVE_MATCHES.find((m) => m.id === matchId);
+    // 2026 경기는 서버가 아니라 보관된 기록(스냅샷)으로 보여준다
+    const archived = isArchivedMatch(matchId);
 
-    const [state, setState] = useState({
+    const [liveState, setState] = useState({
         status: 'upcoming',
         youtubeId: null,
         homeScore: 0,
         awayScore: 0,
         currentQuarter: null,
     });
-    const [comments, setComments] = useState([]);
+    const [liveComments, setComments] = useState([]);
     const [selectedQuarter, setSelectedQuarter] = useState('__all');
     const [lineupModalOpen, setLineupModalOpen] = useState(false);
 
+    const archivedRow = archived ? getArchivedState(matchId) : null;
+    const state = archived
+        ? {
+              status: archivedRow?.status || 'finished',
+              youtubeId: archivedRow?.youtubeId || null,
+              homeScore: Number(archivedRow?.homeScore) || 0,
+              awayScore: Number(archivedRow?.awayScore) || 0,
+              currentQuarter: null,
+          }
+        : liveState;
+    const comments = archived ? getArchivedComments(matchId) : liveComments;
+
     /* state 폴링 */
     useEffect(() => {
-        if (!matchId) return;
+        if (!matchId || archived) return;
         let cancelled = false;
         const pull = async () => {
             try {
@@ -305,11 +320,11 @@ export default function LiveMatchPage() {
             cancelled = true;
             clearInterval(timer);
         };
-    }, [matchId]);
+    }, [matchId, archived]);
 
     /* comments 폴링 (LIVE / 종료 일 때) */
     useEffect(() => {
-        if (!matchId) return;
+        if (!matchId || archived) return;
         if (state.status === 'upcoming') return;
         let cancelled = false;
         const pull = async () => {
@@ -327,7 +342,7 @@ export default function LiveMatchPage() {
             cancelled = true;
             clearInterval(timer);
         };
-    }, [matchId, state.status]);
+    }, [matchId, archived, state.status]);
 
     const quarters = match ? getQuarters(match.sport) : ['전체'];
 

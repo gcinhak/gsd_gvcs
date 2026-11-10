@@ -12,7 +12,9 @@ import {
     getTugOfWarPoints,
 } from '../lib/dashboardStore';
 import { fetchComments, fetchLiveStates } from '../lib/liveApi';
-import { LIVE_MATCHES, getQuarters } from '../data/data';
+import { LIVE_MATCHES, SEASON_2027, getQuarters } from '../data/data';
+import { ARCHIVE_2026 } from '../lib/archive2026';
+import { ArchiveSection } from '../components/SeasonBlocks';
 import { getRelayMatchId, getScorePair } from '../lib/dashboardRelay';
 import { getSetSummary, getSetTargetWins, isSetEvent, isSetMatch } from '../lib/volleyballSets';
 
@@ -823,11 +825,19 @@ function ScoreDetailModalContent({ detail, relayState, comments, loading, onClos
     );
 }
 
-export default function DashboardPage() {
-    const [events, setEvents] = useState(INITIAL_DASHBOARD_EVENTS);
-    const [relayStatesMap, setRelayStatesMap] = useState({});
-    const [relayCommentsMap, setRelayCommentsMap] = useState({});
-    const [setCommentsMap, setSetCommentsMap] = useState({});
+/**
+ * 경기 현황판 본체.
+ * archive 를 넘기면 서버 폴링 없이 정적 기록(2026 스냅샷)으로 그린다.
+ */
+function DashboardBoard({ archive = null }) {
+    const [events, setEvents] = useState(() =>
+        archive ? applyDivisionsToEvents(INITIAL_DASHBOARD_EVENTS, archive.divisions) : INITIAL_DASHBOARD_EVENTS
+    );
+    const [relayStatesMap, setRelayStatesMap] = useState(() =>
+        archive ? Object.fromEntries(archive.states.map((s) => [s.matchId, s])) : {}
+    );
+    const [relayCommentsMap, setRelayCommentsMap] = useState(() => (archive ? archive.comments : {}));
+    const [setCommentsMap, setSetCommentsMap] = useState(() => (archive ? archive.comments : {}));
     const [selectedDetail, setSelectedDetail] = useState(null);
     const [selectedTugDetail, setSelectedTugDetail] = useState(null);
     const [selectedMidDetail, setSelectedMidDetail] = useState(null);
@@ -851,8 +861,9 @@ export default function DashboardPage() {
         return [...new Set(ids)];
     }, [liveMatchMap]);
 
-    // 서버에서 대시보드 결과 로드 (10초마다 폴링)
+    // 서버에서 대시보드 결과 로드 (10초마다 폴링) — 기록 모드에선 생략
     useEffect(() => {
+        if (archive) return undefined;
         let cancelled = false;
         const load = async () => {
             try {
@@ -870,10 +881,11 @@ export default function DashboardPage() {
             cancelled = true;
             window.clearInterval(timer);
         };
-    }, []);
+    }, [archive]);
 
     // 실시간 경기 점수 폴링 (4초마다)
     useEffect(() => {
+        if (archive) return undefined;
         let cancelled = false;
         const pull = async () => {
             try {
@@ -892,10 +904,10 @@ export default function DashboardPage() {
             cancelled = true;
             window.clearInterval(timer);
         };
-    }, []);
+    }, [archive]);
 
     useEffect(() => {
-        if (setMatchIds.length === 0) return;
+        if (archive || setMatchIds.length === 0) return undefined;
         let cancelled = false;
         let pullCount = 0;
         const FULL_RELOAD_EVERY = 15;
@@ -959,10 +971,10 @@ export default function DashboardPage() {
             cancelled = true;
             window.clearInterval(timer);
         };
-    }, [setMatchIds]);
+    }, [archive, setMatchIds]);
 
     useEffect(() => {
-        if (!selectedDetail?.matchId) return;
+        if (archive || !selectedDetail?.matchId) return undefined;
         let cancelled = false;
         const matchId = selectedDetail.matchId;
         fetchComments(matchId)
@@ -977,7 +989,7 @@ export default function DashboardPage() {
         return () => {
             cancelled = true;
         };
-    }, [selectedDetail]);
+    }, [archive, selectedDetail]);
 
     const eventContexts = useMemo(() => {
         return events.map((event) => ({
@@ -1005,11 +1017,11 @@ export default function DashboardPage() {
     }, [eventContexts]);
 
     return (
-        <div className="page dashboard-page">
+        <div className="db-board-frame">
             <section className="db-topline">
                 <div className="db-title-block">
-                    <span className="db-kicker">MATCH BOARD</span>
-                    <h1>경기 현황판</h1>
+                    <span className="db-kicker">{archive ? `${archive.year} FINAL RESULTS` : 'MATCH BOARD'}</span>
+                    <h1>{archive ? '최종 결과' : '경기 현황판'}</h1>
                 </div>
 
                 <div className="db-campus-scoreboard" aria-label="캠퍼스별 종목 우승 개수">
@@ -1022,14 +1034,23 @@ export default function DashboardPage() {
                     ))}
                 </div>
 
-                <div className="db-live-panel" aria-label="현재 진행 상태">
-                    <span className="db-live-dot" />
-                    <strong>LIVE</strong>
-                    <LiveClock />
-                    <span className="db-live-summary">
-                        {stats.done}/{stats.total} 완료 · {stats.live} 진행
-                    </span>
-                </div>
+                {archive ? (
+                    <div className="db-live-panel is-ended" aria-label="대회 종료">
+                        <strong>대회 종료</strong>
+                        <span className="db-live-summary">
+                            {stats.done}/{stats.total} 경기 완료
+                        </span>
+                    </div>
+                ) : (
+                    <div className="db-live-panel" aria-label="현재 진행 상태">
+                        <span className="db-live-dot" />
+                        <strong>LIVE</strong>
+                        <LiveClock />
+                        <span className="db-live-summary">
+                            {stats.done}/{stats.total} 완료 · {stats.live} 진행
+                        </span>
+                    </div>
+                )}
             </section>
 
             <section className="db-board" aria-label="종목별 결과 현황">
@@ -1120,6 +1141,41 @@ export default function DashboardPage() {
                 onClose={() => setSelectedTugDetail(null)}
             />
             <MiddleDistanceDetailModal detail={selectedMidDetail} onClose={() => setSelectedMidDetail(null)} />
+        </div>
+    );
+}
+
+/** 메인 상단 — 2027 대회 안내 (일정 확정 전에는 「미정」) */
+function SeasonHero2027() {
+    const dateLabel = SEASON_2027.dateLabel;
+    return (
+        <section className="main-hero" aria-label="2027 글로벌 체육 축제">
+            <div className="main-hero-text">
+                <span className="main-hero-kicker">GLOBAL SPORTS FESTIVAL</span>
+                <h1 className="main-hero-title">
+                    <span className="main-hero-year">2027</span> 글로벌 체육 축제
+                </h1>
+                <p className="main-hero-desc">
+                    {dateLabel
+                        ? '대회 당일 이곳에서 실시간 경기 현황판이 열립니다.'
+                        : '대회 일정이 확정되면 이곳에서 실시간 경기 현황판이 열립니다.'}
+                </p>
+            </div>
+            <div className="main-hero-date">
+                <span>대회 일정</span>
+                <strong className={dateLabel ? '' : 'is-tbd'}>{dateLabel || '미정'}</strong>
+            </div>
+        </section>
+    );
+}
+
+export default function DashboardPage() {
+    return (
+        <div className="page dashboard-page is-archive">
+            <SeasonHero2027 />
+            <ArchiveSection year={ARCHIVE_2026.year} title="경기 현황판" meta="5/28 – 5/30 · 최종 결과">
+                <DashboardBoard archive={ARCHIVE_2026} />
+            </ArchiveSection>
         </div>
     );
 }

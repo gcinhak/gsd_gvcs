@@ -32,11 +32,23 @@ export default function UpcomingPage() {
                             </p>
                         </div>
                     </section>
+                    <section>
+                        <span>03</span>
+                        <div>
+                            <h2>2026 체육축제를 마치며</h2>
+                            <p>
+                                2026년 5월 28일부터 30일까지 열린 글로벌 체육 축제 동안 경기 현황판, 실시간 문자 중계,
+                                라인업, 응원전 영상 등을 운영했습니다. 대회의 모든 결과와 중계 기록은 각 페이지의
+                                「2026 기록」에 보관되어 있습니다. 2027 체육축제에서 더 나은 모습으로 다시
+                                찾아오겠습니다.
+                            </p>
+                        </div>
+                    </section>
                 </div>
 
-                <section className="credits-section" aria-label="제작진 명단">
+                <section className="credits-section" aria-label="2026 제작진 명단">
                     <div className="credits-section-head">
-                        <span>CREDITS</span>
+                        <span>2026 CREDITS</span>
                     </div>
                     <div className="credits-list">
                         <div className="credits-role-group">

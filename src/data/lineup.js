@@ -784,11 +784,11 @@ export function getCategories(campus, sport) {
 }
 
 /** 모든 캠퍼스의 종목 합집합 (입력 순서 유지) */
-export function getAllSports() {
+export function getAllSports(lineup = LINEUP) {
     const out = [];
     const seen = new Set();
     for (const campus of SUPPORTED_CAMPUSES) {
-        for (const sport of Object.keys(LINEUP[campus] || {})) {
+        for (const sport of Object.keys(lineup[campus] || {})) {
             if (!seen.has(sport)) {
                 seen.add(sport);
                 out.push(sport);
@@ -799,11 +799,11 @@ export function getAllSports() {
 }
 
 /** 한 종목에서 모든 캠퍼스의 카테고리 합집합 */
-export function getAllCategoriesForSport(sport) {
+export function getAllCategoriesForSport(sport, lineup = LINEUP) {
     const out = [];
     const seen = new Set();
     for (const campus of SUPPORTED_CAMPUSES) {
-        for (const cat of Object.keys(LINEUP[campus]?.[sport] || {})) {
+        for (const cat of Object.keys(lineup[campus]?.[sport] || {})) {
             if (!seen.has(cat)) {
                 seen.add(cat);
                 out.push(cat);
@@ -813,8 +813,21 @@ export function getAllCategoriesForSport(sport) {
     return out;
 }
 
-export function getPlayers(campus, sport, category) {
-    return LINEUP[campus]?.[sport]?.[category] || [];
+export function getPlayers(campus, sport, category, lineup = LINEUP) {
+    return lineup[campus]?.[sport]?.[category] || [];
+}
+
+/**
+ * 2027 라인업 — LINEUP 과 같은 구조. 비어 있으면 라인업 페이지에 「미정」 표시.
+ * 선수 데이터가 들어오면 라인업 페이지 맨 위에 자동으로 고정된다.
+ */
+export const LINEUP_2027 = {};
+
+/** 라인업 객체에 선수가 한 명이라도 있는지 */
+export function hasAnyPlayers(lineup) {
+    return Object.values(lineup || {}).some((sports) =>
+        Object.values(sports || {}).some((cats) => Object.values(cats || {}).some((arr) => arr && arr.length > 0))
+    );
 }
 
 /* match.category → lineup category 키 정규화 */

@@ -1,9 +1,8 @@
 import { useState, Fragment } from 'react';
 import PageHeader from '../components/PageHeader';
 import CampusBadge from '../components/CampusBadge';
-import { SCHEDULE } from '../data/data';
-
-const DAY_ORDER = ['thursday', 'friday', 'saturday'];
+import { ArchiveSection, SeasonPending, SeasonTitle } from '../components/SeasonBlocks';
+import { SCHEDULE, SCHEDULE_2027 } from '../data/data';
 
 /* 파란색에 흰색 반스푼 섞은 부드러운 파스텔톤 컬러 스타일 정의 */
 const PILL_STYLES = {
@@ -60,7 +59,7 @@ function MatchTable({ matches }) {
             <table className="match-table">
                 <thead>
                     <tr>
-                        <th>시간</th> {/* 경기 → 시간 */}
+                        <th>시간</th>
                         <th>구분</th>
                         <th>대상</th>
                         <th>매치</th>
@@ -220,53 +219,79 @@ function VenueSection({ venue }) {
     );
 }
 
-export default function SchedulePage() {
-    const [activeDay, setActiveDay] = useState('thursday');
-    const day = SCHEDULE[activeDay];
+/** 요일 탭 + 그날 일정. 연도별 SCHEDULE 객체를 받아 그린다. */
+function ScheduleBrowser({ schedule }) {
+    const dayKeys = Object.keys(schedule);
+    const [activeDay, setActiveDay] = useState(dayKeys[0]);
+    const day = schedule[activeDay];
 
+    return (
+        <>
+            <div className="day-tabs">
+                {dayKeys.map((key) => {
+                    const d = schedule[key];
+                    return (
+                        <button
+                            key={key}
+                            className={`day-tab ${activeDay === key ? 'active' : ''}`}
+                            onClick={() => setActiveDay(key)}
+                        >
+                            <span className="day-tab-emoji" aria-hidden>
+                                {d.emoji}
+                            </span>
+                            <span className="day-tab-text">
+                                <span className="day-tab-date">{d.shortDate}</span>
+                                <span className="day-tab-title">{d.title}</span>
+                            </span>
+                        </button>
+                    );
+                })}
+            </div>
+
+            {/* <div className="day-hero">
+                <div className="day-hero-emoji">{day.emoji}</div>
+                <div>
+                    <div className="day-hero-title">{day.title}</div>
+                    <div className="day-hero-date">{day.date}</div>
+                </div>
+            </div> */}
+
+            {day.matches && <MatchTable matches={day.matches} />}
+
+            {day.venues && (
+                <div className="venues-stack">
+                    {day.venues.map((v, i) => (
+                        <VenueSection key={i} venue={v} />
+                    ))}
+                </div>
+            )}
+        </>
+    );
+}
+
+export default function SchedulePage() {
+    const has2027 = Boolean(SCHEDULE_2027);
     return (
         <div className="page schedule-page">
             <div className="schedule-inner">
                 <PageHeader eyebrow="GLOBAL SPORTS FESTIVAL" title="경기 일정" />
 
-                <div className="day-tabs">
-                    {DAY_ORDER.map((key) => {
-                        const d = SCHEDULE[key];
-                        return (
-                            <button
-                                key={key}
-                                className={`day-tab ${activeDay === key ? 'active' : ''}`}
-                                onClick={() => setActiveDay(key)}
-                            >
-                                <span className="day-tab-emoji" aria-hidden>
-                                    {d.emoji}
-                                </span>
-                                <span className="day-tab-text">
-                                    <span className="day-tab-date">{d.shortDate}</span>
-                                    <span className="day-tab-title">{d.title}</span>
-                                </span>
-                            </button>
-                        );
-                    })}
-                </div>
-
-                {/* <div className="day-hero">
-                    <div className="day-hero-emoji">{day.emoji}</div>
-                    <div>
-                        <div className="day-hero-title">{day.title}</div>
-                        <div className="day-hero-date">{day.date}</div>
-                    </div>
-                </div> */}
-
-                {day.matches && <MatchTable matches={day.matches} />}
-
-                {day.venues && (
-                    <div className="venues-stack">
-                        {day.venues.map((v, i) => (
-                            <VenueSection key={i} venue={v} />
-                        ))}
-                    </div>
+                {has2027 ? (
+                    <section className="season-block">
+                        <SeasonTitle year={2027} title="경기 일정" />
+                        <ScheduleBrowser schedule={SCHEDULE_2027} />
+                    </section>
+                ) : (
+                    <SeasonPending
+                        year={2027}
+                        title="2027 경기 일정"
+                        message="대회 일정이 확정되면 이곳에 공개됩니다."
+                    />
                 )}
+
+                <ArchiveSection year={2026} title="경기 일정" meta="5/28 – 5/30">
+                    <ScheduleBrowser schedule={SCHEDULE} />
+                </ArchiveSection>
             </div>
         </div>
     );

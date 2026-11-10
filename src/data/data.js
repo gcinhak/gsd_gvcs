@@ -1,6 +1,25 @@
 export const TARGET_DATE = new Date('2026-05-30T09:00:00');
 
 /* ──────────────────────────────────────────────────────────
+   시즌 — 2027 대회 + 2026 기록
+   2027 자료가 들어오면 아래 값만 채우면 각 페이지 맨 위에 자동 고정된다.
+   비어 있으면(null / 빈 배열) 「미정」으로 표시.
+────────────────────────────────────────────────────────── */
+export const CURRENT_YEAR = 2027;
+export const ARCHIVE_YEAR = 2026;
+
+export const SEASON_2027 = {
+    year: 2027,
+    dateLabel: null, // 확정되면 예: '2027년 5월 29일 (토)'
+};
+
+/** 2027 경기 목록 (LIVE_MATCHES와 같은 구조). 비어 있으면 「미정」 */
+export const LIVE_MATCHES_2027 = [];
+
+/** 2027 경기 일정 (SCHEDULE과 같은 구조). null 이면 「미정」 */
+export const SCHEDULE_2027 = null;
+
+/* ──────────────────────────────────────────────────────────
    THEME PALETTES — 흰색 베이스 스포츠 사이트 톤
    네이버 스포츠 / KBO 스타일 (밝은 배경, 진한 액센트)
 ────────────────────────────────────────────────────────── */
@@ -453,6 +472,103 @@ export const CAMPUS_COLORS = {
      ]
 ────────────────────────────────────────────────────────── */
 export const HISTORY = [
+    // 2026 — 현황판 최종 결과(2026 기록 스냅샷) 기준
+    {
+        year: 2026,
+        overall: {
+            winner: '문경',
+            note: '2026년 경기 종합우승은 문경캠퍼스입니다. (종목 우승 문경 6 · 음성 3 · 세종 1)',
+        },
+        cheer: {
+            winner: '음성',
+            note: '2026년 응원전 우승은 음성캠퍼스입니다.',
+        },
+        events: [
+            {
+                name: '축구',
+                winner: '음성',
+                matches: [
+                    { label: '고등부(남)', score: '문경 2:0 음성', winner: '문경' },
+                    { label: '중등부(남)', score: '음성 2:1 문경', winner: '음성' },
+                    { label: '중고연합(여)', score: '음성 4:2 문경', winner: '음성' },
+                ],
+            },
+            {
+                name: '농구',
+                winner: '음성',
+                matches: [
+                    { label: '고등부(남)', score: '세종 17:24 문경', winner: '문경' },
+                    { label: '중등부(남)', score: '문경 15:27 음성', winner: '음성' },
+                    { label: '중고연합(여)', score: '문경 3:10 음성', winner: '음성' },
+                ],
+            },
+            {
+                name: '배구',
+                winner: '문경',
+                matches: [
+                    { label: '고등부(남)', score: '세종 1:2 문경', winner: '문경' },
+                    { label: '중등부(남)', score: '세종 0:2 문경', winner: '문경' },
+                    { label: '중고연합(여)', score: '문경 1:2 세종', winner: '세종' },
+                ],
+            },
+            {
+                name: '태권도',
+                winner: '문경',
+                matches: [
+                    { label: '태권체조', winner: '음성' },
+                    { label: '품새(중)', winner: '문경' },
+                    { label: '품새(고)', winner: '문경' },
+                    { label: '겨루기(여)', score: '문경 5:7 음성', winner: '음성' },
+                    { label: '겨루기(남)', score: '문경 67:54 음성', winner: '문경' },
+                ],
+            },
+            {
+                name: '탁구',
+                winner: '문경',
+                matches: [
+                    { label: '고등부', winner: '음성' },
+                    { label: '중등부', winner: '문경' },
+                    { label: '인기모', winner: '세종' },
+                    { label: '교직원', winner: '문경' },
+                ],
+            },
+            {
+                name: '체스',
+                winner: '문경',
+                matches: [
+                    { label: '7·8학년', winner: '문경' },
+                    { label: '9·10학년', winner: '문경' },
+                    { label: '11·12학년', winner: '음성' },
+                ],
+            },
+            {
+                name: '중거리',
+                winner: '음성',
+                matches: [
+                    { label: '중등부(여)', score: '문경 14 · 음성 45 · 세종 4', winner: '음성' },
+                    { label: '중등부(남)', score: '문경 37 · 음성 19 · 세종 9', winner: '문경' },
+                    { label: '고등부(여)', score: '문경 9 · 음성 45 · 세종 9', winner: '음성' },
+                    { label: '고등부(남)', score: '문경 29 · 음성 30 · 세종 6', winner: '음성' },
+                ],
+            },
+            {
+                name: '이어달리기',
+                winner: '문경',
+            },
+            {
+                name: '줄다리기',
+                winner: '문경',
+                matches: [
+                    { label: '학생팀', score: '문경 2 · 음성 4 · 세종 0', winner: '음성' },
+                    { label: '성인팀', score: '문경 4 · 음성 2 · 세종 0', winner: '문경' },
+                ],
+            },
+            {
+                name: '초등경기',
+                winner: '세종',
+            },
+        ],
+    },
     {
         year: 2025,
         overall: {

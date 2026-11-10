@@ -8563,3 +8563,292 @@ img {
     border-bottom: 1px solid var(--card-accent);
     margin-top: 0.4rem;
 }
+
+/* ──────────────────────────────────────────────────────────
+   시즌 블록 — 2027 「미정」 카드 / 2026 기록 접기·펼치기
+────────────────────────────────────────────────────────── */
+.season-pending {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.1rem 1.25rem;
+    background: var(--surface);
+    border: 1.5px dashed var(--border-strong);
+    border-radius: var(--radius-lg);
+}
+.sp-text {
+    min-width: 0;
+}
+.sp-year {
+    font-family: 'Black Han Sans', sans-serif;
+    font-size: 0.85rem;
+    letter-spacing: 0.06em;
+    color: var(--primary);
+}
+.sp-title {
+    margin: 0.1rem 0 0;
+    font-size: 1.12rem;
+    font-weight: 800;
+    color: var(--text);
+}
+.sp-message {
+    margin: 0.3rem 0 0;
+    font-size: 0.9rem;
+    color: var(--muted);
+}
+.sp-badge {
+    flex-shrink: 0;
+    padding: 0.45rem 1.05rem;
+    border-radius: 999px;
+    background: var(--bg-soft-2);
+    color: var(--text-2);
+    font-size: 0.95rem;
+    font-weight: 800;
+}
+
+.season-block {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+.season-title {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+}
+.season-title-year {
+    font-family: 'Black Han Sans', sans-serif;
+    font-size: 1.1rem;
+    color: var(--primary);
+}
+.season-title h2 {
+    margin: 0;
+    font-size: 1.15rem;
+    font-weight: 800;
+}
+
+.archive-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-xs);
+}
+.archive-head,
+.acc-head {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    background: transparent;
+    border: 0;
+    cursor: pointer;
+    text-align: left;
+    font: inherit;
+    color: var(--text);
+}
+.archive-head {
+    padding: 0.9rem 1.1rem;
+    border-radius: var(--radius-lg);
+}
+.archive-head:hover,
+.acc-head:hover {
+    background: var(--surface-2);
+}
+.archive-section.is-open .archive-head {
+    border-bottom: 1px solid var(--border);
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+.archive-badge {
+    flex-shrink: 0;
+    padding: 0.25rem 0.65rem;
+    border-radius: 999px;
+    background: var(--text);
+    color: #fff;
+    font-size: 0.78rem;
+    font-weight: 800;
+}
+.archive-title {
+    font-size: 1.02rem;
+    font-weight: 800;
+}
+.archive-meta,
+.acc-meta {
+    color: var(--muted);
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+.archive-chevron,
+.acc-chevron {
+    margin-left: auto;
+    color: var(--muted);
+    transition: transform 0.15s;
+}
+.archive-section.is-open .archive-chevron,
+.acc-item.is-open .acc-chevron {
+    transform: rotate(180deg);
+}
+.archive-body {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1rem 1.1rem 1.2rem;
+}
+
+.acc-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+.acc-item {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+}
+.acc-head {
+    padding: 0.8rem 1rem;
+    border-radius: var(--radius-md);
+}
+.acc-title {
+    font-weight: 800;
+}
+.acc-body {
+    padding: 0.25rem 1rem 1rem;
+}
+
+@media (max-width: 640px) {
+    .season-pending {
+        padding: 1rem;
+    }
+    .archive-head {
+        flex-wrap: wrap;
+        padding: 0.85rem 0.95rem;
+    }
+    .archive-meta {
+        flex-basis: 100%;
+        order: 4;
+    }
+    .archive-body {
+        padding: 0.85rem 0.75rem 1rem;
+    }
+    .acc-body {
+        padding: 0.25rem 0.6rem 0.8rem;
+    }
+}
+
+/* ──────────────────────────────────────────────────────────
+   메인 — 2027 히어로 + 2026 현황판 기록 (스크롤 페이지)
+   대회 기간의 16:9 한 화면 보드 모드를 기록용으로 풀어 준다.
+────────────────────────────────────────────────────────── */
+.layout:has(.dashboard-page.is-archive) {
+    height: auto;
+    min-height: 100vh;
+    overflow: visible;
+}
+.layout:has(.dashboard-page.is-archive) .site-footer {
+    display: block;
+}
+.dashboard-page.is-archive {
+    height: auto;
+    min-height: calc(100vh - 64px);
+    overflow: visible;
+    gap: 1rem;
+    padding: 1rem 0 2rem;
+}
+.dashboard-page.is-archive > .main-hero,
+.dashboard-page.is-archive > .archive-section {
+    width: min(100% - 1rem, 1560px);
+    margin-left: auto;
+    margin-right: auto;
+}
+.dashboard-page.is-archive .archive-body {
+    padding: 0.75rem 0.75rem 0.9rem;
+}
+.db-board-frame {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+}
+.dashboard-page.is-archive .db-topline,
+.dashboard-page.is-archive .db-board {
+    width: 100%;
+}
+@media (min-width: 1025px) and (orientation: landscape) {
+    /* 데스크톱: 보드는 원래처럼 한 화면 크기 그대로 */
+    .dashboard-page.is-archive .db-board-frame {
+        height: calc(100vh - 64px - 5rem);
+        min-height: 620px;
+    }
+}
+.db-live-panel.is-ended {
+    grid-template-columns: 1fr;
+    border-left-color: var(--text);
+}
+.db-live-panel.is-ended strong {
+    grid-column: 1;
+    color: var(--text);
+}
+.db-live-panel.is-ended .db-live-summary {
+    grid-column: 1;
+}
+
+.main-hero {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem 1.5rem;
+    padding: clamp(1.1rem, 2.5vw, 1.6rem) clamp(1.1rem, 3vw, 2rem);
+    border-radius: var(--radius-xl);
+    background: linear-gradient(120deg, #0f172a, var(--primary-dark) 55%, var(--primary));
+    color: #fff;
+    box-shadow: var(--shadow-md);
+}
+.main-hero-kicker {
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.22em;
+    opacity: 0.75;
+}
+.main-hero-title {
+    margin: 0.25rem 0 0;
+    font-family: 'Black Han Sans', sans-serif;
+    font-size: clamp(1.6rem, 3.6vw, 2.4rem);
+    font-weight: 400;
+    line-height: 1.15;
+}
+.main-hero-year {
+    color: var(--primary-line);
+}
+.main-hero-desc {
+    margin: 0.4rem 0 0;
+    font-size: 0.95rem;
+    opacity: 0.85;
+}
+.main-hero-date {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.3rem;
+}
+.main-hero-date span {
+    font-size: 0.78rem;
+    font-weight: 700;
+    opacity: 0.75;
+}
+.main-hero-date strong {
+    font-family: 'Black Han Sans', sans-serif;
+    font-size: clamp(1.4rem, 3vw, 2rem);
+    font-weight: 400;
+}
+.main-hero-date strong.is-tbd {
+    padding: 0.15rem 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.14);
+}
+@media (max-width: 640px) {
+    .main-hero-date {
+        align-items: flex-start;
+    }
+}

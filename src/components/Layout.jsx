@@ -16,7 +16,8 @@ const NAV_ITEMS = [
     { to: '/cheers', label: '응원전' },
     ...(SHOW_DEV_TABS ? [{ to: '/games', label: '경기 영상' }] : []),
     { to: '/history', label: '역대 전적' },
-    { to: '/cheer', label: '🏰 점령전' },
+    // 점령전: 비공개 — 운영 사이트 메뉴에서 숨김 (dev 빌드에서만 노출)
+    ...(SHOW_DEV_TABS ? [{ to: '/cheer', label: '🏰 점령전' }] : []),
     { to: '/about', label: 'About' },
 ];
 
